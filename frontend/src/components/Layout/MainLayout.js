@@ -44,7 +44,6 @@ const menuItems = [
   { text: 'Master Data', icon: <LocationIcon />, path: '/master-data', roles: ['superadmin', 'admin'] },
   { text: 'Financial Management', icon: <FinanceIcon />, path: '/finance', roles: ['superadmin', 'admin', 'financial_manager'] },
   { text: 'Vendors Management', icon: <PeopleIcon />, path: '/vendors', roles: ['superadmin', 'admin'] },
-  { text: 'Transportation', icon: <TransportIcon />, path: '/transport', roles: ['superadmin', 'admin'] },
   { text: 'Support Management', icon: <SupportIcon />, path: '/support', roles: ['superadmin', 'admin'] },
   { text: 'User Management', icon: <PeopleIcon />, path: '/users', roles: ['superadmin'] },
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager'] },
@@ -72,11 +71,7 @@ const FinanceSubMenu = [
 const VendorsSubMenu = [
   { text: 'Accommodation', path: '/vendors/accommodation' },
   { text: 'Food', path: '/vendors/food' },
-  { text: 'Transport', path: '/vendors/transport' }
-];
-
-const TransportSubMenu = [
-  { text: 'Transport Management', path: '/transport' }
+  { text: 'Transport', path: '/transport' }
 ];
 
 function MainLayout({ children }) {
@@ -125,8 +120,6 @@ function MainLayout({ children }) {
         return FinanceSubMenu;
       case '/vendors':
         return VendorsSubMenu;
-      case '/transport':
-        return TransportSubMenu;
       default:
         return [];
     }
