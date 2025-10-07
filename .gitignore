@@ -3,6 +3,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # Production builds
 /frontend/build
@@ -14,6 +15,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
 
 # IDE files
 .vscode/
@@ -42,6 +44,7 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+*.lcov
 
 # nyc test coverage
 .nyc_output
@@ -63,6 +66,7 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+.env.*
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -70,15 +74,17 @@ jspm_packages/
 
 # next.js build output
 .next
+out
 
 # nuxt.js build output
 .nuxt
+dist
 
 # vuepress build output
 .vuepress/dist
 
 # Serverless directories
-.serverless
+.serverless/
 
 # FuseBox cache
 .fusebox/
@@ -88,3 +94,22 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Firebase cache directory
+.firebase/
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v3
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Vite logs files
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
