@@ -1,0 +1,45 @@
+{
+  "name": "tirth-yatra-app",
+  "version": "1.0.0",
+  "description": "Complete Tirth Yatra Pilgrimage Management Application",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "build:local": "npm run build:local:backend && npm run build:local:frontend",
+    "build:prod": "npm run build:prod:backend && npm run build:prod:frontend",
+    "build:local:backend": "cd backend && npm run build:local",
+    "build:local:frontend": "cd frontend && npm run build:local",
+    "build:prod:backend": "cd backend && npm run build:prod",
+    "build:prod:frontend": "cd frontend && npm run build:prod",
+    "start:local": "concurrently \"npm run start:local:backend\" \"npm run start:local:frontend\"",
+    "start:prod": "concurrently \"npm run start:prod:backend\" \"npm run start:prod:frontend\"",
+    "start:local:backend": "cd backend && npm run build:local",
+    "start:local:frontend": "cd frontend && npm run build:local && npx serve -s build -l 3000",
+    "start:prod:backend": "cd backend && npm run build:prod",
+    "start:prod:frontend": "cd frontend && npm run build:prod && npx serve -s build -l 3000",
+    "reset-db": "cd backend && npm run reset-db"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "serve": "^14.2.1"
+  },
+  "keywords": [
+    "tirth-yatra",
+    "pilgrimage",
+    "management",
+    "react",
+    "nodejs",
+    "mysql",
+    "jwt",
+    "rbac"
+  ],
+  "author": "Tirth Yatra Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}
