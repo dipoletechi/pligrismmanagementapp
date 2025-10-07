@@ -76,9 +76,7 @@ const VendorsSubMenu = [
 ];
 
 const TransportSubMenu = [
-  { text: 'Bus Management', path: '/transport/buses' },
-  { text: 'Driver Management', path: '/transport/drivers' },
-  { text: 'Conductor Management', path: '/transport/conductors' }
+  { text: 'Transport Management', path: '/transport' }
 ];
 
 function MainLayout({ children }) {

@@ -13,8 +13,7 @@ import UserManagement from './components/UserManagement';
 import Destinations from './components/MasterData/Destinations';
 import Amenities from './components/MasterData/Amenities';
 import FoodManagement from './components/MasterData/FoodManagement';
-import Drivers from './components/Transport/Drivers';
-import Buses from './components/Transport/Buses';
+import TransportManagement from './components/Transport/TransportManagement';
 import AccommodationVendors from './components/Vendors/AccommodationVendors';
 import FoodVendors from './components/Vendors/FoodVendors';
 import TransportVendors from './components/Vendors/TransportVendors';
@@ -115,22 +114,11 @@ function App() {
               
               {/* Transport Management Routes */}
               <Route 
-                path="/transport/drivers" 
+                path="/transport" 
                 element={
                   <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
                     <MainLayout>
-                      <Drivers />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              <Route 
-                path="/transport/buses" 
-                element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
-                    <MainLayout>
-                      <Buses />
+                      <TransportManagement />
                     </MainLayout>
                   </ProtectedRoute>
                 } 
