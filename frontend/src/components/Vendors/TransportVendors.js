@@ -1906,7 +1906,13 @@ const TransportVendors = () => {
                   '& .MuiInputBase-input': { 
                     color: '#1976d2', 
                     fontWeight: 500,
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16.5px 14px'
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#e0e0e0'
+                    }
                   }
                 }}
               />
@@ -1923,7 +1929,13 @@ const TransportVendors = () => {
                     '& .MuiInputBase-input': { 
                       color: '#1976d2', 
                       fontWeight: 500,
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      padding: '16.5px 14px'
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0'
+                      }
                     }
                   }}
                 />
@@ -1937,7 +1949,13 @@ const TransportVendors = () => {
                     '& .MuiInputBase-input': { 
                       color: '#1976d2', 
                       fontWeight: 500,
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      padding: '16.5px 14px'
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0'
+                      }
                     }
                   }}
                 />
@@ -1954,7 +1972,13 @@ const TransportVendors = () => {
                   '& .MuiInputBase-input': { 
                     color: '#1976d2', 
                     fontWeight: 500,
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    padding: '16.5px 14px'
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#e0e0e0'
+                    }
                   }
                 }}
               />
@@ -1971,7 +1995,13 @@ const TransportVendors = () => {
                     '& .MuiInputBase-input': { 
                       color: '#1976d2', 
                       fontWeight: 500,
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      padding: '16.5px 14px'
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0'
+                      }
                     }
                   }}
                 />
@@ -1985,7 +2015,13 @@ const TransportVendors = () => {
                     '& .MuiInputBase-input': { 
                       color: '#1976d2', 
                       fontWeight: 500,
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      padding: '16.5px 14px'
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0'
+                      }
                     }
                   }}
                 />
