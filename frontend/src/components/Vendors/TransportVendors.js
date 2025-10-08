@@ -1006,7 +1006,7 @@ const TransportVendors = () => {
         >
           <BusinessIcon sx={{ fontSize: 32 }} />
           <Typography variant="h5" component="div">
-            {viewDialog.vendor?.title} - Details
+            {viewDialog.vendor?.title}
           </Typography>
         </DialogTitle>
         <DialogContent>
