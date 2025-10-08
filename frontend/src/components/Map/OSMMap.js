@@ -52,10 +52,25 @@ const OSMMap = ({
         const newMarker = L.marker([lat, lng]).addTo(map);
         markerRef.current = newMarker;
 
-        // Call callback with new coordinates
-        if (onLocationSelect) {
-          onLocationSelect(lat, lng);
-        }
+        // Get address from coordinates using reverse geocoding
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`)
+          .then(response => response.json())
+          .then(data => {
+            const address = data.display_name || '';
+            const title = data.name || data.display_name?.split(',')[0] || 'Selected Location';
+            
+            // Call callback with coordinates, title, and address
+            if (onLocationSelect) {
+              onLocationSelect(lat, lng, title, address);
+            }
+          })
+          .catch(error => {
+            console.log('Reverse geocoding failed:', error);
+            // Still call callback with just coordinates if geocoding fails
+            if (onLocationSelect) {
+              onLocationSelect(lat, lng);
+            }
+          });
       });
     }
 

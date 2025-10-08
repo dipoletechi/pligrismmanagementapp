@@ -48,6 +48,7 @@ const Destinations = () => {
     description: ''
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [mapLoading, setMapLoading] = useState(false);
 
   const fetchDestinations = async () => {
     try {
@@ -109,12 +110,17 @@ const Destinations = () => {
     }));
   };
 
-  const handleMapLocationSelect = (lat, lng) => {
+  const handleMapLocationSelect = (lat, lng, title = null, address = null) => {
+    setMapLoading(true);
     setFormData(prev => ({
       ...prev,
       latitude: lat.toString(),
-      longitude: lng.toString()
+      longitude: lng.toString(),
+      ...(title && { title: title }),
+      ...(address && { address: address })
     }));
+    // Reset loading after a short delay
+    setTimeout(() => setMapLoading(false), 1000);
   };
 
   const handleSubmit = async (e) => {
@@ -332,8 +338,16 @@ const Destinations = () => {
                   Select Location on Map
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Click on the map to select a location. Coordinates will be automatically updated.
+                  Click on the map to select a location. Title, address, and coordinates will be automatically updated.
                 </Typography>
+                {mapLoading && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <CircularProgress size={20} />
+                    <Typography variant="body2" color="text.secondary">
+                      Getting location details...
+                    </Typography>
+                  </Box>
+                )}
                 <OSMMap
                   latitude={parseFloat(formData.latitude) || 28.6139}
                   longitude={parseFloat(formData.longitude) || 77.2090}
