@@ -77,8 +77,6 @@ const Settings = () => {
   });
 
   useEffect(() => {
-    console.log('Settings component - User data:', user);
-    console.log('Settings component - Auth token:', localStorage.getItem('token'));
     if (user) {
       setProfileData({
         name: user.name || '',
@@ -143,16 +141,10 @@ const Settings = () => {
     setLoading(true);
     
     try {
-      console.log('Updating profile with data:', profileData);
-      console.log('Auth token:', localStorage.getItem('token'));
-      console.log('Axios base URL:', axios.defaults.baseURL);
-      console.log('Full URL will be:', `${axios.defaults.baseURL}/api/auth/profile`);
       const response = await axios.put('/api/auth/profile', profileData);
-      console.log('Profile update response:', response.data);
       setSnackbar({ open: true, message: 'Profile updated successfully', severity: 'success' });
     } catch (error) {
       console.error('Profile update error:', error);
-      console.error('Error response:', error.response?.data);
       setSnackbar({ 
         open: true, 
         message: error.response?.data?.message || 'Failed to update profile', 
@@ -179,15 +171,10 @@ const Settings = () => {
     setLoading(true);
     
     try {
-      console.log('Changing password with data:', { currentPassword: '***', newPassword: '***' });
-      console.log('Auth token:', localStorage.getItem('token'));
-      console.log('Axios base URL:', axios.defaults.baseURL);
-      console.log('Full URL will be:', `${axios.defaults.baseURL}/api/auth/change-password`);
       const response = await axios.put('/api/auth/change-password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
-      console.log('Password change response:', response.data);
       setSnackbar({ open: true, message: 'Password changed successfully', severity: 'success' });
       setPasswordData({
         currentPassword: '',
@@ -196,7 +183,6 @@ const Settings = () => {
       });
     } catch (error) {
       console.error('Password change error:', error);
-      console.error('Error response:', error.response?.data);
       setSnackbar({ 
         open: true, 
         message: error.response?.data?.message || 'Failed to change password', 

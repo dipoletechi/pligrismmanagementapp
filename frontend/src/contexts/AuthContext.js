@@ -67,38 +67,37 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Configure axios defaults
+  // Check if user is logged in on app start - only once
   useEffect(() => {
-    if (state.token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [state.token]);
-
-  // Check if user is logged in on app start
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (state.token) {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        // Set axios header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('AuthContext: Set axios header with token:', token.substring(0, 20) + '...');
+        
         try {
           const response = await axios.get('/api/auth/me');
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
               user: response.data.data,
-              token: state.token
+              token: token
             }
           });
         } catch (error) {
           localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
           dispatch({ type: 'LOGOUT' });
         }
       }
+      
       dispatch({ type: 'SET_LOADING', payload: false });
     };
 
-    checkAuth();
-  }, []); // Empty dependency array to run only once on mount
+    initializeAuth();
+  }, []); // Run only once on mount
 
   // Login function
   const login = async (email, password) => {
@@ -108,6 +107,8 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data.data;
       
       localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user, token }
@@ -149,6 +150,7 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = () => {
     localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
     dispatch({ type: 'LOGOUT' });
   };
 

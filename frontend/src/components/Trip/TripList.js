@@ -38,8 +38,13 @@ import {
   AttachMoney as MoneyIcon
 } from '@mui/icons-material';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+
+// Ensure axios base URL is set
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const TripList = () => {
+  const { user, isAuthenticated } = useAuth();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -63,21 +68,60 @@ const TripList = () => {
   };
 
   const fetchTrips = async () => {
+    console.log('fetchTrips called, current loading state:', loading);
+    // Remove the loading check to allow the call
+    
     try {
       setLoading(true);
+      console.log('=== FETCHING TRIPS START ===');
+      console.log('Fetching trips with token:', localStorage.getItem('token'));
+      console.log('Axios headers:', axios.defaults.headers.common);
+      console.log('Axios base URL:', axios.defaults.baseURL);
+      
       const res = await axios.get('/api/trips');
+      console.log('=== TRIPS RESPONSE ===');
+      console.log('Trips response:', res.data);
+      console.log('Trips count:', res.data.data.items?.length);
       setTrips(res.data.data.items);
+      console.log('=== TRIPS SET SUCCESSFULLY ===');
     } catch (error) {
+      console.error('=== TRIPS FETCH ERROR ===');
       console.error('Error fetching trips:', error);
-      setSnackbar({ open: true, message: 'Error fetching trips', severity: 'error' });
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Error fetching trips', 
+        severity: 'error' 
+      });
     } finally {
+      console.log('=== SETTING LOADING FALSE ===');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTrips();
-  }, []);
+    const initializeTrips = async () => {
+      console.log('TripList useEffect - isAuthenticated:', isAuthenticated);
+      console.log('TripList useEffect - user:', user);
+      console.log('TripList useEffect - token:', localStorage.getItem('token'));
+      
+      // Reset loading state first
+      setLoading(false);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (token && user) {
+        console.log('User authenticated, fetching trips...');
+        await fetchTrips();
+      } else {
+        console.log('User not authenticated, stopping loading');
+        setLoading(false);
+      }
+    };
+
+    initializeTrips();
+  }, []); // Run only once on mount
 
   const handleOpen = (trip = null) => {
     if (trip) {
@@ -158,6 +202,16 @@ const TripList = () => {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, textAlign: 'center' }}>
         <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, textAlign: 'center' }}>
+        <Typography variant="h6" color="text.secondary">
+          Please log in to view trips
+        </Typography>
       </Container>
     );
   }
