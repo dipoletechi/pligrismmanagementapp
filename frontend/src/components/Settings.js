@@ -27,6 +27,7 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import PasswordPolicy from './PasswordPolicy';
 import axios from 'axios';
 
 // Ensure axios base URL is set
@@ -70,6 +71,7 @@ const Settings = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [passwordStrength, setPasswordStrength] = useState({});
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -163,8 +165,9 @@ const Settings = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setSnackbar({ open: true, message: 'Password must be at least 6 characters long', severity: 'error' });
+    // Check password strength
+    if (passwordStrength.percentage < 100) {
+      setSnackbar({ open: true, message: 'Password does not meet all security requirements', severity: 'error' });
       return;
     }
 
@@ -173,7 +176,7 @@ const Settings = () => {
     try {
       const response = await axios.put('/api/auth/change-password', {
         currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+        password: passwordData.newPassword
       });
       setSnackbar({ open: true, message: 'Password changed successfully', severity: 'success' });
       setPasswordData({
@@ -369,6 +372,16 @@ const Settings = () => {
                     }}
                   />
                 </Grid>
+                
+                {/* Password Policy Component */}
+                <Grid item xs={12}>
+                  <PasswordPolicy 
+                    password={passwordData.newPassword}
+                    onStrengthChange={setPasswordStrength}
+                    showPolicy={true}
+                  />
+                </Grid>
+                
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -394,7 +407,7 @@ const Settings = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <Alert severity="info" sx={{ mb: 2 }}>
-                    Password must be at least 6 characters long.
+                    Password must meet all security requirements shown above.
                   </Alert>
                 </Grid>
                 <Grid item xs={12}>

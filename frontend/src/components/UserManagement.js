@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import PasswordPolicy from './PasswordPolicy';
 import {
   Container,
   Paper,
@@ -52,6 +53,7 @@ const UserManagement = () => {
     role: 'user',
     isActive: true
   });
+  const [passwordStrength, setPasswordStrength] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -139,6 +141,17 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check password strength for new users or when password is being changed
+    if ((!editingUser || formData.password) && passwordStrength.percentage < 100) {
+      setSnackbar({
+        open: true,
+        message: 'Password does not meet all security requirements',
+        severity: 'error'
+      });
+      return;
+    }
+    
     try {
       if (editingUser) {
         // Update user
@@ -564,6 +577,16 @@ const UserManagement = () => {
               required={!editingUser}
               helperText={editingUser ? "Leave blank to keep current password" : ""}
             />
+            
+            {/* Password Policy Component - only show for new users or when password is being changed */}
+            {(!editingUser || formData.password) && (
+              <PasswordPolicy 
+                password={formData.password}
+                onStrengthChange={setPasswordStrength}
+                showPolicy={true}
+              />
+            )}
+            
             <FormControl fullWidth margin="dense">
               <InputLabel>Role</InputLabel>
               <Select

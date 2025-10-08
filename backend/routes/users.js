@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const User = require('../models/User');
 const { protect, authorize, checkPermission } = require('../middleware/auth');
+const { validatePasswordPolicy } = require('../middleware/passwordPolicy');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
@@ -98,7 +99,7 @@ router.post('/', protect, authorize('superadmin'), [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').isIn(['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'])
     .withMessage('Invalid role')
-], async (req, res) => {
+], validatePasswordPolicy, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -397,7 +398,7 @@ router.put('/profile', protect, [
 router.put('/change-password', protect, [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
   body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
-], async (req, res) => {
+], validatePasswordPolicy, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

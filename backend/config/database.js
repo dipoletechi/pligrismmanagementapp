@@ -28,9 +28,9 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log('MySQL database connected successfully');
     
-    // Sync database (create tables if they don't exist)
-    await sequelize.sync({ alter: true });
-    console.log('Database synchronized');
+    // Note: Database schema is managed by migrations
+    // No need to sync as it can cause "too many keys" error
+    console.log('Database connection established');
   } catch (error) {
     console.error('Database connection error:', error.message);
     process.exit(1);
