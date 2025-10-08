@@ -392,6 +392,40 @@ const TransportVendors = () => {
     }
   };
 
+  // View handlers for detailed information
+  const handleViewBus = (bus) => {
+    const busDetails = `
+Bus Details:
+Title: ${bus.title}
+RC Number: ${bus.rc_no}
+Model: ${bus.model || 'N/A'}
+Type: ${bus.type || 'N/A'}
+Capacity: ${bus.no_of_sittings || 'N/A'}
+Make Year: ${bus.make_year || 'N/A'}
+    `;
+    alert(busDetails);
+  };
+
+  const handleViewDriver = (driver) => {
+    const driverDetails = `
+Driver Details:
+Name: ${driver.first_name} ${driver.last_name}
+Phone: ${driver.phone_number || 'N/A'}
+License: ${driver.driving_license_no || 'N/A'}
+Aadhar: ${driver.aadhar_no || 'N/A'}
+    `;
+    alert(driverDetails);
+  };
+
+  const handleViewConductor = (conductor) => {
+    const conductorDetails = `
+Conductor Details:
+Name: ${conductor.first_name} ${conductor.last_name}
+Phone: ${conductor.phone_number || 'N/A'}
+    `;
+    alert(conductorDetails);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, textAlign: 'center' }}>
@@ -1193,6 +1227,7 @@ const TransportVendors = () => {
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <IconButton 
                                       size="small" 
+                                      onClick={() => handleViewBus(bus)}
                                       sx={{ 
                                         color: '#1976d2',
                                         '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
