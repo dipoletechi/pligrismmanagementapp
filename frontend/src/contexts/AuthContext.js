@@ -101,9 +101,16 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = async (email, password) => {
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Email:', email);
+    console.log('Password:', password);
+    
     dispatch({ type: 'LOGIN_START' });
     try {
       const response = await axios.post('/api/auth/login', { email, password });
+      console.log('=== LOGIN SUCCESS ===');
+      console.log('Response:', response.data);
+      
       const { token, user } = response.data.data;
       
       localStorage.setItem('token', token);
@@ -115,7 +122,14 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: true };
     } catch (error) {
+      console.log('=== LOGIN ERROR ===');
+      console.log('Error:', error);
+      console.log('Error response:', error.response);
+      console.log('Error message:', error.response?.data?.message);
+      
       const errorMessage = error.response?.data?.message || 'Login failed';
+      console.log('Final error message:', errorMessage);
+      
       dispatch({
         type: 'LOGIN_FAILURE',
         payload: errorMessage

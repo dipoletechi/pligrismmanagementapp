@@ -77,9 +77,17 @@ const Login = () => {
       return;
     }
 
+    console.log('=== LOGIN SUBMIT ===');
+    console.log('Form data:', formData);
+    console.log('Current error state:', error);
+    
     const result = await login(formData.email, formData.password);
+    console.log('Login result:', result);
+    
     if (result.success) {
       navigate('/dashboard');
+    } else {
+      console.log('Login failed, error should be displayed');
     }
   };
 
@@ -114,6 +122,17 @@ const Login = () => {
                 {error}
               </Alert>
             )}
+            
+            {/* Debug: Show error state */}
+            {console.log('=== RENDER DEBUG ===')}
+            {console.log('Error state:', error)}
+            {console.log('Error type:', typeof error)}
+            {console.log('Error truthy:', !!error)}
+            
+            {/* Test Alert - Always show for debugging */}
+            <Alert severity="info" sx={{ width: '100%', mb: 2 }}>
+              Debug: Error state = {error ? error : 'null'}
+            </Alert>
 
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
               <TextField
