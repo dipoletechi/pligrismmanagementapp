@@ -21,6 +21,7 @@ import SupportTickets from './components/Support/SupportTickets';
 import TripList from './components/Trip/TripList';
 import CreateTrip from './components/Trip/CreateTrip';
 import TripTracking from './components/Trip/TripTracking';
+import Settings from './components/Settings';
 import './App.css';
 
 // Configure axios base URL
@@ -275,7 +276,7 @@ function App() {
                     requiredPermissions={[{ module: 'settings', action: 'read' }]}
                   >
                     <MainLayout>
-                      <div>Settings - Coming Soon</div>
+                      <Settings />
                     </MainLayout>
                   </ProtectedRoute>
                 } 

@@ -129,7 +129,9 @@ router.post('/login', [
           email: user.email,
           role: user.role,
           isActive: user.isActive,
-          lastLogin: user.lastLogin
+          lastLogin: user.lastLogin,
+          phone: user.phone,
+          address: user.address
         }
       }
     });
@@ -157,6 +159,8 @@ router.get('/me', protect, async (req, res) => {
         role: user.role,
         isActive: user.isActive,
         lastLogin: user.lastLogin,
+        phone: user.phone,
+        address: user.address,
         createdAt: user.createdAt
       }
     });
@@ -174,7 +178,9 @@ router.get('/me', protect, async (req, res) => {
 // @access  Private
 router.put('/profile', protect, [
   body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email')
+  body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('phone').optional().trim(),
+  body('address').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -186,7 +192,7 @@ router.put('/profile', protect, [
       });
     }
 
-    const { name, email } = req.body;
+    const { name, email, phone, address } = req.body;
     const updateData = {};
 
     if (name) updateData.name = name;
@@ -201,6 +207,8 @@ router.put('/profile', protect, [
       }
       updateData.email = email;
     }
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
 
     await User.update(updateData, {
       where: { id: req.user.id }
@@ -216,7 +224,9 @@ router.put('/profile', protect, [
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
-        isActive: updatedUser.isActive
+        isActive: updatedUser.isActive,
+        phone: updatedUser.phone,
+        address: updatedUser.address
       }
     });
   } catch (error) {

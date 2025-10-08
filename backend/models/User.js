@@ -55,6 +55,14 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true
   },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   createdBy: {
     type: DataTypes.INTEGER,
     allowNull: true,

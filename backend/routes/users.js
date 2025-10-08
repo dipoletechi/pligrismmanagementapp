@@ -3,6 +3,7 @@ const { body, validationResult, query } = require('express-validator');
 const User = require('../models/User');
 const { protect, authorize, checkPermission } = require('../middleware/auth');
 const { Op } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 const router = express.Router();
 
@@ -325,5 +326,130 @@ const getRolePermissions = (role) => {
 
   return permissions[role] || {};
 };
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+router.put('/profile', protect, [
+  body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('phone').optional().trim(),
+  body('address').optional().trim()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
+    const { name, email, phone, address } = req.body;
+    const userId = req.user.id;
+
+    // Check if email is already taken by another user
+    if (email && email !== req.user.email) {
+      const existingUser = await User.findOne({ 
+        where: { email, id: { [Op.ne]: userId } } 
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is already taken'
+        });
+      }
+    }
+
+    // Update user profile
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
+
+    await User.update(updateData, {
+      where: { id: userId }
+    });
+
+    const updatedUser = await User.findByPk(userId, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { user: updatedUser }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Change user password
+// @route   PUT /api/users/change-password
+// @access  Private
+router.put('/change-password', protect, [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Get user with password
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    await User.update(
+      { password: hashedPassword },
+      { where: { id: userId } }
+    );
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
 
 module.exports = router;
