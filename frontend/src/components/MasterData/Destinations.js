@@ -32,6 +32,7 @@ import {
   LocationOn as LocationIcon,
   Map as MapIcon
 } from '@mui/icons-material';
+import OSMMap from '../Map/OSMMap';
 // No API calls yet
 
 const Destinations = () => {
@@ -105,6 +106,14 @@ const Destinations = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleMapLocationSelect = (lat, lng) => {
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat.toString(),
+      longitude: lng.toString()
     }));
   };
 
@@ -248,75 +257,99 @@ const Destinations = () => {
       </Paper>
 
       {/* Destination Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="xl" fullWidth>
         <DialogTitle>
           {editingDestination ? 'Edit Destination' : 'Add New Destination'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
+            <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
+              {/* Left Side - Form Fields */}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  Destination Information
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    autoFocus
+                    name="title"
+                    label="Title"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.title}
+                    onChange={handleChange}
+                    required
+                  />
+                  <TextField
+                    name="address"
+                    label="Address"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.address}
+                    onChange={handleChange}
+                    required
+                  />
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      name="latitude"
+                      label="Latitude"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.latitude}
+                      onChange={handleChange}
+                      required
+                      type="number"
+                      inputProps={{ step: "any" }}
+                    />
+                    <TextField
+                      name="longitude"
+                      label="Longitude"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.longitude}
+                      onChange={handleChange}
+                      required
+                      type="number"
+                      inputProps={{ step: "any" }}
+                    />
+                  </Box>
+                  <TextField
+                    name="description"
+                    label="Description"
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    rows={6}
+                    value={formData.description}
+                    onChange={handleChange}
+                  />
+                </Box>
+              </Box>
+              
+              {/* Right Side - Map */}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  Select Location on Map
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Click on the map to select a location. Coordinates will be automatically updated.
+                </Typography>
+                <OSMMap
+                  latitude={parseFloat(formData.latitude) || 28.6139}
+                  longitude={parseFloat(formData.longitude) || 77.2090}
+                  onLocationSelect={handleMapLocationSelect}
+                  height="400px"
+                  zoom={12}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="address"
-                  label="Address"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="latitude"
-                  label="Latitude"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.latitude}
-                  onChange={handleChange}
-                  required
-                  type="number"
-                  inputProps={{ step: "any" }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="longitude"
-                  label="Longitude"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.longitude}
-                  onChange={handleChange}
-                  required
-                  type="number"
-                  inputProps={{ step: "any" }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleChange}
-                />
-              </Grid>
-            </Grid>
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Selected Coordinates:</strong><br />
+                    Latitude: {formData.latitude || 'Not selected'}<br />
+                    Longitude: {formData.longitude || 'Not selected'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
