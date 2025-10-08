@@ -288,7 +288,7 @@ const FoodItems = () => {
                   <TextField
                     autoFocus
                     name="title"
-                    label="Title *"
+                    label="Title"
                     fullWidth
                     variant="outlined"
                     value={formData.title}
@@ -333,12 +333,12 @@ const FoodItems = () => {
                       }
                     }}
                   >
-                    <InputLabel>Category *</InputLabel>
+                    <InputLabel>Category</InputLabel>
                     <Select
                       name="food_category_id"
                       value={formData.food_category_id}
                       onChange={handleChange}
-                      label="Category *"
+                      label="Category"
                     >
                       {categories.map((category) => (
                         <MenuItem key={category.id} value={category.id}>

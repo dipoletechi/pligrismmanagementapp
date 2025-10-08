@@ -42,6 +42,7 @@ import axios from 'axios';
 
 const TransportVendors = () => {
   const [vendors, setVendors] = useState([]);
+  const [conductorCount, setConductorCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState(null);
@@ -99,8 +100,12 @@ const TransportVendors = () => {
   const fetchVendors = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/transport-vendors');
-      setVendors(res.data.data.items);
+      const [vendorsRes, conductorRes] = await Promise.all([
+        axios.get('/api/transport-vendors'),
+        axios.get('/api/transport-vendors/conductors/count')
+      ]);
+      setVendors(vendorsRes.data.data.items);
+      setConductorCount(conductorRes.data.data.count);
     } catch (error) {
       console.error('Error fetching transport vendors:', error);
       setSnackbar({ open: true, message: 'Error fetching vendors', severity: 'error' });
@@ -434,17 +439,14 @@ const TransportVendors = () => {
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            mb: 3,
             p: 3,
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            <Box>
+            {/* Title and Description */}
+            <Box sx={{ mb: 3 }}>
               <Typography 
                 variant="h3" 
                 component="h1" 
@@ -464,168 +466,184 @@ const TransportVendors = () => {
                 Manage transport vendors and their details
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-              size="large"
-              sx={{
+
+            {/* Stats Cards Row */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              gap: 3,
+              flexWrap: 'wrap'
+            }}>
+              {/* Total Vendors Card */}
+              <Card sx={{
                 borderRadius: 3,
-                px: 4,
-                py: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+                border: 'none',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
-                  boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
-                  transform: 'translateY(-2px)'
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
                 },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Add Vendor
-            </Button>
+                minWidth: 200,
+                flexShrink: 0
+              }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      mr: 1.5
+                    }}>
+                      <BusIcon sx={{ fontSize: 20, color: 'white' }} />
+                    </Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      Total Vendors
+                    </Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, ml: 1 }}>
+                    {vendors.length}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Total Drivers Card */}
+              <Card sx={{
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                color: 'white',
+                boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
+                },
+                minWidth: 200,
+                flexShrink: 0
+              }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      mr: 1.5
+                    }}>
+                      <PersonIcon sx={{ fontSize: 20, color: 'white' }} />
+                    </Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      Total Drivers
+                    </Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, ml: 1 }}>
+                    {vendors.reduce((total, vendor) => total + (vendor.drivers?.length || 0), 0)}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Total Buses Card */}
+              <Card sx={{
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                color: 'white',
+                boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
+                },
+                minWidth: 200,
+                flexShrink: 0
+              }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      mr: 1.5
+                    }}>
+                      <BusIcon sx={{ fontSize: 20, color: 'white' }} />
+                    </Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      Total Buses
+                    </Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, ml: 1 }}>
+                    {vendors.reduce((total, vendor) => total + (vendor.buses?.length || 0), 0)}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Total Conductors Card */}
+              <Card sx={{
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                color: 'white',
+                boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
+                },
+                minWidth: 200,
+                flexShrink: 0
+              }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      mr: 1.5
+                    }}>
+                      <PersonIcon sx={{ fontSize: 20, color: 'white' }} />
+                    </Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      Total Conductors
+                    </Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, ml: 1 }}>
+                    {conductorCount}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Add Button */}
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpen()}
+                size="large"
+                sx={{
+                  borderRadius: 3,
+                  px: 4,
+                  py: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                    boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Add Vendor
+              </Button>
+            </Box>
           </Box>
         </Box>
 
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
-              border: 'none',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    mr: 2
-                  }}>
-                    <BusIcon sx={{ fontSize: 28, color: 'white' }} />
-                  </Box>
-                  <Typography variant="h3" component="div" sx={{ fontWeight: 700 }}>
-                    {vendors.length}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Total Vendors
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)',
-              border: 'none',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    mr: 2
-                  }}>
-                    <BusinessIcon sx={{ fontSize: 28, color: 'white' }} />
-                  </Box>
-                  <Typography variant="h3" component="div" sx={{ fontWeight: 700 }}>
-                    {vendors.length}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Active Vendors
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
-              border: 'none',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    mr: 2
-                  }}>
-                    <PersonIcon sx={{ fontSize: 28, color: 'white' }} />
-                  </Box>
-                  <Typography variant="h3" component="div" sx={{ fontWeight: 700 }}>
-                    {vendors.length * 2}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Total Drivers
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
-              border: 'none',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    mr: 2
-                  }}>
-                    <BusIcon sx={{ fontSize: 28, color: 'white' }} />
-                  </Box>
-                  <Typography variant="h3" component="div" sx={{ fontWeight: 700 }}>
-                    {vendors.length * 3}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Total Buses
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
 
         {/* Vendors Table */}
         <Paper sx={{
@@ -798,7 +816,7 @@ const TransportVendors = () => {
                     <TextField
                       autoFocus
                       name="title"
-                      label="Title *"
+                      label="Title"
                       fullWidth
                       variant="outlined"
                       value={formData.title}
@@ -1574,7 +1592,7 @@ const TransportVendors = () => {
                 <TextField
                   autoFocus
                   name="title"
-                  label="Bus Title *"
+                  label="Bus Title"
                   fullWidth
                   variant="outlined"
                   value={busFormData.title}
@@ -1698,7 +1716,7 @@ const TransportVendors = () => {
                 <TextField
                   autoFocus
                   name="first_name"
-                  label="First Name *"
+                  label="First Name"
                   fullWidth
                   variant="outlined"
                   value={driverFormData.first_name}
@@ -1709,7 +1727,7 @@ const TransportVendors = () => {
               <Grid item xs={6}>
                 <TextField
                   name="last_name"
-                  label="Last Name *"
+                  label="Last Name"
                   fullWidth
                   variant="outlined"
                   value={driverFormData.last_name}
@@ -1720,7 +1738,7 @@ const TransportVendors = () => {
               <Grid item xs={12}>
                 <TextField
                   name="phone_number"
-                  label="Phone Number *"
+                  label="Phone Number"
                   fullWidth
                   variant="outlined"
                   value={driverFormData.phone_number}
@@ -1731,7 +1749,7 @@ const TransportVendors = () => {
               <Grid item xs={12}>
                 <TextField
                   name="driving_license_no"
-                  label="License Number *"
+                  label="License Number"
                   fullWidth
                   variant="outlined"
                   value={driverFormData.driving_license_no}
@@ -1803,7 +1821,7 @@ const TransportVendors = () => {
                 <TextField
                   autoFocus
                   name="first_name"
-                  label="First Name *"
+                  label="First Name"
                   fullWidth
                   variant="outlined"
                   value={conductorFormData.first_name}
@@ -1814,7 +1832,7 @@ const TransportVendors = () => {
               <Grid item xs={6}>
                 <TextField
                   name="last_name"
-                  label="Last Name *"
+                  label="Last Name"
                   fullWidth
                   variant="outlined"
                   value={conductorFormData.last_name}
@@ -1825,7 +1843,7 @@ const TransportVendors = () => {
               <Grid item xs={12}>
                 <TextField
                   name="phone_number"
-                  label="Phone Number *"
+                  label="Phone Number"
                   fullWidth
                   variant="outlined"
                   value={conductorFormData.phone_number}

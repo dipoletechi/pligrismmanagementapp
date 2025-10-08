@@ -31,7 +31,36 @@ import {
   Schedule as ScheduleIcon,
   AccessTime as TimeIcon
 } from '@mui/icons-material';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import moment from 'moment';
 import axios from 'axios';
+
+// Utility functions for time conversion
+const formatTimeForDisplay = (time24) => {
+  if (!time24) return '';
+  const [hours, minutes] = time24.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
+const formatTimeForInput = (time12) => {
+  if (!time12) return '';
+  const [time, ampm] = time12.split(' ');
+  const [hours, minutes] = time.split(':');
+  let hour24 = parseInt(hours, 10);
+  
+  if (ampm === 'PM' && hour24 !== 12) {
+    hour24 += 12;
+  } else if (ampm === 'AM' && hour24 === 12) {
+    hour24 = 0;
+  }
+  
+  return `${hour24.toString().padStart(2, '0')}:${minutes}`;
+};
 
 const FoodSchedules = () => {
   const [schedules, setSchedules] = useState([]);
@@ -67,8 +96,8 @@ const FoodSchedules = () => {
       setEditingSchedule(schedule);
       setFormData({
         title: schedule.title,
-        start_time: schedule.start_time,
-        end_time: schedule.end_time
+        start_time: formatTimeForDisplay(schedule.start_time),
+        end_time: formatTimeForDisplay(schedule.end_time)
       });
     } else {
       setEditingSchedule(null);
@@ -102,10 +131,17 @@ const FoodSchedules = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Convert time fields to 24-hour format before sending to backend
+      const submitData = {
+        ...formData,
+        start_time: formatTimeForInput(formData.start_time),
+        end_time: formatTimeForInput(formData.end_time)
+      };
+      
       if (editingSchedule) {
-        await axios.put(`/api/food-schedules/${editingSchedule.id}`, formData);
+        await axios.put(`/api/food-schedules/${editingSchedule.id}`, submitData);
       } else {
-        await axios.post('/api/food-schedules', formData);
+        await axios.post('/api/food-schedules', submitData);
       }
       await fetchSchedules();
       setSnackbar({ open: true, message: 'Saved successfully', severity: 'success' });
@@ -116,12 +152,16 @@ const FoodSchedules = () => {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this schedule?')) {
-      axios.delete(`/api/food-schedules/${id}`).then(() => {
-        fetchSchedules();
+      try {
+        await axios.delete(`/api/food-schedules/${id}`);
+        await fetchSchedules();
         setSnackbar({ open: true, message: 'Schedule deleted successfully', severity: 'success' });
-      });
+      } catch (error) {
+        console.error('Error deleting schedule:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Error deleting schedule', severity: 'error' });
+      }
     }
   };
 
@@ -213,8 +253,8 @@ const FoodSchedules = () => {
                         {schedule.title}
                       </Typography>
                     </TableCell>
-                    <TableCell>{schedule.start_time}</TableCell>
-                    <TableCell>{schedule.end_time}</TableCell>
+                    <TableCell>{formatTimeForDisplay(schedule.start_time)}</TableCell>
+                    <TableCell>{formatTimeForDisplay(schedule.end_time)}</TableCell>
                     <TableCell>{duration} hours</TableCell>
                     <TableCell align="center">
                       <IconButton
@@ -272,7 +312,7 @@ const FoodSchedules = () => {
               <TextField
                 autoFocus
                 name="title"
-                label="Title *"
+                label="Title"
                 fullWidth
                 variant="outlined"
                 value={formData.title}
@@ -296,60 +336,74 @@ const FoodSchedules = () => {
                 }}
               />
               <Box sx={{ display: 'flex', gap: 3 }}>
-                <TextField
-                  name="start_time"
-                  label="Start Time *"
-                  type="time"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.start_time}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
-                    }
-                  }}
-                />
-                <TextField
-                  name="end_time"
-                  label="End Time *"
-                  type="time"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.end_time}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
-                    }
-                  }}
-                />
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <TimePicker
+                    label="Start Time"
+                    value={formData.start_time ? moment(formData.start_time, 'HH:mm') : null}
+                    onChange={(newValue) => {
+                      const timeString = newValue ? newValue.format('HH:mm') : '';
+                      setFormData(prev => ({ ...prev, start_time: timeString }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        variant="outlined"
+                        required
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#1976d2',
+                              borderWidth: 2
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#1976d2',
+                              borderWidth: 2
+                            }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': {
+                            color: '#1976d2'
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <TimePicker
+                    label="End Time"
+                    value={formData.end_time ? moment(formData.end_time, 'HH:mm') : null}
+                    onChange={(newValue) => {
+                      const timeString = newValue ? newValue.format('HH:mm') : '';
+                      setFormData(prev => ({ ...prev, end_time: timeString }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        variant="outlined"
+                        required
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#1976d2',
+                              borderWidth: 2
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#1976d2',
+                              borderWidth: 2
+                            }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': {
+                            color: '#1976d2'
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
               </Box>
             </Box>
           </DialogContent>

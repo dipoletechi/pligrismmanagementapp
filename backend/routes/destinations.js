@@ -39,14 +39,27 @@ router.get('/', protect, async (req, res) => {
 // Create destination (admin/superadmin)
 router.post('/', protect, authorize('superadmin', 'admin'), [
   body('title').trim().notEmpty(),
-  body('address').trim().notEmpty(),
-  body('latitude').optional().isFloat(),
-  body('longitude').optional().isFloat()
+  body('address').optional().trim(),
+  body('latitude').optional().custom((value) => {
+    if (value === '' || value === null || value === undefined) return true;
+    return !isNaN(parseFloat(value));
+  }),
+  body('longitude').optional().custom((value) => {
+    if (value === '' || value === null || value === undefined) return true;
+    return !isNaN(parseFloat(value));
+  })
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
   try {
-    const dest = await Destination.create(req.body);
+    // Convert empty strings to null for decimal fields
+    const data = { ...req.body };
+    if (data.latitude === '') data.latitude = null;
+    if (data.longitude === '') data.longitude = null;
+    if (data.address === '') data.address = null;
+    if (data.description === '') data.description = null;
+    
+    const dest = await Destination.create(data);
     res.status(201).json({ success: true, data: dest });
   } catch (e) {
     console.error('Create destination error:', e);
@@ -57,7 +70,14 @@ router.post('/', protect, authorize('superadmin', 'admin'), [
 // Update destination
 router.put('/:id', protect, authorize('superadmin', 'admin'), async (req, res) => {
   try {
-    await Destination.update(req.body, { where: { id: req.params.id } });
+    // Convert empty strings to null for decimal fields
+    const data = { ...req.body };
+    if (data.latitude === '') data.latitude = null;
+    if (data.longitude === '') data.longitude = null;
+    if (data.address === '') data.address = null;
+    if (data.description === '') data.description = null;
+    
+    await Destination.update(data, { where: { id: req.params.id } });
     const dest = await Destination.findByPk(req.params.id);
     res.json({ success: true, data: dest });
   } catch (e) {

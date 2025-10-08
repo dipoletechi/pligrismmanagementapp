@@ -252,67 +252,63 @@ const FoodCategories = () => {
             py: 3
           }}
         >
-          {editingCategory ? 'Edit Food Category' : 'Add New Food Category - MODERN DESIGN'}
+          {editingCategory ? 'Edit Food Category' : 'Add New Food Category'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title *"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                autoFocus
+                name="title"
+                label="Title"
+                fullWidth
+                variant="outlined"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     }
-                  }}
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={4}
-                  value={formData.description}
-                  onChange={handleChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
+              <TextField
+                name="description"
+                label="Description"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={4}
+                value={formData.description}
+                onChange={handleChange}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     }
-                  }}
-                />
-              </Box>
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 3, gap: 2 }}>

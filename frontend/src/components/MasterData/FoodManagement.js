@@ -38,6 +38,35 @@ import {
   Fastfood as FoodIcon
 } from '@mui/icons-material';
 import axios from 'axios';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import moment from 'moment';
+
+// Utility functions for time conversion
+const formatTimeForDisplay = (time24) => {
+  if (!time24) return '';
+  const [hours, minutes] = time24.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
+
+const formatTimeForInput = (time12) => {
+  if (!time12) return '';
+  const [time, ampm] = time12.split(' ');
+  const [hours, minutes] = time.split(':');
+  let hour24 = parseInt(hours, 10);
+  
+  if (ampm === 'PM' && hour24 !== 12) {
+    hour24 += 12;
+  } else if (ampm === 'AM' && hour24 === 12) {
+    hour24 = 0;
+  }
+  
+  return `${hour24.toString().padStart(2, '0')}:${minutes}`;
+};
 
 const FoodManagement = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -101,6 +130,9 @@ const FoodManagement = () => {
       setSchedules(schedules);
       setCategories(categories);
       setFoodItems(foodItemsWithCategory);
+      
+      // Debug: Log categories
+      console.log('Categories loaded:', categories);
     } catch (error) {
       console.error('Error fetching data:', error);
       setSnackbar({
@@ -149,14 +181,14 @@ const FoodManagement = () => {
       if (editingSchedule) {
         await axios.put(`/api/food-schedules/${editingSchedule.id}`, {
           title: scheduleForm.title,
-          start_time: scheduleForm.startTime,
-          end_time: scheduleForm.endTime
+          start_time: formatTimeForInput(scheduleForm.startTime),
+          end_time: formatTimeForInput(scheduleForm.endTime)
         });
       } else {
         await axios.post('/api/food-schedules', {
           title: scheduleForm.title,
-          start_time: scheduleForm.startTime,
-          end_time: scheduleForm.endTime
+          start_time: formatTimeForInput(scheduleForm.startTime),
+          end_time: formatTimeForInput(scheduleForm.endTime)
         });
       }
       setSnackbar({ open: true, message: 'Schedule saved successfully', severity: 'success' });
@@ -165,6 +197,19 @@ const FoodManagement = () => {
     } catch (error) {
       console.error('Error saving schedule:', error);
       setSnackbar({ open: true, message: 'Error saving schedule', severity: 'error' });
+    }
+  };
+
+  const handleScheduleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this schedule?')) {
+      try {
+        await axios.delete(`/api/food-schedules/${id}`);
+        await fetchData();
+        setSnackbar({ open: true, message: 'Schedule deleted successfully', severity: 'success' });
+      } catch (error) {
+        console.error('Error deleting schedule:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Error deleting schedule', severity: 'error' });
+      }
     }
   };
 
@@ -200,6 +245,19 @@ const FoodManagement = () => {
     } catch (error) {
       console.error('Error saving category:', error);
       setSnackbar({ open: true, message: 'Error saving category', severity: 'error' });
+    }
+  };
+
+  const handleCategoryDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await axios.delete(`/api/food-categories/${id}`);
+        await fetchData();
+        setSnackbar({ open: true, message: 'Category deleted successfully', severity: 'success' });
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Error deleting category', severity: 'error' });
+      }
     }
   };
 
@@ -247,6 +305,19 @@ const FoodManagement = () => {
     } catch (error) {
       console.error('Error saving food item:', error);
       setSnackbar({ open: true, message: 'Error saving food item', severity: 'error' });
+    }
+  };
+
+  const handleFoodItemDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this food item?')) {
+      try {
+        await axios.delete(`/api/food-items/${id}`);
+        await fetchData();
+        setSnackbar({ open: true, message: 'Food item deleted successfully', severity: 'success' });
+      } catch (error) {
+        console.error('Error deleting food item:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Error deleting food item', severity: 'error' });
+      }
     }
   };
 
@@ -368,13 +439,16 @@ const FoodManagement = () => {
                 {schedules.map((schedule) => (
                   <TableRow key={schedule.id}>
                     <TableCell>{schedule.title}</TableCell>
-                    <TableCell>{schedule.start_time}</TableCell>
-                    <TableCell>{schedule.end_time}</TableCell>
+                    <TableCell>{formatTimeForDisplay(schedule.start_time)}</TableCell>
+                    <TableCell>{formatTimeForDisplay(schedule.end_time)}</TableCell>
                     <TableCell align="center">
                       <IconButton onClick={() => handleScheduleOpen(schedule)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton color="error">
+                      <IconButton 
+                        color="error"
+                        onClick={() => handleScheduleDelete(schedule.id)}
+                      >
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -416,7 +490,10 @@ const FoodManagement = () => {
                       <IconButton onClick={() => handleCategoryOpen(category)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton color="error">
+                      <IconButton 
+                        color="error"
+                        onClick={() => handleCategoryDelete(category.id)}
+                      >
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -462,7 +539,10 @@ const FoodManagement = () => {
                       <IconButton onClick={() => handleFoodItemOpen(item)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton color="error">
+                      <IconButton 
+                        color="error"
+                        onClick={() => handleFoodItemDelete(item.id)}
+                      >
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -494,28 +574,44 @@ const FoodManagement = () => {
                 />
               </Grid>
               <Grid item xs={6}>
-                <TextField
-                  name="startTime"
-                  label="Start Time"
-                  type="time"
-                  fullWidth
-                  value={scheduleForm.startTime}
-                  onChange={(e) => setScheduleForm({...scheduleForm, startTime: e.target.value})}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <TimePicker
+                    label="Start Time"
+                    value={scheduleForm.startTime ? moment(scheduleForm.startTime, 'HH:mm') : null}
+                    onChange={(newValue) => {
+                      const timeString = newValue ? newValue.format('HH:mm') : '';
+                      setScheduleForm({...scheduleForm, startTime: timeString});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        variant="outlined"
+                        required
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
               </Grid>
               <Grid item xs={6}>
-                <TextField
-                  name="endTime"
-                  label="End Time"
-                  type="time"
-                  fullWidth
-                  value={scheduleForm.endTime}
-                  onChange={(e) => setScheduleForm({...scheduleForm, endTime: e.target.value})}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <TimePicker
+                    label="End Time"
+                    value={scheduleForm.endTime ? moment(scheduleForm.endTime, 'HH:mm') : null}
+                    onChange={(newValue) => {
+                      const timeString = newValue ? newValue.format('HH:mm') : '';
+                      setScheduleForm({...scheduleForm, endTime: timeString});
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        variant="outlined"
+                        required
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
               </Grid>
             </Grid>
           </DialogContent>
@@ -550,67 +646,63 @@ const FoodManagement = () => {
             py: 3
           }}
         >
-          {editingCategory ? 'Edit Food Category' : 'Add New Food Category - MODERN DESIGN'}
+          {editingCategory ? 'Edit Food Category' : 'Add New Food Category'}
         </DialogTitle>
         <form onSubmit={handleCategorySubmit}>
           <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title *"
-                  fullWidth
-                  variant="outlined"
-                  value={categoryForm.title}
-                  onChange={(e) => setCategoryForm({...categoryForm, title: e.target.value})}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                autoFocus
+                name="title"
+                label="Title"
+                fullWidth
+                variant="outlined"
+                value={categoryForm.title}
+                onChange={(e) => setCategoryForm({...categoryForm, title: e.target.value})}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     }
-                  }}
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={4}
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
+              <TextField
+                name="description"
+                label="Description"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={4}
+                value={categoryForm.description}
+                onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     }
-                  }}
-                />
-              </Box>
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 3, gap: 2 }}>
@@ -662,49 +754,66 @@ const FoodManagement = () => {
           {editingFoodItem ? 'Edit Food Item' : 'Add Food Item'}
         </DialogTitle>
         <form onSubmit={handleFoodItemSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title"
-                  fullWidth
-                  value={foodItemForm.title}
-                  onChange={(e) => setFoodItemForm({...foodItemForm, title: e.target.value})}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  fullWidth
-                  multiline
-                  rows={3}
-                  value={foodItemForm.description}
-                  onChange={(e) => setFoodItemForm({...foodItemForm, description: e.target.value})}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={foodItemForm.categoryId}
-                    onChange={(e) => setFoodItemForm({...foodItemForm, categoryId: e.target.value})}
-                    label="Category"
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.title}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </DialogContent>
+           <DialogContent>
+             <Box sx={{ mt: 1 }}>
+               {/* First Row: Title and Category */}
+               <Grid container spacing={2} sx={{ mb: 2 }}>
+                 <Grid item xs={6}>
+                   <TextField
+                     autoFocus
+                     name="title"
+                     label="Title"
+                     fullWidth
+                     value={foodItemForm.title}
+                     onChange={(e) => setFoodItemForm({...foodItemForm, title: e.target.value})}
+                     required
+                   />
+                 </Grid>
+                 <Grid item xs={6}>
+                   <FormControl fullWidth required>
+                     <InputLabel id="category-label"></InputLabel>
+                     <Select
+                       labelId="category-label"
+                       value={foodItemForm.categoryId}
+                       onChange={(e) => setFoodItemForm({...foodItemForm, categoryId: e.target.value})}
+                       label="Category"
+                       displayEmpty
+                     >
+                       <MenuItem value="">
+                         <em>Select Category</em>
+                       </MenuItem>
+                       {categories && categories.length > 0 ? (
+                         categories.map((category) => (
+                           <MenuItem key={category.id} value={category.id}>
+                             {category.title}
+                           </MenuItem>
+                         ))
+                       ) : (
+                         <MenuItem disabled>
+                           <em>No categories available</em>
+                         </MenuItem>
+                       )}
+                     </Select>
+                   </FormControl>
+                 </Grid>
+               </Grid>
+               
+               {/* Second Row: Description */}
+               <Grid container spacing={2}>
+                 <Grid item xs={12}>
+                   <TextField
+                     name="description"
+                     label="Description"
+                     fullWidth
+                     multiline
+                     rows={3}
+                     value={foodItemForm.description}
+                     onChange={(e) => setFoodItemForm({...foodItemForm, description: e.target.value})}
+                   />
+                 </Grid>
+               </Grid>
+             </Box>
+           </DialogContent>
           <DialogActions>
             <Button onClick={handleFoodItemClose}>Cancel</Button>
             <Button type="submit" variant="contained">Save</Button>

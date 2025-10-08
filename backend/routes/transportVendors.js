@@ -8,7 +8,20 @@ const router = express.Router();
 // List transport vendors
 router.get('/', protect, async (req, res) => {
   try {
-    const vendors = await TransportVendor.findAll({ order: [['created_at', 'DESC']] });
+    const { Bus, Driver } = require('../models');
+    const vendors = await TransportVendor.findAll({ 
+      order: [['created_at', 'DESC']],
+      include: [
+        {
+          model: Bus,
+          as: 'buses'
+        },
+        {
+          model: Driver,
+          as: 'drivers'
+        }
+      ]
+    });
     res.json({ success: true, data: { items: vendors } });
   } catch (e) {
     console.error('List transport vendors error:', e);
@@ -39,6 +52,18 @@ router.put('/:id', protect, authorize('superadmin', 'admin'), async (req, res) =
     res.json({ success: true, data: vendor });
   } catch (e) {
     console.error('Update transport vendor error:', e);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get conductor count
+router.get('/conductors/count', protect, async (req, res) => {
+  try {
+    const { Conductor } = require('../models');
+    const count = await Conductor.count();
+    res.json({ success: true, data: { count } });
+  } catch (e) {
+    console.error('Get conductor count error:', e);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

@@ -307,7 +307,7 @@ const Buses = () => {
                 <TextField
                   autoFocus
                   name="title"
-                  label="Title *"
+                  label="Title"
                   fullWidth
                   variant="outlined"
                   value={formData.title}
@@ -334,7 +334,7 @@ const Buses = () => {
               <Grid item xs={6}>
                 <TextField
                   name="rc_no"
-                  label="RC No *"
+                  label="RC No"
                   fullWidth
                   variant="outlined"
                   value={formData.rc_no}

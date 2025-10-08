@@ -6,6 +6,7 @@ const Destination = require('./Destination');
 const Amenity = require('./Amenity');
 const Driver = require('./Driver');
 const Bus = require('./Bus');
+const Conductor = require('./Conductor');
 const AccommodationVendor = require('./AccommodationVendor');
 const FoodVendor = require('./FoodVendor');
 const TransportVendor = require('./TransportVendor');
@@ -55,6 +56,19 @@ Driver.belongsTo(TransportVendor, {
   onUpdate: 'CASCADE'
 });
 
+TransportVendor.hasMany(Conductor, {
+  foreignKey: 'transport_vendor_id',
+  as: 'conductors',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+Conductor.belongsTo(TransportVendor, {
+  foreignKey: 'transport_vendor_id',
+  as: 'vendor',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,
@@ -62,6 +76,7 @@ module.exports = {
   Amenity,
   Driver,
   Bus,
+  Conductor,
   AccommodationVendor,
   FoodVendor,
   TransportVendor,

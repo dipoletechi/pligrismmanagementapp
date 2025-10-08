@@ -275,7 +275,7 @@ const Drivers = () => {
                 <TextField
                   autoFocus
                   name="first_name"
-                  label="First Name *"
+                  label="First Name"
                   fullWidth
                   variant="outlined"
                   value={formData.first_name}
@@ -302,7 +302,7 @@ const Drivers = () => {
               <Grid item xs={6}>
                 <TextField
                   name="last_name"
-                  label="Last Name *"
+                  label="Last Name"
                   fullWidth
                   variant="outlined"
                   value={formData.last_name}

@@ -30,7 +30,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Hotel as HotelIcon,
-  Restaurant as RestaurantIcon
+  Restaurant as RestaurantIcon,
+  Star as StarIcon
 } from '@mui/icons-material';
 
 const Amenities = () => {
@@ -148,17 +149,14 @@ const Amenities = () => {
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            mb: 3,
             p: 3,
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            <Box>
+            {/* Title and Description */}
+            <Box sx={{ mb: 3 }}>
               <Typography 
                 variant="h3" 
                 component="h1" 
@@ -178,136 +176,78 @@ const Amenities = () => {
                 Manage amenities available for trips
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-              size="large"
-              sx={{
+
+            {/* Total Amenities Card and Add Button Row */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              gap: 3
+            }}>
+              {/* Total Amenities Card */}
+              <Card sx={{
                 borderRadius: 3,
-                px: 4,
-                py: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+                border: 'none',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
-                  boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
-                  transform: 'translateY(-2px)'
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
                 },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Add Amenity
-            </Button>
+                minWidth: 200,
+                flexShrink: 0
+              }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      mr: 1.5
+                    }}>
+                      <StarIcon sx={{ fontSize: 20, color: 'white' }} />
+                    </Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      Total Amenities
+                    </Typography>
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 700, ml: 1 }}>
+                    {amenities.length}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Add Button */}
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpen()}
+                size="large"
+                sx={{
+                  borderRadius: 3,
+                  px: 4,
+                  py: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                    boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Add Amenity
+              </Button>
+            </Box>
           </Box>
         </Box>
 
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <HotelIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {amenities.length}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Total Amenities
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <RestaurantIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {amenities.filter(a => a.description).length}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  With Description
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <HotelIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {amenities.filter(a => a.title.length > 10).length}
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Detailed Names
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <RestaurantIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {amenities.length > 0 ? Math.round((amenities.filter(a => a.description).length / amenities.length) * 100) : 0}%
-                  </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Completion Rate
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
 
         {/* Amenities Table */}
         <Paper sx={{
@@ -429,63 +369,59 @@ const Amenities = () => {
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title *"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                autoFocus
+                name="title"
+                label="Title"
+                fullWidth
+                variant="outlined"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     }
-                  }}
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={4}
-                  value={formData.description}
-                  onChange={handleChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976d2',
-                        borderWidth: 2
-                      }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
+              <TextField
+                name="description"
+                label="Description"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={4}
+                value={formData.description}
+                onChange={handleChange}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#1976d2'
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
                     }
-                  }}
-                />
-              </Box>
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 3, gap: 2 }}>
