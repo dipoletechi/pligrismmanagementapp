@@ -133,26 +133,24 @@ const FoodCategories = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
             <Typography variant="h4" component="h1" gutterBottom>
               Food Categories
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Manage food categories (Veg, Jain, Non-Veg, etc.)
             </Typography>
-          </Grid>
-          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-              size="large"
-            >
-              Add Category
-            </Button>
-          </Grid>
-        </Grid>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpen()}
+            size="large"
+          >
+            Add Category
+          </Button>
+        </Box>
       </Box>
 
       {/* Stats Cards */}

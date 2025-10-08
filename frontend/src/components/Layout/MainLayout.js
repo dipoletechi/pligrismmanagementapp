@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -71,7 +71,7 @@ const FinanceSubMenu = [
 const VendorsSubMenu = [
   { text: 'Accommodation', path: '/vendors/accommodation' },
   { text: 'Food', path: '/vendors/food' },
-  { text: 'Transport', path: '/transport' }
+  { text: 'Transport', path: '/vendors/transport' }
 ];
 
 function MainLayout({ children }) {
@@ -81,6 +81,26 @@ function MainLayout({ children }) {
   const { user, logout, hasAnyRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Reset menu expansion when location changes, but keep relevant menus open
+  useEffect(() => {
+    const currentPath = location.pathname;
+    
+    // Determine which menu should be expanded based on current path
+    const newExpandedMenus = {};
+    
+    if (currentPath.startsWith('/master-data')) {
+      newExpandedMenus['/master-data'] = true;
+    } else if (currentPath.startsWith('/trips')) {
+      newExpandedMenus['/trips'] = true;
+    } else if (currentPath.startsWith('/finance')) {
+      newExpandedMenus['/finance'] = true;
+    } else if (currentPath.startsWith('/vendors')) {
+      newExpandedMenus['/vendors'] = true;
+    }
+    
+    setExpandedMenus(newExpandedMenus);
+  }, [location.pathname]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -105,6 +125,7 @@ function MainLayout({ children }) {
       [menuKey]: !prev[menuKey]
     }));
   };
+
 
   const getFilteredMenuItems = () => {
     return menuItems.filter(item => hasAnyRole(item.roles));
@@ -150,13 +171,10 @@ function MainLayout({ children }) {
                       navigate(item.path);
                     }
                   }}
-                  selected={isActive && subMenu.length === 0}
+                  selected={false}
                   sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: 'primary.light',
-                      '&:hover': {
-                        backgroundColor: 'primary.light',
-                      },
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
                     },
                   }}
                 >
@@ -180,11 +198,19 @@ function MainLayout({ children }) {
                   {subMenu.map((subItem) => (
                     <ListItem key={subItem.text} disablePadding>
                       <ListItemButton
-                        sx={{ pl: 4 }}
+                        sx={{ 
+                          pl: 4,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
+                        }}
                         onClick={() => navigate(subItem.path)}
-                        selected={location.pathname === subItem.path}
+                        selected={false}
                       >
-                        <ListItemText primary={subItem.text} />
+                        <ListItemText 
+                          primary={subItem.text}
+                          sx={{ color: location.pathname === subItem.path ? 'primary.main' : 'inherit' }}
+                        />
                       </ListItemButton>
                     </ListItem>
                   ))}

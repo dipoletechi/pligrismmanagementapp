@@ -173,26 +173,24 @@ const Buses = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
             <Typography variant="h4" component="h1" gutterBottom>
               Bus Management
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Manage buses and transport vehicles
             </Typography>
-          </Grid>
-          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-              size="large"
-            >
-              Add Bus
-            </Button>
-          </Grid>
-        </Grid>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpen()}
+            size="large"
+          >
+            Add Bus
+          </Button>
+        </Box>
       </Box>
 
       {/* Stats Cards */}
@@ -275,7 +273,18 @@ const Buses = () => {
       </Paper>
 
       {/* Bus Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="md" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            margin: 'auto',
+            maxHeight: '90vh'
+          }
+        }}
+      >
         <DialogTitle>
           {editingBus ? 'Edit Bus' : 'Add New Bus'}
         </DialogTitle>

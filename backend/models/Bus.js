@@ -13,7 +13,8 @@ const Bus = sequelize.define('Bus', {
   make_year: { type: DataTypes.INTEGER, allowNull: true },
   make: { type: DataTypes.STRING(30), allowNull: true },
   type: { type: DataTypes.ENUM('bus', 'traveller', 'car'), allowNull: true },
-  no_of_sittings: { type: DataTypes.INTEGER, allowNull: true }
+  no_of_sittings: { type: DataTypes.INTEGER, allowNull: true },
+  transport_vendor_id: { type: DataTypes.INTEGER, allowNull: true }
 }, {
   tableName: 'bus_details',
   underscored: true,

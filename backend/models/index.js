@@ -28,6 +28,33 @@ FoodItem.belongsTo(FoodCategory, {
   onUpdate: 'CASCADE'
 });
 
+// Transport Vendor Associations
+TransportVendor.hasMany(Bus, {
+  foreignKey: 'transport_vendor_id',
+  as: 'buses',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+Bus.belongsTo(TransportVendor, {
+  foreignKey: 'transport_vendor_id',
+  as: 'vendor',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
+TransportVendor.hasMany(Driver, {
+  foreignKey: 'transport_vendor_id',
+  as: 'drivers',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+Driver.belongsTo(TransportVendor, {
+  foreignKey: 'transport_vendor_id',
+  as: 'vendor',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,

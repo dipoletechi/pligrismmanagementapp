@@ -22,14 +22,18 @@ import {
   CardContent,
   Alert,
   Snackbar,
-  CircularProgress
+  CircularProgress,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as ViewIcon,
   DirectionsBus as BusIcon,
-  Business as BusinessIcon
+  Business as BusinessIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -46,6 +50,8 @@ const TransportVendors = () => {
     email: ''
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [viewDialog, setViewDialog] = useState({ open: false, vendor: null, details: null });
+  const [activeTab, setActiveTab] = useState(0);
 
   const fetchVendors = async () => {
     try {
@@ -133,6 +139,24 @@ const TransportVendors = () => {
     }
   };
 
+  const handleViewVendor = async (vendor) => {
+    try {
+      setLoading(true);
+      setActiveTab(0); // Reset to first tab
+      const response = await axios.get(`/api/transport-vendors/${vendor.id}/details`);
+      setViewDialog({ open: true, vendor, details: response.data.data });
+    } catch (error) {
+      console.error('Error fetching vendor details:', error);
+      setSnackbar({ open: true, message: 'Error fetching vendor details', severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseViewDialog = () => {
+    setViewDialog({ open: false, vendor: null, details: null });
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, textAlign: 'center' }}>
@@ -145,26 +169,24 @@ const TransportVendors = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
             <Typography variant="h4" component="h1" gutterBottom>
               Transport Vendors
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Manage transport vendors and their details
             </Typography>
-          </Grid>
-          <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-              size="large"
-            >
-              Add Vendor
-            </Button>
-          </Grid>
-        </Grid>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpen()}
+            size="large"
+          >
+            Add Vendor
+          </Button>
+        </Box>
       </Box>
 
       {/* Stats Cards */}
@@ -225,9 +247,18 @@ const TransportVendors = () => {
                   <TableCell>{vendor.email || '-'}</TableCell>
                   <TableCell align="center">
                     <IconButton
+                      color="info"
+                      onClick={() => handleViewVendor(vendor)}
+                      size="small"
+                      title="View Details"
+                    >
+                      <ViewIcon />
+                    </IconButton>
+                    <IconButton
                       color="primary"
                       onClick={() => handleOpen(vendor)}
                       size="small"
+                      title="Edit"
                     >
                       <EditIcon />
                     </IconButton>
@@ -235,6 +266,7 @@ const TransportVendors = () => {
                       color="error"
                       onClick={() => handleDelete(vendor.id)}
                       size="small"
+                      title="Delete"
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -318,6 +350,189 @@ const TransportVendors = () => {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* Vendor Details Dialog with Tabs */}
+      <Dialog 
+        open={viewDialog.open} 
+        onClose={handleCloseViewDialog} 
+        maxWidth="lg" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <BusinessIcon color="primary" />
+            <Typography variant="h6">
+              {viewDialog.vendor?.title} - Details
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {viewDialog.details && (
+            <Box sx={{ mt: 2 }}>
+              {/* Vendor Info */}
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>Vendor Information</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Description:</Typography>
+                      <Typography variant="body1">{viewDialog.details.description || 'N/A'}</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Address:</Typography>
+                      <Typography variant="body1">{viewDialog.details.address || 'N/A'}</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Phone:</Typography>
+                      <Typography variant="body1">{viewDialog.details.phone || 'N/A'}</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Email:</Typography>
+                      <Typography variant="body1">{viewDialog.details.email || 'N/A'}</Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              {/* Tabs for Bus, Driver, Conductor */}
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+                  <Tab 
+                    label={`Buses (${viewDialog.details.buses?.length || 0})`} 
+                    icon={<BusIcon />} 
+                    iconPosition="start"
+                  />
+                  <Tab 
+                    label={`Drivers (${viewDialog.details.drivers?.length || 0})`} 
+                    icon={<PersonIcon />} 
+                    iconPosition="start"
+                  />
+                  <Tab 
+                    label={`Conductors (${viewDialog.details.drivers?.length || 0})`} 
+                    icon={<PersonIcon />} 
+                    iconPosition="start"
+                  />
+                </Tabs>
+              </Box>
+
+              {/* Tab Content */}
+              <Box sx={{ mt: 2 }}>
+                {/* Buses Tab */}
+                {activeTab === 0 && (
+                  <Box>
+                    {viewDialog.details.buses && viewDialog.details.buses.length > 0 ? (
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Title</TableCell>
+                              <TableCell>RC No</TableCell>
+                              <TableCell>Model</TableCell>
+                              <TableCell>Type</TableCell>
+                              <TableCell>Seats</TableCell>
+                              <TableCell>Make Year</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {viewDialog.details.buses.map((bus) => (
+                              <TableRow key={bus.id}>
+                                <TableCell>{bus.title}</TableCell>
+                                <TableCell>{bus.rc_no}</TableCell>
+                                <TableCell>{bus.model}</TableCell>
+                                <TableCell>{bus.type}</TableCell>
+                                <TableCell>{bus.no_of_sittings}</TableCell>
+                                <TableCell>{bus.make_year}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <BusIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                        <Typography color="text.secondary">No buses assigned to this vendor</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* Drivers Tab */}
+                {activeTab === 1 && (
+                  <Box>
+                    {viewDialog.details.drivers && viewDialog.details.drivers.length > 0 ? (
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Name</TableCell>
+                              <TableCell>Phone</TableCell>
+                              <TableCell>License No</TableCell>
+                              <TableCell>Aadhar No</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {viewDialog.details.drivers.map((driver) => (
+                              <TableRow key={driver.id}>
+                                <TableCell>{driver.first_name} {driver.last_name}</TableCell>
+                                <TableCell>{driver.phone_number}</TableCell>
+                                <TableCell>{driver.driving_license_no}</TableCell>
+                                <TableCell>{driver.aadhar_no}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                        <Typography color="text.secondary">No drivers assigned to this vendor</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* Conductors Tab */}
+                {activeTab === 2 && (
+                  <Box>
+                    {viewDialog.details.drivers && viewDialog.details.drivers.length > 0 ? (
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Name</TableCell>
+                              <TableCell>Phone</TableCell>
+                              <TableCell>Employee ID</TableCell>
+                              <TableCell>Aadhar No</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {viewDialog.details.drivers.map((driver) => (
+                              <TableRow key={driver.id}>
+                                <TableCell>{driver.first_name} {driver.last_name}</TableCell>
+                                <TableCell>{driver.phone_number}</TableCell>
+                                <TableCell>{driver.driving_license_no}</TableCell>
+                                <TableCell>{driver.aadhar_no}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <PersonIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                        <Typography color="text.secondary">No conductors assigned to this vendor</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseViewDialog}>Close</Button>
+        </DialogActions>
       </Dialog>
 
       {/* Snackbar */}

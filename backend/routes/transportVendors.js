@@ -43,6 +43,34 @@ router.put('/:id', protect, authorize('superadmin', 'admin'), async (req, res) =
   }
 });
 
+// Get transport vendor details with buses and drivers
+router.get('/:id/details', protect, async (req, res) => {
+  try {
+    const { Bus, Driver } = require('../models');
+    const vendor = await TransportVendor.findByPk(req.params.id, {
+      include: [
+        {
+          model: Bus,
+          as: 'buses'
+        },
+        {
+          model: Driver,
+          as: 'drivers'
+        }
+      ]
+    });
+    
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+    
+    res.json({ success: true, data: vendor });
+  } catch (e) {
+    console.error('Get vendor details error:', e);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Delete transport vendor
 router.delete('/:id', protect, authorize('superadmin', 'admin'), async (req, res) => {
   try {
