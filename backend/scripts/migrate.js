@@ -6,7 +6,7 @@ require('dotenv').config();
 class DatabaseMigrator {
   constructor() {
     this.connection = null;
-    this.dbName = process.env.DB_NAME || 'tirthyatra_demo';
+    this.dbName = process.env.DB_NAME || 'tirthyatra';
     this.host = process.env.DB_HOST || 'localhost';
     this.port = process.env.DB_PORT || 3306;
     this.user = process.env.DB_USER || 'root';
@@ -53,8 +53,30 @@ class DatabaseMigrator {
     }
   }
 
+  async checkTablesExist() {
+    try {
+      const [tables] = await this.connection.execute(
+        "SELECT COUNT(*) as tableCount FROM information_schema.tables WHERE table_schema = ?",
+        [this.dbName]
+      );
+      return tables[0].tableCount > 0;
+    } catch (error) {
+      console.error('Error checking tables:', error.message);
+      return false;
+    }
+  }
+
   async runMigrations() {
     try {
+      // Check if tables already exist
+      const tablesExist = await this.checkTablesExist();
+      
+      if (tablesExist) {
+        console.log('ℹ️  Database tables already exist, skipping migration');
+        console.log('✅ Database is ready to use');
+        return;
+      }
+
       const migrationsDir = path.join(__dirname, '..', 'migrations');
       const migrationFiles = fs.readdirSync(migrationsDir)
         .filter(file => file.endsWith('.sql'))
@@ -88,9 +110,6 @@ class DatabaseMigrator {
 
   async createDefaultSuperadmin() {
     try {
-      const bcrypt = require('bcryptjs');
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      
       // Check if superadmin already exists
       const [existing] = await this.connection.execute(
         'SELECT id FROM users WHERE email = ?',
@@ -98,6 +117,11 @@ class DatabaseMigrator {
       );
 
       if (existing.length === 0) {
+        const bcrypt = require('bcryptjs');
+        // Strong password that meets policy requirements
+        const strongPassword = 'SuperAdmin@2024!';
+        const hashedPassword = await bcrypt.hash(strongPassword, 10);
+        
         await this.connection.execute(
           `INSERT INTO users (first_name, last_name, email, password, role, is_active) 
            VALUES (?, ?, ?, ?, ?, ?)`,
@@ -105,7 +129,8 @@ class DatabaseMigrator {
         );
         console.log('✅ Default superadmin created');
         console.log('📧 Email: superadmin@tirthyatra.com');
-        console.log('🔑 Password: admin123');
+        console.log('🔑 Password: SuperAdmin@2024!');
+        console.log('🔒 Password meets all security requirements');
       } else {
         console.log('ℹ️  Superadmin already exists');
       }

@@ -12,18 +12,22 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Grid
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
+import PasswordPolicy from './PasswordPolicy';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     password: '',
     confirmPassword: '',
     role: 'user'
   });
+  const [passwordStrength, setPasswordStrength] = useState({});
   const [errors, setErrors] = useState({});
 
   const { register, isAuthenticated, error, clearError } = useAuth();
@@ -60,10 +64,16 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+    if (!formData.first_name) {
+      newErrors.first_name = 'First name is required';
+    } else if (formData.first_name.length < 2) {
+      newErrors.first_name = 'First name must be at least 2 characters';
+    }
+
+    if (!formData.last_name) {
+      newErrors.last_name = 'Last name is required';
+    } else if (formData.last_name.length < 2) {
+      newErrors.last_name = 'Last name must be at least 2 characters';
     }
 
     if (!formData.email) {
@@ -74,8 +84,8 @@ const Register = () => {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (passwordStrength.strength === 'Very Weak' || passwordStrength.strength === 'Weak') {
+      newErrors.password = 'Password is too weak. Please choose a stronger password.';
     }
 
     if (!formData.confirmPassword) {
@@ -135,20 +145,39 @@ const Register = () => {
             )}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="name"
-                label="Full Name"
-                name="name"
-                autoComplete="name"
-                autoFocus
-                value={formData.name}
-                onChange={handleChange}
-                error={!!errors.name}
-                helperText={errors.name}
-              />
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="first_name"
+                    label="First Name"
+                    name="first_name"
+                    autoComplete="given-name"
+                    autoFocus
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    error={!!errors.first_name}
+                    helperText={errors.first_name}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="last_name"
+                    label="Last Name"
+                    name="last_name"
+                    autoComplete="family-name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    error={!!errors.last_name}
+                    helperText={errors.last_name}
+                  />
+                </Grid>
+              </Grid>
               <TextField
                 margin="normal"
                 required
@@ -176,6 +205,14 @@ const Register = () => {
                 error={!!errors.password}
                 helperText={errors.password}
               />
+              
+              {/* Password Policy Component */}
+              <PasswordPolicy 
+                password={formData.password}
+                onStrengthChange={setPasswordStrength}
+                showPolicy={true}
+              />
+              
               <TextField
                 margin="normal"
                 required

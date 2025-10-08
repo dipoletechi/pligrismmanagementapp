@@ -5,7 +5,7 @@ const defaultUsers = [
     first_name: 'Super',
     last_name: 'Admin',
     email: 'superadmin@tirthyatra.com',
-    password: 'admin123',
+    password: 'SuperAdmin@2024!',
     role: 'superadmin'
   }
 ];

@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 
 // Create Sequelize instance
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'tirthyatra_demo',
+  process.env.DB_NAME || 'tirthyatra',
   process.env.DB_USER || 'root',
   process.env.DB_PASSWORD || 'root',
   {

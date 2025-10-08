@@ -7,7 +7,7 @@ require('dotenv').config();
 // Set default environment variables if not provided
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-change-this-in-production';
 process.env.JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
-process.env.DB_NAME = process.env.DB_NAME || 'tirthyatra_demo';
+process.env.DB_NAME = process.env.DB_NAME || 'tirthyatra';
 process.env.DB_USER = process.env.DB_USER || 'root';
 process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'root';
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';

@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const { protect, authorize } = require('../middleware/auth');
+const { validatePasswordPolicy, getPasswordPolicy } = require('../middleware/passwordPolicy');
 
 const router = express.Router();
 
@@ -10,12 +11,12 @@ const router = express.Router();
 // @route   POST /api/auth/register
 // @access  Public (only superadmin can create other roles)
 router.post('/register', [
-  body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('first_name').trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
+  body('last_name').trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').optional().isIn(['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'])
     .withMessage('Invalid role')
-], async (req, res) => {
+], validatePasswordPolicy, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -26,7 +27,7 @@ router.post('/register', [
       });
     }
 
-    const { name, email, password, role = 'user' } = req.body;
+    const { first_name, last_name, email, password, role = 'user' } = req.body;
 
     // Check if user exists
     const userExists = await User.findOne({ where: { email } });
@@ -39,7 +40,8 @@ router.post('/register', [
 
     // Create user
     const user = await User.create({
-      name,
+      first_name,
+      last_name,
       email,
       password,
       role,
@@ -242,9 +244,8 @@ router.put('/profile', protect, [
 // @route   PUT /api/auth/change-password
 // @access  Private
 router.put('/change-password', protect, [
-  body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
-], async (req, res) => {
+  body('currentPassword').notEmpty().withMessage('Current password is required')
+], validatePasswordPolicy, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -255,7 +256,7 @@ router.put('/change-password', protect, [
       });
     }
 
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, password: newPassword } = req.body;
 
     // Get user with password
     const user = await User.findByPk(req.user.id);
@@ -279,6 +280,25 @@ router.put('/change-password', protect, [
     });
   } catch (error) {
     console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Get password policy requirements
+// @route   GET /api/auth/password-policy
+// @access  Public
+router.get('/password-policy', (req, res) => {
+  try {
+    const policy = getPasswordPolicy();
+    res.json({
+      success: true,
+      data: policy
+    });
+  } catch (error) {
+    console.error('Get password policy error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

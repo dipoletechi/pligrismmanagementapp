@@ -23,8 +23,10 @@ npm run migrate:demo
 
 After running the migration, you can login with:
 - **Email:** `superadmin@tirthyatra.com`
-- **Password:** `admin123`
+- **Password:** `SuperAdmin@2024!`
 - **Role:** `superadmin`
+
+**Note:** The password meets all security requirements including uppercase, lowercase, numbers, and special characters.
 
 ## Migration Commands
 
