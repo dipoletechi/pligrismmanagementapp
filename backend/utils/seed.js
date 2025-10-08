@@ -2,34 +2,11 @@ const User = require('../models/User');
 
 const defaultUsers = [
   {
-    name: 'Super Admin',
+    first_name: 'Super',
+    last_name: 'Admin',
     email: 'superadmin@tirthyatra.com',
-    password: 'password123',
-    role: 'superadmin'
-  },
-  {
-    name: 'Admin User',
-    email: 'admin@tirthyatra.com',
     password: 'admin123',
-    role: 'admin'
-  },
-  {
-    name: 'Trip Manager',
-    email: 'tripmanager@tirthyatra.com',
-    password: 'trip123',
-    role: 'trip_manager'
-  },
-  {
-    name: 'Financial Manager',
-    email: 'finance@tirthyatra.com',
-    password: 'fina123',
-    role: 'financial_manager'
-  },
-  {
-    name: 'Regular User',
-    email: 'user@tirthyatra.com',
-    password: 'user123',
-    role: 'user'
+    role: 'superadmin'
   }
 ];
 
@@ -46,11 +23,12 @@ async function ensureDefaultUsers() {
       }
 
       const user = await User.create({
-        name: userData.name,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
         email: userData.email,
         password: userData.password,
         role: userData.role,
-        isActive: true
+        is_active: true
       });
 
       console.log(`Created user: ${userData.email} (${userData.role})`);
