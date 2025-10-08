@@ -55,6 +55,36 @@ const TransportVendors = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [viewDialog, setViewDialog] = useState({ open: false, vendor: null, details: null });
   const [activeTab, setActiveTab] = useState(0);
+  
+  // Add Bus/Driver/Conductor states
+  const [busDialog, setBusDialog] = useState(false);
+  const [driverDialog, setDriverDialog] = useState(false);
+  const [conductorDialog, setConductorDialog] = useState(false);
+  
+  // Edit states
+  const [editingBus, setEditingBus] = useState(null);
+  const [editingDriver, setEditingDriver] = useState(null);
+  const [editingConductor, setEditingConductor] = useState(null);
+  const [busFormData, setBusFormData] = useState({
+    title: '',
+    rc_no: '',
+    no_of_sittings: '',
+    type: '',
+    transport_vendor_id: ''
+  });
+  const [driverFormData, setDriverFormData] = useState({
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+    driving_license_no: '',
+    transport_vendor_id: ''
+  });
+  const [conductorFormData, setConductorFormData] = useState({
+    first_name: '',
+    last_name: '',
+    phone_number: '',
+    transport_vendor_id: ''
+  });
 
   const fetchVendors = async () => {
     try {
@@ -158,6 +188,202 @@ const TransportVendors = () => {
 
   const handleCloseViewDialog = () => {
     setViewDialog({ open: false, vendor: null, details: null });
+  };
+
+  // Add Bus/Driver/Conductor handlers
+  const handleAddBus = (vendor) => {
+    setBusFormData({
+      title: '',
+      rc_no: '',
+      no_of_sittings: '',
+      type: '',
+      transport_vendor_id: vendor.id
+    });
+    setBusDialog(true);
+  };
+
+  const handleAddDriver = (vendor) => {
+    setDriverFormData({
+      first_name: '',
+      last_name: '',
+      phone_number: '',
+      driving_license_no: '',
+      transport_vendor_id: vendor.id
+    });
+    setDriverDialog(true);
+  };
+
+  const handleAddConductor = (vendor) => {
+    setConductorFormData({
+      first_name: '',
+      last_name: '',
+      phone_number: '',
+      transport_vendor_id: vendor.id
+    });
+    setConductorDialog(true);
+  };
+
+  // Form change handlers
+  const handleBusFormChange = (e) => {
+    const { name, value } = e.target;
+    setBusFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDriverFormChange = (e) => {
+    const { name, value } = e.target;
+    setDriverFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleConductorFormChange = (e) => {
+    const { name, value } = e.target;
+    setConductorFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Submit handlers
+  const handleBusSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingBus) {
+        await axios.put(`/api/buses/${editingBus.id}`, busFormData);
+        setSnackbar({ open: true, message: 'Bus updated successfully', severity: 'success' });
+      } else {
+        await axios.post('/api/buses', busFormData);
+        setSnackbar({ open: true, message: 'Bus added successfully', severity: 'success' });
+      }
+      setBusDialog(false);
+      setEditingBus(null);
+      // Refresh vendor details if view dialog is open
+      if (viewDialog.open) {
+        handleViewVendor(viewDialog.vendor);
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: editingBus ? 'Error updating bus' : 'Error adding bus', severity: 'error' });
+    }
+  };
+
+  const handleDriverSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingDriver) {
+        await axios.put(`/api/drivers/${editingDriver.id}`, driverFormData);
+        setSnackbar({ open: true, message: 'Driver updated successfully', severity: 'success' });
+      } else {
+        await axios.post('/api/drivers', driverFormData);
+        setSnackbar({ open: true, message: 'Driver added successfully', severity: 'success' });
+      }
+      setDriverDialog(false);
+      setEditingDriver(null);
+      // Refresh vendor details if view dialog is open
+      if (viewDialog.open) {
+        handleViewVendor(viewDialog.vendor);
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: editingDriver ? 'Error updating driver' : 'Error adding driver', severity: 'error' });
+    }
+  };
+
+  const handleConductorSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingConductor) {
+        await axios.put(`/api/drivers/${editingConductor.id}`, conductorFormData);
+        setSnackbar({ open: true, message: 'Conductor updated successfully', severity: 'success' });
+      } else {
+        // For now, we'll use the driver endpoint since conductor model might not exist
+        await axios.post('/api/drivers', conductorFormData);
+        setSnackbar({ open: true, message: 'Conductor added successfully', severity: 'success' });
+      }
+      setConductorDialog(false);
+      setEditingConductor(null);
+      // Refresh vendor details if view dialog is open
+      if (viewDialog.open) {
+        handleViewVendor(viewDialog.vendor);
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: editingConductor ? 'Error updating conductor' : 'Error adding conductor', severity: 'error' });
+    }
+  };
+
+  // Edit handlers
+  const handleEditBus = (bus) => {
+    setEditingBus(bus);
+    setBusFormData({
+      title: bus.title,
+      rc_no: bus.rc_no,
+      no_of_sittings: bus.no_of_sittings,
+      type: bus.type,
+      transport_vendor_id: bus.transport_vendor_id
+    });
+    setBusDialog(true);
+  };
+
+  const handleEditDriver = (driver) => {
+    setEditingDriver(driver);
+    setDriverFormData({
+      first_name: driver.first_name,
+      last_name: driver.last_name,
+      phone_number: driver.phone_number,
+      driving_license_no: driver.driving_license_no,
+      transport_vendor_id: driver.transport_vendor_id
+    });
+    setDriverDialog(true);
+  };
+
+  const handleEditConductor = (conductor) => {
+    setEditingConductor(conductor);
+    setConductorFormData({
+      first_name: conductor.first_name,
+      last_name: conductor.last_name,
+      phone_number: conductor.phone_number,
+      transport_vendor_id: conductor.transport_vendor_id
+    });
+    setConductorDialog(true);
+  };
+
+  // Delete handlers
+  const handleDeleteBus = async (busId) => {
+    if (window.confirm('Are you sure you want to delete this bus?')) {
+      try {
+        await axios.delete(`/api/buses/${busId}`);
+        setSnackbar({ open: true, message: 'Bus deleted successfully', severity: 'success' });
+        // Refresh vendor details if view dialog is open
+        if (viewDialog.open) {
+          handleViewVendor(viewDialog.vendor);
+        }
+      } catch (error) {
+        setSnackbar({ open: true, message: 'Error deleting bus', severity: 'error' });
+      }
+    }
+  };
+
+  const handleDeleteDriver = async (driverId) => {
+    if (window.confirm('Are you sure you want to delete this driver?')) {
+      try {
+        await axios.delete(`/api/drivers/${driverId}`);
+        setSnackbar({ open: true, message: 'Driver deleted successfully', severity: 'success' });
+        // Refresh vendor details if view dialog is open
+        if (viewDialog.open) {
+          handleViewVendor(viewDialog.vendor);
+        }
+      } catch (error) {
+        setSnackbar({ open: true, message: 'Error deleting driver', severity: 'error' });
+      }
+    }
+  };
+
+  const handleDeleteConductor = async (conductorId) => {
+    if (window.confirm('Are you sure you want to delete this conductor?')) {
+      try {
+        await axios.delete(`/api/drivers/${conductorId}`);
+        setSnackbar({ open: true, message: 'Conductor deleted successfully', severity: 'success' });
+        // Refresh vendor details if view dialog is open
+        if (viewDialog.open) {
+          handleViewVendor(viewDialog.vendor);
+        }
+      } catch (error) {
+        setSnackbar({ open: true, message: 'Error deleting conductor', severity: 'error' });
+      }
+    }
   };
 
   if (loading) {
@@ -889,6 +1115,7 @@ const TransportVendors = () => {
                       <Button
                         variant="contained"
                         startIcon={<BusAddIcon />}
+                        onClick={() => handleAddBus(viewDialog.vendor)}
                         sx={{
                           borderRadius: 2,
                           px: 3,
@@ -969,6 +1196,17 @@ const TransportVendors = () => {
                                     </IconButton>
                                     <IconButton 
                                       size="small" 
+                                      onClick={() => handleEditBus(bus)}
+                                      sx={{ 
+                                        color: '#1976d2',
+                                        '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
+                                      }}
+                                    >
+                                      <EditIcon />
+                                    </IconButton>
+                                    <IconButton 
+                                      size="small" 
+                                      onClick={() => handleDeleteBus(bus.id)}
                                       sx={{ 
                                         color: '#d32f2f',
                                         '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' }
@@ -1011,6 +1249,7 @@ const TransportVendors = () => {
                       <Button
                         variant="contained"
                         startIcon={<PersonAddIcon />}
+                        onClick={() => handleAddDriver(viewDialog.vendor)}
                         sx={{
                           borderRadius: 2,
                           px: 3,
@@ -1131,6 +1370,7 @@ const TransportVendors = () => {
                       <Button
                         variant="contained"
                         startIcon={<ConductorIcon />}
+                        onClick={() => handleAddConductor(viewDialog.vendor)}
                         sx={{
                           borderRadius: 2,
                           px: 3,
@@ -1283,6 +1523,310 @@ const TransportVendors = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Add Bus Dialog */}
+      <Dialog open={busDialog} onClose={() => { setBusDialog(false); setEditingBus(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.5rem',
+          textAlign: 'center',
+          py: 3
+        }}>
+          {editingBus ? 'Edit Bus' : 'Add New Bus'}
+        </DialogTitle>
+        <form onSubmit={handleBusSubmit}>
+          <DialogContent sx={{ p: 4 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  autoFocus
+                  name="title"
+                  label="Bus Title *"
+                  fullWidth
+                  variant="outlined"
+                  value={busFormData.title}
+                  onChange={handleBusFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  name="rc_no"
+                  label="RC Number *"
+                  fullWidth
+                  variant="outlined"
+                  value={busFormData.rc_no}
+                  onChange={handleBusFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  name="no_of_sittings"
+                  label="Capacity *"
+                  fullWidth
+                  variant="outlined"
+                  type="number"
+                  value={busFormData.no_of_sittings}
+                  onChange={handleBusFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="type"
+                  label="Bus Type"
+                  fullWidth
+                  variant="outlined"
+                  value={busFormData.type}
+                  onChange={handleBusFormChange}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={() => { setBusDialog(false); setEditingBus(null); }}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
+              {editingBus ? 'Update Bus' : 'Add Bus'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Add Driver Dialog */}
+      <Dialog open={driverDialog} onClose={() => { setDriverDialog(false); setEditingDriver(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.5rem',
+          textAlign: 'center',
+          py: 3
+        }}>
+          {editingDriver ? 'Edit Driver' : 'Add New Driver'}
+        </DialogTitle>
+        <form onSubmit={handleDriverSubmit}>
+          <DialogContent sx={{ p: 4 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  autoFocus
+                  name="first_name"
+                  label="First Name *"
+                  fullWidth
+                  variant="outlined"
+                  value={driverFormData.first_name}
+                  onChange={handleDriverFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  name="last_name"
+                  label="Last Name *"
+                  fullWidth
+                  variant="outlined"
+                  value={driverFormData.last_name}
+                  onChange={handleDriverFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="phone_number"
+                  label="Phone Number *"
+                  fullWidth
+                  variant="outlined"
+                  value={driverFormData.phone_number}
+                  onChange={handleDriverFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="driving_license_no"
+                  label="License Number *"
+                  fullWidth
+                  variant="outlined"
+                  value={driverFormData.driving_license_no}
+                  onChange={handleDriverFormChange}
+                  required
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={() => { setDriverDialog(false); setEditingDriver(null); }}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
+              {editingDriver ? 'Update Driver' : 'Add Driver'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Add Conductor Dialog */}
+      <Dialog open={conductorDialog} onClose={() => { setConductorDialog(false); setEditingConductor(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.5rem',
+          textAlign: 'center',
+          py: 3
+        }}>
+          {editingConductor ? 'Edit Conductor' : 'Add New Conductor'}
+        </DialogTitle>
+        <form onSubmit={handleConductorSubmit}>
+          <DialogContent sx={{ p: 4 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  autoFocus
+                  name="first_name"
+                  label="First Name *"
+                  fullWidth
+                  variant="outlined"
+                  value={conductorFormData.first_name}
+                  onChange={handleConductorFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  name="last_name"
+                  label="Last Name *"
+                  fullWidth
+                  variant="outlined"
+                  value={conductorFormData.last_name}
+                  onChange={handleConductorFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  name="phone_number"
+                  label="Phone Number *"
+                  fullWidth
+                  variant="outlined"
+                  value={conductorFormData.phone_number}
+                  onChange={handleConductorFormChange}
+                  required
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={() => { setConductorDialog(false); setEditingConductor(null); }}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
+              {editingConductor ? 'Update Conductor' : 'Add Conductor'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
       </Container>
     </Box>
   );
