@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     checkAuth();
-  }, [state.token]);
+  }, []); // Empty dependency array to run only once on mount
 
   // Login function
   const login = async (email, password) => {
