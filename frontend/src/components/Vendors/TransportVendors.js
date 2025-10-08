@@ -1585,24 +1585,22 @@ const TransportVendors = () => {
               <Grid item xs={6}>
                 <TextField
                   name="rc_no"
-                  label="RC Number *"
+                  label="RC Number"
                   fullWidth
                   variant="outlined"
                   value={busFormData.rc_no}
                   onChange={handleBusFormChange}
-                  required
                 />
               </Grid>
               <Grid item xs={6}>
                 <TextField
                   name="no_of_sittings"
-                  label="Capacity *"
+                  label="Capacity"
                   fullWidth
                   variant="outlined"
                   type="number"
                   value={busFormData.no_of_sittings}
                   onChange={handleBusFormChange}
-                  required
                 />
               </Grid>
               <Grid item xs={12}>
@@ -1894,7 +1892,7 @@ const TransportVendors = () => {
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           {viewingBus && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop:'25px' }}>
               {/* Bus Title - Full Width */}
               <TextField
                 label="Bus Title"
@@ -1907,7 +1905,7 @@ const TransportVendors = () => {
                     color: '#1976d2', 
                     fontWeight: 500,
                     textAlign: 'left',
-                    padding: '16.5px 14px'
+                    padding: '16.5px 14px',
                   },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
