@@ -70,8 +70,8 @@ const TransportVendors = () => {
     rc_no: '',
     no_of_sittings: '',
     type: '',
-    make: '',
     model: '',
+    make_year: '',
     transport_vendor_id: ''
   });
   const [driverFormData, setDriverFormData] = useState({
@@ -199,8 +199,8 @@ const TransportVendors = () => {
       rc_no: '',
       no_of_sittings: '',
       type: '',
-      make: '',
       model: '',
+      make_year: '',
       transport_vendor_id: vendor.id
     });
     setBusDialog(true);
@@ -316,8 +316,8 @@ const TransportVendors = () => {
       rc_no: bus.rc_no,
       no_of_sittings: bus.no_of_sittings,
       type: bus.type,
-      make: bus.make,
       model: bus.model,
+      make_year: bus.make_year,
       transport_vendor_id: bus.transport_vendor_id
     });
     setBusDialog(true);
@@ -1153,7 +1153,6 @@ const TransportVendors = () => {
                             <TableRow sx={{ backgroundColor: 'rgba(25, 118, 210, 0.05)' }}>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Title</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>RC No</TableCell>
-                              <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Make</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Model</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Type</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Seats</TableCell>
@@ -1173,7 +1172,6 @@ const TransportVendors = () => {
                               >
                                 <TableCell sx={{ fontWeight: 500 }}>{bus.title}</TableCell>
                                 <TableCell>{bus.rc_no}</TableCell>
-                                <TableCell>{bus.make || 'N/A'}</TableCell>
                                 <TableCell>{bus.model || 'N/A'}</TableCell>
                                 <TableCell>
                                   <Box sx={{ 
@@ -1582,17 +1580,7 @@ const TransportVendors = () => {
                   required
                 />
               </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="make"
-                  label="Make"
-                  fullWidth
-                  variant="outlined"
-                  value={busFormData.make}
-                  onChange={handleBusFormChange}
-                />
-              </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <TextField
                   name="model"
                   label="Model"
@@ -1602,13 +1590,24 @@ const TransportVendors = () => {
                   onChange={handleBusFormChange}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={6}>
                 <TextField
                   name="type"
                   label="Bus Type"
                   fullWidth
                   variant="outlined"
                   value={busFormData.type}
+                  onChange={handleBusFormChange}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  name="make_year"
+                  label="Make Year"
+                  fullWidth
+                  variant="outlined"
+                  type="number"
+                  value={busFormData.make_year}
                   onChange={handleBusFormChange}
                 />
               </Grid>
