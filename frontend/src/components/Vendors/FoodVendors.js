@@ -142,176 +142,495 @@ const FoodVendors = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Food Vendors
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
-              Manage food vendors and their details
-            </Typography>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      py: 4
+    }}>
+      <Container maxWidth="lg">
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start', 
+            mb: 3,
+            p: 3,
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <Box>
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                gutterBottom
+                sx={{
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontWeight: 700,
+                  mb: 1
+                }}
+              >
+                Food Vendors
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+                Manage food vendors and their details
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpen()}
+              size="large"
+              sx={{
+                borderRadius: 3,
+                px: 4,
+                py: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Add Vendor
+            </Button>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpen()}
-            size="large"
-          >
-            Add Vendor
-          </Button>
         </Box>
-      </Box>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <RestaurantIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
-                <Box>
-                  <Typography variant="h4">{vendors.length}</Typography>
-                  <Typography color="text.secondary">Total Vendors</Typography>
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <RestaurantIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {vendors.length}
+                  </Typography>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <BusinessIcon color="success" sx={{ fontSize: 40, mr: 2 }} />
-                <Box>
-                  <Typography variant="h4">{vendors.length}</Typography>
-                  <Typography color="text.secondary">Active Vendors</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  Total Vendors
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <BusinessIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {vendors.length}
+                  </Typography>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  Active Vendors
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <RestaurantIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {vendors.filter(v => v.email).length}
+                  </Typography>
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  With Email
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <BusinessIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {vendors.filter(v => v.phone).length}
+                  </Typography>
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  With Phone
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
 
-      {/* Vendors Table */}
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Title</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Address</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {vendors.map((vendor) => (
-                <TableRow key={vendor.id}>
-                  <TableCell>
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      {vendor.title}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{vendor.description || '-'}</TableCell>
-                  <TableCell>{vendor.address || '-'}</TableCell>
-                  <TableCell>{vendor.phone || '-'}</TableCell>
-                  <TableCell>{vendor.email || '-'}</TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleOpen(vendor)}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDelete(vendor.id)}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
+        {/* Vendors Table */}
+        <Paper sx={{
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          <TableContainer sx={{ maxHeight: 400 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  '& .MuiTableCell-head': {
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: '1.1rem',
+                    border: 'none'
+                  }
+                }}>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Address</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell align="center">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+              </TableHead>
+              <TableBody>
+                {vendors.map((vendor, index) => (
+                  <TableRow 
+                    key={vendor.id}
+                    sx={{
+                      '&:nth-of-type(odd)': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      },
+                      '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                        transform: 'scale(1.01)',
+                        transition: 'all 0.2s ease'
+                      },
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <RestaurantIcon sx={{ color: '#1976d2', mr: 2, fontSize: 24 }} />
+                        <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+                          {vendor.title}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {vendor.description || 'No description'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {vendor.address || 'No address'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {vendor.phone || 'No phone'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {vendor.email || 'No email'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <IconButton
+                          onClick={() => handleOpen(vendor)}
+                          sx={{
+                            color: '#1976d2',
+                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDelete(vendor.id)}
+                          sx={{
+                            color: '#d32f2f',
+                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(211, 47, 47, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
 
       {/* Vendor Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}
+        >
           {editingVendor ? 'Edit Food Vendor' : 'Add New Food Vendor'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
+          <DialogContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', gap: 3 }}>
+              {/* Left Section - 2 rows */}
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {/* Row 1: Title and Address */}
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      autoFocus
+                      name="title"
+                      label="Title *"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.title}
+                      onChange={handleChange}
+                      required
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          }
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#1976d2'
+                        }
+                      }}
+                    />
+                    <TextField
+                      name="address"
+                      label="Address"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.address}
+                      onChange={handleChange}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          }
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#1976d2'
+                        }
+                      }}
+                    />
+                  </Box>
+                  
+                  {/* Row 2: Phone and Email */}
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      name="phone"
+                      label="Phone"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          }
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#1976d2'
+                        }
+                      }}
+                    />
+                    <TextField
+                      name="email"
+                      label="Email"
+                      type="email"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.email}
+                      onChange={handleChange}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2',
+                            borderWidth: 2
+                          }
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#1976d2'
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+              
+              {/* Right Section - Description only */}
+              <Box sx={{ flex: 1 }}>
                 <TextField
                   name="description"
                   label="Description"
                   fullWidth
                   variant="outlined"
                   multiline
-                  rows={3}
+                  rows={4}
                   value={formData.description}
                   onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="address"
-                  label="Address"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.address}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="phone"
-                  label="Phone"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.phone}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="email"
-                  label="Email"
-                  type="email"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
               {editingVendor ? 'Update' : 'Create'}
             </Button>
           </DialogActions>
@@ -332,7 +651,8 @@ const FoodVendors = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

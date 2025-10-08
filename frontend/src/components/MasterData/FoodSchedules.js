@@ -241,29 +241,64 @@ const FoodSchedules = () => {
       </Paper>
 
       {/* Schedule Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}
+        >
           {editingSchedule ? 'Edit Food Schedule' : 'Add New Food Schedule'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
+          <DialogContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                autoFocus
+                name="title"
+                label="Title *"
+                fullWidth
+                variant="outlined"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2',
+                      borderWidth: 2
+                    }
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2'
+                  }
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 3 }}>
                 <TextField
                   name="start_time"
-                  label="Start Time"
+                  label="Start Time *"
                   type="time"
                   fullWidth
                   variant="outlined"
@@ -271,12 +306,26 @@ const FoodSchedules = () => {
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={6}>
                 <TextField
                   name="end_time"
-                  label="End Time"
+                  label="End Time *"
                   type="time"
                   fullWidth
                   variant="outlined"
@@ -284,13 +333,63 @@ const FoodSchedules = () => {
                   onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
               {editingSchedule ? 'Update' : 'Create'}
             </Button>
           </DialogActions>

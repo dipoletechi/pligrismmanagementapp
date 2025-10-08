@@ -255,59 +255,167 @@ const FoodItems = () => {
       </Paper>
 
       {/* Item Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}
+        >
           {editingItem ? 'Edit Food Item' : 'Add New Food Item'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Title"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
+          <DialogContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', gap: 3 }}>
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    autoFocus
+                    name="title"
+                    label="Title *"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.title}
+                    onChange={handleChange}
+                    required
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#1976d2',
+                          borderWidth: 2
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#1976d2',
+                          borderWidth: 2
+                        }
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#1976d2'
+                      }
+                    }}
+                  />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <FormControl 
+                    fullWidth 
+                    required
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#1976d2',
+                          borderWidth: 2
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#1976d2',
+                          borderWidth: 2
+                        }
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#1976d2'
+                      }
+                    }}
+                  >
+                    <InputLabel>Category *</InputLabel>
+                    <Select
+                      name="food_category_id"
+                      value={formData.food_category_id}
+                      onChange={handleChange}
+                      label="Category *"
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.title}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Box>
+              <Box>
                 <TextField
                   name="description"
                   label="Description"
                   fullWidth
                   variant="outlined"
                   multiline
-                  rows={3}
+                  rows={4}
                   value={formData.description}
                   onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    name="food_category_id"
-                    value={formData.food_category_id}
-                    onChange={handleChange}
-                    label="Category"
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.title}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
               {editingItem ? 'Update' : 'Create'}
             </Button>
           </DialogActions>

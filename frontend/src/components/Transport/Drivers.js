@@ -197,7 +197,7 @@ const Drivers = () => {
 
       {/* Drivers Table */}
       <Paper>
-        <TableContainer>
+        <TableContainer sx={{ maxHeight: 400 }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -243,34 +243,87 @@ const Drivers = () => {
       </Paper>
 
       {/* Driver Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}
+        >
           {editingDriver ? 'Edit Driver' : 'Add New Driver'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
+          <DialogContent sx={{ p: 4 }}>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={6}>
                 <TextField
                   autoFocus
                   name="first_name"
-                  label="First Name"
+                  label="First Name *"
                   fullWidth
                   variant="outlined"
                   value={formData.first_name}
                   onChange={handleChange}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={6}>
                 <TextField
                   name="last_name"
-                  label="Last Name"
+                  label="Last Name *"
                   fullWidth
                   variant="outlined"
                   value={formData.last_name}
                   onChange={handleChange}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -281,6 +334,22 @@ const Drivers = () => {
                   variant="outlined"
                   value={formData.phone_number}
                   onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -291,6 +360,22 @@ const Drivers = () => {
                   variant="outlined"
                   value={formData.driving_license_no}
                   onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -301,13 +386,63 @@ const Drivers = () => {
                   variant="outlined"
                   value={formData.aadhar_no}
                   onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
               {editingDriver ? 'Update' : 'Create'}
             </Button>
           </DialogActions>

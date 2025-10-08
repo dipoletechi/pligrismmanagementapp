@@ -217,135 +217,304 @@ const TripList = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Trip Management
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
-              Manage pilgrimage trips and their details
-            </Typography>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      py: 4
+    }}>
+      <Container maxWidth="lg">
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start', 
+            mb: 3,
+            p: 3,
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <Box>
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                gutterBottom
+                sx={{
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontWeight: 700,
+                  mb: 1
+                }}
+              >
+                Trip Management
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+                Manage pilgrimage trips and their details
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpen()}
+              size="large"
+              sx={{
+                borderRadius: 3,
+                px: 4,
+                py: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Create Trip
+            </Button>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpen()}
-            size="large"
-          >
-            Create Trip
-          </Button>
         </Box>
-      </Box>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <TripIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
-                <Box>
-                  <Typography variant="h4">{trips.length}</Typography>
-                  <Typography color="text.secondary">Total Trips</Typography>
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <TripIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {trips.length}
+                  </Typography>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <CalendarIcon color="success" sx={{ fontSize: 40, mr: 2 }} />
-                <Box>
-                  <Typography variant="h4">{trips.filter(t => t.status === 'active').length}</Typography>
-                  <Typography color="text.secondary">Active Trips</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  Total Trips
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <CalendarIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {trips.filter(t => t.status === 'active').length}
+                  </Typography>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <MoneyIcon color="warning" sx={{ fontSize: 40, mr: 2 }} />
-                <Box>
-                  <Typography variant="h4">
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  Active Trips
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <MoneyIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     ₹{trips.reduce((sum, trip) => sum + (parseFloat(trip.budget) || 0), 0).toLocaleString()}
                   </Typography>
-                  <Typography color="text.secondary">Total Budget</Typography>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  Total Budget
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              color: 'white',
+              boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
+              }
+            }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <TripIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {trips.filter(t => t.status === 'completed').length}
+                  </Typography>
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                  Completed
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
 
-      {/* Trips Table */}
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Title</TableCell>
-                <TableCell>Destination</TableCell>
-                <TableCell>Start Date</TableCell>
-                <TableCell>End Date</TableCell>
-                <TableCell>Budget</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {trips.map((trip) => (
-                <TableRow key={trip.id}>
-                  <TableCell>
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      {trip.title}
-                    </Typography>
-                    {trip.description && (
-                      <Typography variant="caption" color="text.secondary">
-                        {trip.description.substring(0, 50)}...
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>{trip.destination || '-'}</TableCell>
-                  <TableCell>{new Date(trip.start_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(trip.end_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{trip.budget ? `₹${parseFloat(trip.budget).toLocaleString()}` : '-'}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={trip.status} 
-                      color={statusColors[trip.status]} 
-                      size="small" 
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleOpen(trip)}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDelete(trip.id)}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
+        {/* Trips Table */}
+        <Paper sx={{
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          <TableContainer sx={{ maxHeight: 400 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  '& .MuiTableCell-head': {
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: '1.1rem',
+                    border: 'none'
+                  }
+                }}>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Destination</TableCell>
+                  <TableCell>Start Date</TableCell>
+                  <TableCell>End Date</TableCell>
+                  <TableCell>Budget</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="center">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+              </TableHead>
+              <TableBody>
+                {trips.map((trip, index) => (
+                  <TableRow 
+                    key={trip.id}
+                    sx={{
+                      '&:nth-of-type(odd)': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      },
+                      '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                        transform: 'scale(1.01)',
+                        transition: 'all 0.2s ease'
+                      },
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <TripIcon sx={{ color: '#1976d2', mr: 2, fontSize: 24 }} />
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+                            {trip.title}
+                          </Typography>
+                          {trip.description && (
+                            <Typography variant="caption" color="text.secondary">
+                              {trip.description.substring(0, 50)}...
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {trip.destination || 'No destination'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(trip.start_date).toLocaleDateString()}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(trip.end_date).toLocaleDateString()}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight="600" color="text.primary">
+                        {trip.budget ? `₹${parseFloat(trip.budget).toLocaleString()}` : 'No budget'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={trip.status} 
+                        color={statusColors[trip.status]} 
+                        size="small"
+                        sx={{
+                          fontWeight: 600,
+                          borderRadius: 2
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <IconButton
+                          onClick={() => handleOpen(trip)}
+                          sx={{
+                            color: '#1976d2',
+                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDelete(trip.id)}
+                          sx={{
+                            color: '#d32f2f',
+                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(211, 47, 47, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
 
       {/* Trip Form Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
@@ -467,7 +636,8 @@ const TripList = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

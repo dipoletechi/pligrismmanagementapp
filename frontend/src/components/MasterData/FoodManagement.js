@@ -265,22 +265,81 @@ const FoodManagement = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Food Management
-      </Typography>
-      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-        Manage food schedules, categories, and items
-      </Typography>
-
-      <Paper sx={{ width: '100%' }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange}>
-            <Tab label="Food Schedules" icon={<ScheduleIcon />} />
-            <Tab label="Food Categories" icon={<CategoryIcon />} />
-            <Tab label="Food Items" icon={<FoodIcon />} />
-          </Tabs>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      py: 4
+    }}>
+      <Container maxWidth="lg">
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ 
+            p: 3,
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              gutterBottom
+              sx={{
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 700,
+                mb: 1
+              }}
+            >
+              Food Management
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              Manage food schedules, categories, and items
+            </Typography>
+          </Box>
         </Box>
+
+        <Paper sx={{ 
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          <Box sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
+          }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange}
+              sx={{
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  py: 2,
+                  px: 3,
+                  '&.Mui-selected': {
+                    color: '#1976d2',
+                    background: 'linear-gradient(45deg, rgba(25, 118, 210, 0.1) 30%, rgba(66, 165, 245, 0.1) 90%)'
+                  }
+                },
+                '& .MuiTabs-indicator': {
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  height: 3,
+                  borderRadius: '3px 3px 0 0'
+                }
+              }}
+            >
+              <Tab label="Food Schedules" icon={<ScheduleIcon />} />
+              <Tab label="Food Categories" icon={<CategoryIcon />} />
+              <Tab label="Food Items" icon={<FoodIcon />} />
+            </Tabs>
+          </Box>
 
         {/* Food Schedules Tab */}
         <TabPanel value={activeTab} index={0}>
@@ -468,41 +527,131 @@ const FoodManagement = () => {
       </Dialog>
 
       {/* Food Category Dialog */}
-      <Dialog open={categoryOpen} onClose={handleCategoryClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingCategory ? 'Edit Food Category' : 'Add Food Category'}
+      <Dialog
+        open={categoryOpen}
+        onClose={handleCategoryClose}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}
+        >
+          {editingCategory ? 'Edit Food Category' : 'Add New Food Category - MODERN DESIGN'}
         </DialogTitle>
         <form onSubmit={handleCategorySubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
+          <DialogContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', gap: 3 }}>
+              <Box sx={{ flex: 1 }}>
                 <TextField
                   autoFocus
                   name="title"
-                  label="Title"
+                  label="Title *"
                   fullWidth
+                  variant="outlined"
                   value={categoryForm.title}
                   onChange={(e) => setCategoryForm({...categoryForm, title: e.target.value})}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={12}>
+              </Box>
+              <Box sx={{ flex: 1 }}>
                 <TextField
                   name="description"
                   label="Description"
                   fullWidth
+                  variant="outlined"
                   multiline
-                  rows={3}
+                  rows={4}
                   value={categoryForm.description}
                   onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
-                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: 2
+                      }
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#1976d2'
+                    }
+                  }}
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCategoryClose}>Cancel</Button>
-            <Button type="submit" variant="contained">Save</Button>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleCategoryClose}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                '&:hover': {
+                  borderColor: '#1565c0',
+                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }}
+            >
+              {editingCategory ? 'Update' : 'Create'}
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
@@ -577,7 +726,8 @@ const FoodManagement = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 
