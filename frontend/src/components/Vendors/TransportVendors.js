@@ -1894,68 +1894,103 @@ const TransportVendors = () => {
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           {viewingBus && (
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Bus Title"
-                  fullWidth
-                  variant="outlined"
-                  value={viewingBus.title}
-                  InputProps={{ readOnly: true }}
-                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
-                />
-              </Grid>
-              <Grid item xs={6}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Bus Title - Full Width */}
+              <TextField
+                label="Bus Title"
+                fullWidth
+                variant="outlined"
+                value={viewingBus.title}
+                InputProps={{ readOnly: true }}
+                sx={{ 
+                  '& .MuiInputBase-input': { 
+                    color: '#1976d2', 
+                    fontWeight: 500,
+                    textAlign: 'left'
+                  }
+                }}
+              />
+              
+              {/* RC Number and Capacity - Side by Side */}
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
                   label="RC Number"
                   fullWidth
                   variant="outlined"
                   value={viewingBus.rc_no}
                   InputProps={{ readOnly: true }}
-                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                  sx={{ 
+                    '& .MuiInputBase-input': { 
+                      color: '#1976d2', 
+                      fontWeight: 500,
+                      textAlign: 'left'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={6}>
                 <TextField
                   label="Capacity"
                   fullWidth
                   variant="outlined"
                   value={viewingBus.no_of_sittings}
                   InputProps={{ readOnly: true }}
-                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                  sx={{ 
+                    '& .MuiInputBase-input': { 
+                      color: '#1976d2', 
+                      fontWeight: 500,
+                      textAlign: 'left'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Model"
-                  fullWidth
-                  variant="outlined"
-                  value={viewingBus.model || 'N/A'}
-                  InputProps={{ readOnly: true }}
-                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
-                />
-              </Grid>
-              <Grid item xs={6}>
+              </Box>
+              
+              {/* Model - Full Width */}
+              <TextField
+                label="Model"
+                fullWidth
+                variant="outlined"
+                value={viewingBus.model || 'N/A'}
+                InputProps={{ readOnly: true }}
+                sx={{ 
+                  '& .MuiInputBase-input': { 
+                    color: '#1976d2', 
+                    fontWeight: 500,
+                    textAlign: 'left'
+                  }
+                }}
+              />
+              
+              {/* Bus Type and Make Year - Side by Side */}
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
                   label="Bus Type"
                   fullWidth
                   variant="outlined"
                   value={viewingBus.type || 'N/A'}
                   InputProps={{ readOnly: true }}
-                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                  sx={{ 
+                    '& .MuiInputBase-input': { 
+                      color: '#1976d2', 
+                      fontWeight: 500,
+                      textAlign: 'left'
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item xs={6}>
                 <TextField
                   label="Make Year"
                   fullWidth
                   variant="outlined"
                   value={viewingBus.make_year || 'N/A'}
                   InputProps={{ readOnly: true }}
-                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                  sx={{ 
+                    '& .MuiInputBase-input': { 
+                      color: '#1976d2', 
+                      fontWeight: 500,
+                      textAlign: 'left'
+                    }
+                  }}
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 2 }}>
