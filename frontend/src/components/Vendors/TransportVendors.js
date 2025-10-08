@@ -61,6 +61,14 @@ const TransportVendors = () => {
   const [driverDialog, setDriverDialog] = useState(false);
   const [conductorDialog, setConductorDialog] = useState(false);
   
+  // View states
+  const [viewBusDialog, setViewBusDialog] = useState(false);
+  const [viewDriverDialog, setViewDriverDialog] = useState(false);
+  const [viewConductorDialog, setViewConductorDialog] = useState(false);
+  const [viewingBus, setViewingBus] = useState(null);
+  const [viewingDriver, setViewingDriver] = useState(null);
+  const [viewingConductor, setViewingConductor] = useState(null);
+  
   // Edit states
   const [editingBus, setEditingBus] = useState(null);
   const [editingDriver, setEditingDriver] = useState(null);
@@ -394,36 +402,18 @@ const TransportVendors = () => {
 
   // View handlers for detailed information
   const handleViewBus = (bus) => {
-    const busDetails = `
-Bus Details:
-Title: ${bus.title}
-RC Number: ${bus.rc_no}
-Model: ${bus.model || 'N/A'}
-Type: ${bus.type || 'N/A'}
-Capacity: ${bus.no_of_sittings || 'N/A'}
-Make Year: ${bus.make_year || 'N/A'}
-    `;
-    alert(busDetails);
+    setViewingBus(bus);
+    setViewBusDialog(true);
   };
 
   const handleViewDriver = (driver) => {
-    const driverDetails = `
-Driver Details:
-Name: ${driver.first_name} ${driver.last_name}
-Phone: ${driver.phone_number || 'N/A'}
-License: ${driver.driving_license_no || 'N/A'}
-Aadhar: ${driver.aadhar_no || 'N/A'}
-    `;
-    alert(driverDetails);
+    setViewingDriver(driver);
+    setViewDriverDialog(true);
   };
 
   const handleViewConductor = (conductor) => {
-    const conductorDetails = `
-Conductor Details:
-Name: ${conductor.first_name} ${conductor.last_name}
-Phone: ${conductor.phone_number || 'N/A'}
-    `;
-    alert(conductorDetails);
+    setViewingConductor(conductor);
+    setViewConductorDialog(true);
   };
 
   if (loading) {
@@ -1888,6 +1878,107 @@ Phone: ${conductor.phone_number || 'N/A'}
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* View Bus Dialog */}
+      <Dialog open={viewBusDialog} onClose={() => setViewBusDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.5rem',
+          textAlign: 'center',
+          py: 3
+        }}>
+          View Bus Details
+        </DialogTitle>
+        <DialogContent sx={{ p: 4 }}>
+          {viewingBus && (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Bus Title"
+                  fullWidth
+                  variant="outlined"
+                  value={viewingBus.title}
+                  InputProps={{ readOnly: true }}
+                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="RC Number"
+                  fullWidth
+                  variant="outlined"
+                  value={viewingBus.rc_no}
+                  InputProps={{ readOnly: true }}
+                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Capacity"
+                  fullWidth
+                  variant="outlined"
+                  value={viewingBus.no_of_sittings}
+                  InputProps={{ readOnly: true }}
+                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Model"
+                  fullWidth
+                  variant="outlined"
+                  value={viewingBus.model || 'N/A'}
+                  InputProps={{ readOnly: true }}
+                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Bus Type"
+                  fullWidth
+                  variant="outlined"
+                  value={viewingBus.type || 'N/A'}
+                  InputProps={{ readOnly: true }}
+                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Make Year"
+                  fullWidth
+                  variant="outlined"
+                  value={viewingBus.make_year || 'N/A'}
+                  InputProps={{ readOnly: true }}
+                  sx={{ '& .MuiInputBase-input': { color: '#1976d2', fontWeight: 500 } }}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3, gap: 2 }}>
+          <Button
+            onClick={() => setViewBusDialog(false)}
+            variant="contained"
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+              }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
       </Container>
     </Box>
