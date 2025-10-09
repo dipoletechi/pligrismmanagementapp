@@ -601,145 +601,53 @@ const CreateTrip = () => {
             </Grid>
 
             {/* Day-wise Selection */}
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AddIcon color="primary" />
-                  Day-wise Selection
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Select different drivers and conductors for specific days
-                </Typography>
-                
-                {tripDays.map((day, index) => (
-                  <Card key={day} variant="outlined" sx={{ p: 2, mb: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </Typography>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AddIcon color="primary" />
+                Day-wise Selection
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Select different drivers and conductors for specific days
+              </Typography>
+              
+              {tripDays.map((day, index) => (
+                <Card key={day} variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </Typography>
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <DropdownChecklist
+                        label="Drivers"
+                        options={drivers.map(driver => ({
+                          value: driver.id,
+                          label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                        }))}
+                        selectedValues={formData.driversByDay[day] || []}
+                        onChange={(values) => handleDriverDayChange(day, values)}
+              />
+            </Grid>
                     
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <DropdownChecklist
-                          label="Drivers"
-                          options={drivers.map(driver => ({
-                            value: driver.id,
-                            label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
-                          }))}
-                          selectedValues={formData.driversByDay[day] || []}
-                          onChange={(values) => handleDriverDayChange(day, values)}
-                        />
-                      </Grid>
-                      
-                      <Grid item xs={12}>
-                        <DropdownChecklist
-                          label="Conductors"
-                          options={conductors.map(conductor => ({
-                            value: conductor.id,
-                            label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
-                          }))}
-                          selectedValues={formData.conductorsByDay[day] || []}
-                          onChange={(values) => handleConductorDayChange(day, values)}
-                        />
-                      </Grid>
+                    <Grid item xs={12} md={6}>
+                      <DropdownChecklist
+                        label="Conductors"
+                        options={conductors.map(conductor => ({
+                          value: conductor.id,
+                          label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                        }))}
+                        selectedValues={formData.conductorsByDay[day] || []}
+                        onChange={(values) => handleConductorDayChange(day, values)}
+                      />
                     </Grid>
-                  </Card>
-                ))}
-              </Grid>
-
-              {/* Right Side - Additional Options */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PersonIcon color="primary" />
-                  Additional Options
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Manage transportation details and preferences
-                </Typography>
-                
-                {/* Box 1: Transportation Summary */}
-                <Card variant="outlined" sx={{ p: 2, mb: 2, backgroundColor: '#f8f9fa' }}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <TripIcon color="primary" />
-                    Transportation Summary
-                  </Typography>
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Total Days: {tripDays.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Selected Drivers: {formData.selectedDrivers.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Selected Conductors: {formData.selectedConductors.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Day-wise Assignments: {Object.keys(formData.driversByDay).length} days configured
-                    </Typography>
-                  </Box>
+                  </Grid>
                 </Card>
-
-                {/* Box 2: Quick Actions */}
-                <Card variant="outlined" sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AddIcon color="primary" />
-                    Quick Actions
-                  </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => {
-                        const allDays = tripDays;
-                        const driversByDay = {};
-                        const conductorsByDay = {};
-                        allDays.forEach(day => {
-                          driversByDay[day] = [...formData.selectedDrivers];
-                          conductorsByDay[day] = [...formData.selectedConductors];
-                        });
-                        setFormData(prev => ({
-                          ...prev,
-                          driversByDay,
-                          conductorsByDay
-                        }));
-                      }}
-                      disabled={formData.selectedDrivers.length === 0 && formData.selectedConductors.length === 0}
-                    >
-                      Apply All to Every Day
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          driversByDay: {},
-                          conductorsByDay: {}
-                        }));
-                      }}
-                    >
-                      Clear Day-wise Assignments
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          selectedDrivers: [],
-                          selectedConductors: []
-                        }));
-                      }}
-                    >
-                      Clear All Selections
-                    </Button>
-                  </Box>
-                </Card>
-              </Grid>
+              ))}
             </Grid>
           </Grid>
         );
