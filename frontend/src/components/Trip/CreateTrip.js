@@ -540,71 +540,69 @@ const CreateTrip = () => {
 
       case 1:
         return (
-          <Grid container spacing={3}>
+          <Box>
             {/* All Days Selection */}
-            <Grid item xs={12}>
-              <Card variant="outlined" sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa' }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TripIcon color="primary" />
-                  All Days Selection
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Select drivers and conductors for all {tripDays.length} days
-                </Typography>
-                
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <DropdownChecklist
-                      label="Drivers"
-                      options={drivers.map(driver => ({
-                        value: driver.id,
-                        label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
-                      }))}
-                      selectedValues={formData.selectedDrivers}
-                      onChange={(values) => setFormData(prev => ({ ...prev, selectedDrivers: values }))}
-                    />
-                    <Button
-                      variant="contained"
-                      size="medium"
-                      onClick={applyDriversToAllDays}
-                      disabled={formData.selectedDrivers.length === 0}
-                      sx={{ mt: 2, width: '100%', py: 1.5 }}
-                    >
-                      Apply to All Days
-                    </Button>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <DropdownChecklist
-                      label="Conductors"
-                      options={conductors.map(conductor => ({
-                        value: conductor.id,
-                        label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
-                      }))}
-                      selectedValues={formData.selectedConductors}
-                      onChange={(values) => setFormData(prev => ({ ...prev, selectedConductors: values }))}
-                    />
-                    <Button
-                      variant="contained"
-                      size="medium"
-                      onClick={applyConductorsToAllDays}
-                      disabled={formData.selectedConductors.length === 0}
-                      sx={{ mt: 2, width: '100%', py: 1.5 }}
-                    >
-                      Apply to All Days
-                    </Button>
-                  </Grid>
+            <Card variant="outlined" sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa', width: '100%' }}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TripIcon color="primary" />
+                All Days Selection
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Select drivers and conductors for all {tripDays.length} days
+              </Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <DropdownChecklist
+                    label="Drivers"
+                    options={drivers.map(driver => ({
+                      value: driver.id,
+                      label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                    }))}
+                    selectedValues={formData.selectedDrivers}
+                    onChange={(values) => setFormData(prev => ({ ...prev, selectedDrivers: values }))}
+                  />
+                  <Button
+                    variant="contained"
+                    size="medium"
+                    onClick={applyDriversToAllDays}
+                    disabled={formData.selectedDrivers.length === 0}
+                    sx={{ mt: 2, width: '100%', py: 1.5 }}
+                  >
+                    Apply to All Days
+                  </Button>
                 </Grid>
-              </Card>
-            </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <DropdownChecklist
+                    label="Conductors"
+                    options={conductors.map(conductor => ({
+                      value: conductor.id,
+                      label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                    }))}
+                    selectedValues={formData.selectedConductors}
+                    onChange={(values) => setFormData(prev => ({ ...prev, selectedConductors: values }))}
+                  />
+                  <Button
+                    variant="contained"
+                    size="medium"
+                    onClick={applyConductorsToAllDays}
+                    disabled={formData.selectedConductors.length === 0}
+                    sx={{ mt: 2, width: '100%', py: 1.5 }}
+                  >
+                    Apply to All Days
+                  </Button>
+                </Grid>
+              </Grid>
+            </Card>
 
             {/* Day-wise Selection */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <AddIcon color="primary" />
                 Day-wise Selection
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 Select different drivers and conductors for specific days
               </Typography>
               
@@ -641,13 +639,13 @@ const CreateTrip = () => {
                           selectedValues={formData.conductorsByDay[day] || []}
                           onChange={(values) => handleConductorDayChange(day, values)}
                         />
-            </Box>
+                      </Box>
                     </Card>
                   </Grid>
                 ))}
               </Grid>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         );
 
       case 2:
