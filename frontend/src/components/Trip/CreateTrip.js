@@ -610,44 +610,48 @@ const CreateTrip = () => {
                 Select different drivers and conductors for specific days
               </Typography>
               
-              {tripDays.map((day, index) => (
-                <Card key={day} variant="outlined" sx={{ p: 2, mb: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </Typography>
-                  
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <DropdownChecklist
-                        label="Drivers"
-                        options={drivers.map(driver => ({
-                          value: driver.id,
-                          label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
-                        }))}
-                        selectedValues={formData.driversByDay[day] || []}
-                        onChange={(values) => handleDriverDayChange(day, values)}
-              />
-            </Grid>
-                    
-                    <Grid item xs={12} md={6}>
-                      <DropdownChecklist
-                        label="Conductors"
-                        options={conductors.map(conductor => ({
-                          value: conductor.id,
-                          label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
-                        }))}
-                        selectedValues={formData.conductorsByDay[day] || []}
-                        onChange={(values) => handleConductorDayChange(day, values)}
-                      />
-                    </Grid>
+              <Grid container spacing={2}>
+                {tripDays.map((day, index) => (
+                  <Grid item xs={12} md={6} key={day}>
+                    <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
+                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </Typography>
+                      
+                      <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                          <DropdownChecklist
+                            label="Drivers"
+                            options={drivers.map(driver => ({
+                              value: driver.id,
+                              label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                            }))}
+                            selectedValues={formData.driversByDay[day] || []}
+                            onChange={(values) => handleDriverDayChange(day, values)}
+                          />
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                          <DropdownChecklist
+                            label="Conductors"
+                            options={conductors.map(conductor => ({
+                              value: conductor.id,
+                              label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                            }))}
+                            selectedValues={formData.conductorsByDay[day] || []}
+                            onChange={(values) => handleConductorDayChange(day, values)}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Card>
                   </Grid>
-                </Card>
-              ))}
+                ))}
+              </Grid>
             </Grid>
           </Grid>
         );
