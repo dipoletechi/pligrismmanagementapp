@@ -612,9 +612,9 @@ const CreateTrip = () => {
               
               <Grid container spacing={2}>
                 {tripDays.map((day, index) => (
-                  <Grid item xs={12} md={6} key={day}>
-                    <Card variant="outlined" sx={{ p: 2, height: '100%' }}>
-                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  <Grid item xs={12} sm={6} key={day}>
+                    <Card variant="outlined" sx={{ p: 2, height: '100%', minHeight: 200 }}>
+                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
                         Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
                           weekday: 'long', 
                           year: 'numeric', 
@@ -623,31 +623,27 @@ const CreateTrip = () => {
                         })}
                       </Typography>
                       
-                      <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                          <DropdownChecklist
-                            label="Drivers"
-                            options={drivers.map(driver => ({
-                              value: driver.id,
-                              label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
-                            }))}
-                            selectedValues={formData.driversByDay[day] || []}
-                            onChange={(values) => handleDriverDayChange(day, values)}
-                          />
-                        </Grid>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <DropdownChecklist
+                          label="Drivers"
+                          options={drivers.map(driver => ({
+                            value: driver.id,
+                            label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                          }))}
+                          selectedValues={formData.driversByDay[day] || []}
+                          onChange={(values) => handleDriverDayChange(day, values)}
+                        />
                         
-                        <Grid item xs={12}>
-                          <DropdownChecklist
-                            label="Conductors"
-                            options={conductors.map(conductor => ({
-                              value: conductor.id,
-                              label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
-                            }))}
-                            selectedValues={formData.conductorsByDay[day] || []}
-                            onChange={(values) => handleConductorDayChange(day, values)}
-                          />
-                        </Grid>
-                      </Grid>
+                        <DropdownChecklist
+                          label="Conductors"
+                          options={conductors.map(conductor => ({
+                            value: conductor.id,
+                            label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                          }))}
+                          selectedValues={formData.conductorsByDay[day] || []}
+                          onChange={(values) => handleConductorDayChange(day, values)}
+                        />
+            </Box>
                     </Card>
                   </Grid>
                 ))}
