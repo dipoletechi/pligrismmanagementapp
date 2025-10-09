@@ -270,14 +270,16 @@ function MainLayout({ children }) {
               </ListItem>
               
               {subMenu.length > 0 && isExpanded && !sidebarCollapsed && (
-                <List component="div" disablePadding sx={{ ml: 2 }}>
+                <List component="div" disablePadding sx={{ ml: 0 }}>
                   {subMenu.map((subItem) => (
                     <ListItem key={subItem.text} disablePadding>
                       <ListItemButton
                         sx={{ 
                           borderRadius: 1,
                           mb: 0.5,
-                          pl: 2,
+                          pl: 4,
+                          ml: 1,
+                          mr: 1,
                           '&:hover': {
                             backgroundColor: 'action.hover',
                           },
