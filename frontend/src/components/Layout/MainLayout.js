@@ -270,7 +270,13 @@ function MainLayout({ children }) {
               </ListItem>
               
               {subMenu.length > 0 && isExpanded && !sidebarCollapsed && (
-                <List component="div" disablePadding sx={{ ml: 0 }}>
+                <List component="div" disablePadding sx={{ 
+                  ml: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  borderRadius: 1,
+                  mx: 1,
+                  py: 0.5
+                }}>
                   {subMenu.map((subItem) => (
                     <ListItem key={subItem.text} disablePadding>
                       <ListItemButton
@@ -280,14 +286,15 @@ function MainLayout({ children }) {
                           pl: 4,
                           ml: 1,
                           mr: 1,
+                          backgroundColor: 'transparent',
                           '&:hover': {
-                            backgroundColor: 'action.hover',
+                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
                           },
                           ...(location.pathname === subItem.path && {
-                            backgroundColor: 'primary.light',
+                            backgroundColor: 'rgba(25, 118, 210, 0.12)',
                             color: 'primary.main',
                             '&:hover': {
-                              backgroundColor: 'primary.light',
+                              backgroundColor: 'rgba(25, 118, 210, 0.16)',
                             },
                             '& .MuiListItemText-primary': {
                               color: 'primary.main',
@@ -303,7 +310,8 @@ function MainLayout({ children }) {
                           sx={{ 
                             '& .MuiListItemText-primary': {
                               fontSize: '0.85rem',
-                              fontWeight: location.pathname === subItem.path ? 600 : 400
+                              fontWeight: location.pathname === subItem.path ? 600 : 400,
+                              color: location.pathname === subItem.path ? 'primary.main' : 'text.secondary'
                             }
                           }}
                         />
