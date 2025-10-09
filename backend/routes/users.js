@@ -157,10 +157,11 @@ router.post('/', protect, authorize('superadmin'), [
 router.put('/:id', protect, authorize('superadmin'), [
   body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').optional().isIn(['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'])
     .withMessage('Invalid role'),
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean')
-], async (req, res) => {
+], validatePasswordPolicy, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -171,18 +172,10 @@ router.put('/:id', protect, authorize('superadmin'), [
       });
     }
 
-    const { name, email, role, isActive } = req.body;
-
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    const { name, email, password, role, isActive } = req.body;
 
     // Check if email is already taken by another user
-    if (email && email !== user.email) {
+    if (email) {
       const existingUser = await User.findOne({ 
         where: { email, id: { [Op.ne]: req.params.id } } 
       });
@@ -194,16 +187,28 @@ router.put('/:id', protect, authorize('superadmin'), [
       }
     }
 
-    // Update user
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (role) updateData.role = role;
-    if (typeof isActive === 'boolean') updateData.isActive = isActive;
+    // Get user to update
+    const userToUpdate = await User.findByPk(req.params.id);
+    if (!userToUpdate) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
-    await User.update(updateData, {
-      where: { id: req.params.id }
-    });
+    // Update user fields
+    if (name) userToUpdate.name = name;
+    if (email) userToUpdate.email = email;
+    if (role) userToUpdate.role = role;
+    if (typeof isActive === 'boolean') userToUpdate.isActive = isActive;
+    
+    // Handle password separately to ensure proper hashing
+    if (password) {
+      userToUpdate.password = password; // This will trigger beforeUpdate hook
+    }
+
+    // Save the user instance (this will trigger beforeUpdate hook)
+    await userToUpdate.save();
 
     const updatedUser = await User.findByPk(req.params.id, {
       attributes: { exclude: ['password'] }
