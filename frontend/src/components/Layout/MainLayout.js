@@ -32,11 +32,16 @@ import {
   Support as SupportIcon,
   Notifications as NotificationsIcon,
   AccountCircle as AccountIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  ExpandMore as ExpandMoreIcon,
+  ChevronRight as ChevronRightSubIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 280;
+const collapsedDrawerWidth = 70;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] },
@@ -76,6 +81,7 @@ const VendorsSubMenu = [
 
 function MainLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
   const { user, logout, hasAnyRole, hasPermission } = useAuth();
@@ -104,6 +110,14 @@ function MainLayout({ children }) {
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleSidebarToggle = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+    // Close all expanded menus when collapsing
+    if (!sidebarCollapsed) {
+      setExpandedMenus({});
+    }
   };
 
   const handleProfileMenuOpen = (event) => {
@@ -161,13 +175,30 @@ function MainLayout({ children }) {
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
-          Tirth Yatra
-        </Typography>
+      <Toolbar sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: sidebarCollapsed ? 'center' : 'space-between',
+        px: sidebarCollapsed ? 1 : 2,
+        minHeight: '64px !important'
+      }}>
+        {!sidebarCollapsed && (
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+            Tirth Yatra
+          </Typography>
+        )}
+        <IconButton 
+          onClick={handleSidebarToggle}
+          sx={{ 
+            color: 'inherit',
+            ...(sidebarCollapsed && { mx: 'auto' })
+          }}
+        >
+          {sidebarCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
       </Toolbar>
       <Divider />
-      <List>
+      <List sx={{ px: sidebarCollapsed ? 0.5 : 1 }}>
         {getFilteredMenuItems().map((item) => {
           const subMenu = getSubMenu(item.path);
           const isExpanded = expandedMenus[item.path];
@@ -178,51 +209,101 @@ function MainLayout({ children }) {
               <ListItem disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    if (subMenu.length > 0) {
+                    if (subMenu.length > 0 && !sidebarCollapsed) {
                       toggleSubMenu(item.path);
-                    } else {
+                    } else if (subMenu.length === 0) {
                       navigate(item.path);
                     }
                   }}
                   selected={false}
                   sx={{
+                    borderRadius: 1,
+                    mb: 0.5,
+                    mx: sidebarCollapsed ? 0.5 : 0,
                     '&:hover': {
                       backgroundColor: 'action.hover',
                     },
+                    ...(isActive && {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: 'white',
+                      },
+                      '& .MuiListItemText-primary': {
+                        color: 'white',
+                      }
+                    })
                   }}
+                  title={sidebarCollapsed ? item.text : ''}
                 >
-                  <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'inherit' }}>
+                  <ListItemIcon sx={{ 
+                    color: isActive ? 'white' : 'inherit',
+                    minWidth: sidebarCollapsed ? 'auto' : 40,
+                    justifyContent: 'center',
+                    mr: sidebarCollapsed ? 0 : 2
+                  }}>
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text}
-                    sx={{ color: isActive ? 'primary.main' : 'inherit' }}
-                  />
-                  {subMenu.length > 0 && (
-                    <IconButton size="small">
-                      {isExpanded ? '▼' : '▶'}
-                    </IconButton>
+                  {!sidebarCollapsed && (
+                    <>
+                      <ListItemText 
+                        primary={item.text}
+                        sx={{ 
+                          color: isActive ? 'white' : 'inherit',
+                          '& .MuiListItemText-primary': {
+                            fontSize: '0.9rem',
+                            fontWeight: isActive ? 600 : 400
+                          }
+                        }}
+                      />
+                      {subMenu.length > 0 && (
+                        <IconButton size="small" sx={{ color: 'inherit' }}>
+                          {isExpanded ? <ExpandMoreIcon /> : <ChevronRightSubIcon />}
+                        </IconButton>
+                      )}
+                    </>
                   )}
                 </ListItemButton>
               </ListItem>
               
-              {subMenu.length > 0 && isExpanded && (
-                <List component="div" disablePadding>
+              {subMenu.length > 0 && isExpanded && !sidebarCollapsed && (
+                <List component="div" disablePadding sx={{ ml: 2 }}>
                   {subMenu.map((subItem) => (
                     <ListItem key={subItem.text} disablePadding>
                       <ListItemButton
                         sx={{ 
-                          pl: 4,
+                          borderRadius: 1,
+                          mb: 0.5,
+                          pl: 2,
                           '&:hover': {
                             backgroundColor: 'action.hover',
                           },
+                          ...(location.pathname === subItem.path && {
+                            backgroundColor: 'primary.light',
+                            color: 'primary.main',
+                            '&:hover': {
+                              backgroundColor: 'primary.light',
+                            },
+                            '& .MuiListItemText-primary': {
+                              color: 'primary.main',
+                              fontWeight: 600
+                            }
+                          })
                         }}
                         onClick={() => navigate(subItem.path)}
                         selected={false}
                       >
                         <ListItemText 
                           primary={subItem.text}
-                          sx={{ color: location.pathname === subItem.path ? 'primary.main' : 'inherit' }}
+                          sx={{ 
+                            '& .MuiListItemText-primary': {
+                              fontSize: '0.85rem',
+                              fontWeight: location.pathname === subItem.path ? 600 : 400
+                            }
+                          }}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -242,8 +323,9 @@ function MainLayout({ children }) {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
+          width: { sm: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
+          ml: { sm: `${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
+          transition: 'all 0.3s ease',
         }}
       >
         <Toolbar>
@@ -287,7 +369,11 @@ function MainLayout({ children }) {
 
       <Box
         component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        sx={{ 
+          width: { sm: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth }, 
+          flexShrink: { sm: 0 },
+          transition: 'width 0.3s ease'
+        }}
         aria-label="mailbox folders"
       >
         <Drawer
@@ -308,7 +394,12 @@ function MainLayout({ children }) {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth,
+              transition: 'width 0.3s ease',
+              overflowX: 'hidden'
+            },
           }}
           open
         >
@@ -321,8 +412,9 @@ function MainLayout({ children }) {
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8
+          width: { sm: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
+          mt: 8,
+          transition: 'all 0.3s ease'
         }}
       >
         {children}
