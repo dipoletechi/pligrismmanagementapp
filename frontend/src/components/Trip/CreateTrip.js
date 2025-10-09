@@ -58,6 +58,7 @@ import {
   AttachMoney as MoneyIcon,
   Hotel as HotelIcon,
   Restaurant as FoodIcon,
+  Restaurant as RestaurantIcon,
   Event as EventIcon,
   AccountBalance as FinanceIcon,
   CheckCircle as CheckIcon,
@@ -83,6 +84,9 @@ const CreateTrip = () => {
   const [conductors, setConductors] = useState([]);
   const [accommodationVendors, setAccommodationVendors] = useState([]);
   const [foodVendors, setFoodVendors] = useState([]);
+  const [foodSchedules, setFoodSchedules] = useState([]);
+  const [foodCategories, setFoodCategories] = useState([]);
+  const [foodItems, setFoodItems] = useState([]);
   const [transportVendors, setTransportVendors] = useState([]);
 
   // Form data
@@ -91,20 +95,32 @@ const CreateTrip = () => {
     destination: '',
     startDate: null,
     endDate: null,
+    selectedTransportVendor: '',
     selectedDrivers: [],
     selectedConductors: [],
     selectedBuses: [],
     driversByDay: {}, // { '2025-10-11': [driverIds], '2025-10-12': [driverIds] }
     conductorsByDay: {}, // { '2025-10-11': [conductorIds], '2025-10-12': [conductorIds] }
     busesByDay: {}, // { '2025-10-11': [busIds], '2025-10-12': [busIds] }
+    vendorsByDay: {}, // { '2025-10-11': vendorId, '2025-10-12': vendorId }
     timeByDay: {}, // { '2025-10-11': { startTime: '08:00', endTime: '18:00' } }
     accommodations: [],
     accommodationsByDay: {}, // { '2025-10-11': [accommodations], '2025-10-12': [accommodations] }
     selectedAccommodationVendor: '',
     selectedAccommodationStartTime: '',
     selectedAccommodationEndTime: '',
+    selectedFoodVendors: [], // Array of selected food vendor IDs for All Days
+    foodVendorsByDay: {}, // { '2025-10-11': [vendorIds], '2025-10-12': [vendorIds] }
+    selectedFoodSchedules: [], // Selected food schedules for All Days (multi-select)
+    selectedFoodCategories: [], // Selected food categories for All Days
+    selectedFoodItems: [], // Selected food items for All Days
+    foodSchedulesByDay: {}, // { '2025-10-11': [scheduleIds], '2025-10-12': [scheduleIds] }
+    foodCategoriesByDay: {}, // { '2025-10-11': [categoryIds], '2025-10-12': [categoryIds] }
+    foodItemsByDay: {}, // { '2025-10-11': [itemIds], '2025-10-12': [itemIds] }
+    allDaysFoodEntries: [], // Array of food entries for all days
     events: [],
     eventsByDay: {}, // { '2025-10-11': [events], '2025-10-12': [events] }
+    allDaysEvents: [], // Events applied to all days
     selectedEventTitle: '',
     selectedEventDescription: '',
     selectedEventStartTime: '',
@@ -118,11 +134,14 @@ const CreateTrip = () => {
   // Collapse states for sections
   const [allDaysExpanded, setAllDaysExpanded] = useState(false);
   const [dayWiseExpanded, setDayWiseExpanded] = useState(false);
+  const [foodAllDaysExpanded, setFoodAllDaysExpanded] = useState(false);
+  const [foodDayWiseExpanded, setFoodDayWiseExpanded] = useState(false);
   const [appliedToAllDays, setAppliedToAllDays] = useState({
     drivers: false,
     conductors: false,
     buses: false,
     accommodations: false,
+    food: false,
     events: false
   });
   
@@ -133,7 +152,35 @@ const CreateTrip = () => {
   const [accommodationDialog, setAccommodationDialog] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [eventDialog, setEventDialog] = useState(false);
+  const [dayEventDialog, setDayEventDialog] = useState(false);
+  const [allDaysEventDialog, setAllDaysEventDialog] = useState(false);
   const [financeDialog, setFinanceDialog] = useState(false);
+  const [foodAllDaysDialog, setFoodAllDaysDialog] = useState(false);
+  const [newFoodAllDays, setNewFoodAllDays] = useState({
+    vendors: [],
+    schedules: [],
+    categories: [],
+    items: []
+  });
+  const [newFoodEntry, setNewFoodEntry] = useState({
+    vendors: [],
+    schedules: [],
+    categories: [],
+    items: []
+  });
+  const [dayFoodDialog, setDayFoodDialog] = useState(false);
+  const [selectedDayForFood, setSelectedDayForFood] = useState(null);
+  const [newDayFoodEntry, setNewDayFoodEntry] = useState({
+    vendors: [],
+    schedules: [],
+    categories: [],
+    items: []
+  });
+  const [selectedDayForEvent, setSelectedDayForEvent] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(false);
+  const [editingEventIndex, setEditingEventIndex] = useState(0);
+  const [editingAllDaysEvent, setEditingAllDaysEvent] = useState(false);
+  const [editingAllDaysEventIndex, setEditingAllDaysEventIndex] = useState(0);
 
   // New accommodation/event data
   const [newAccommodation, setNewAccommodation] = useState({
@@ -149,6 +196,20 @@ const CreateTrip = () => {
     endTime: null
   });
 
+  const [dayEvent, setDayEvent] = useState({
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: ''
+  });
+
+  const [allDaysEvent, setAllDaysEvent] = useState({
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: ''
+  });
+
   const [newFinance, setNewFinance] = useState({
     vendor: '',
     amount: '',
@@ -159,6 +220,7 @@ const CreateTrip = () => {
     'Basic Information',
     'Transportation',
     'Accommodation',
+    'Food Management',
     'Events',
     'Finance & Review'
   ];
@@ -200,6 +262,19 @@ const CreateTrip = () => {
   };
 
   const tripDays = getTripDays();
+
+  // Filter drivers, conductors, and buses based on selected transport vendor
+  const filteredDrivers = formData.selectedTransportVendor 
+    ? drivers.filter(driver => driver.transport_vendor_id === parseInt(formData.selectedTransportVendor))
+    : [];
+  
+  const filteredConductors = formData.selectedTransportVendor 
+    ? conductors.filter(conductor => conductor.transport_vendor_id === parseInt(formData.selectedTransportVendor))
+    : [];
+  
+  const filteredBuses = formData.selectedTransportVendor 
+    ? buses.filter(bus => bus.transport_vendor_id === parseInt(formData.selectedTransportVendor))
+    : [];
 
   // Dropdown checklist component
   const DropdownChecklist = ({ 
@@ -343,13 +418,16 @@ const CreateTrip = () => {
 
   const fetchDropdownData = async () => {
     try {
-      const [destRes, busRes, driverRes, conductorRes, accRes, foodRes, transRes] = await Promise.all([
+      const [destRes, busRes, driverRes, conductorRes, accRes, foodRes, foodSchedRes, foodCatRes, foodItemRes, transRes] = await Promise.all([
         axios.get('/api/destinations'),
         axios.get('/api/buses'),
         axios.get('/api/drivers'),
         axios.get('/api/conductors'),
         axios.get('/api/accommodation-vendors'),
         axios.get('/api/food-vendors'),
+        axios.get('/api/food-schedules'),
+        axios.get('/api/food-categories'),
+        axios.get('/api/food-items'),
         axios.get('/api/transport-vendors')
       ]);
 
@@ -359,6 +437,9 @@ const CreateTrip = () => {
       setConductors(conductorRes.data.data.items || conductorRes.data.data);
       setAccommodationVendors(accRes.data.data.items || accRes.data.data);
       setFoodVendors(foodRes.data.data.items || foodRes.data.data);
+      setFoodSchedules(foodSchedRes.data.data.items || foodSchedRes.data.data);
+      setFoodCategories(foodCatRes.data.data.items || foodCatRes.data.data);
+      setFoodItems(foodItemRes.data.data.items || foodItemRes.data.data);
       setTransportVendors(transRes.data.data.items || transRes.data.data);
       
       // Debug bus data
@@ -459,7 +540,56 @@ const CreateTrip = () => {
     setAppliedToAllDays(prev => ({ ...prev, accommodations: true }));
   };
 
+  const applyFoodToAllDays = () => {
+    const allDays = getTripDays();
+    const foodVendorsByDay = {};
+    const foodSchedulesByDay = {};
+    const foodCategoriesByDay = {};
+    const foodItemsByDay = {};
+    
+    allDays.forEach(day => {
+      foodVendorsByDay[day] = [...formData.selectedFoodVendors];
+      foodSchedulesByDay[day] = [...formData.selectedFoodSchedules];
+      foodCategoriesByDay[day] = [...formData.selectedFoodCategories];
+      foodItemsByDay[day] = [...formData.selectedFoodItems];
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      foodVendorsByDay,
+      foodSchedulesByDay,
+      foodCategoriesByDay,
+      foodItemsByDay
+    }));
+    setAppliedToAllDays(prev => ({ ...prev, food: true }));
+  };
+
   const handleNext = () => {
+    // Validate current step before moving to next
+    if (activeStep === 0) {
+      // Basic Information validation
+      if (!formData.title.trim()) {
+        setSnackbar({ open: true, message: 'Trip title is required', severity: 'error' });
+        return;
+      }
+      if (!formData.destination) {
+        setSnackbar({ open: true, message: 'Destination is required', severity: 'error' });
+        return;
+      }
+      if (!formData.startDate) {
+        setSnackbar({ open: true, message: 'Start date is required', severity: 'error' });
+        return;
+      }
+      if (!formData.endDate) {
+        setSnackbar({ open: true, message: 'End date is required', severity: 'error' });
+        return;
+      }
+      if (formData.startDate >= formData.endDate) {
+        setSnackbar({ open: true, message: 'End date must be after start date', severity: 'error' });
+        return;
+      }
+    }
+    
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
 
@@ -500,18 +630,28 @@ const CreateTrip = () => {
     const driversByDay = {};
     const conductorsByDay = {};
     const busesByDay = {};
+    const vendorsByDay = {};
     
     allDays.forEach(day => {
       driversByDay[day] = [...selectedDrivers];
       conductorsByDay[day] = [...selectedConductors];
       busesByDay[day] = [...selectedBuses];
+      vendorsByDay[day] = formData.selectedTransportVendor;
     });
     
     setFormData(prev => ({
       ...prev,
       driversByDay,
       conductorsByDay,
-      busesByDay
+      busesByDay,
+      vendorsByDay
+    }));
+    
+    setAppliedToAllDays(prev => ({
+      ...prev,
+      drivers: true,
+      conductors: true,
+      buses: true
     }));
     
     setApplyButtonState('applied');
@@ -536,6 +676,30 @@ const CreateTrip = () => {
       busesByDay: {
         ...prev.busesByDay,
         [day]: values
+      }
+    }));
+  };
+
+  // Handle vendor day change
+  const handleVendorDayChange = (day, vendorId) => {
+    setFormData(prev => ({
+      ...prev,
+      vendorsByDay: {
+        ...prev.vendorsByDay,
+        [day]: vendorId
+      },
+      // Clear drivers, conductors, buses for this day when vendor changes
+      driversByDay: {
+        ...prev.driversByDay,
+        [day]: []
+      },
+      conductorsByDay: {
+        ...prev.conductorsByDay,
+        [day]: []
+      },
+      busesByDay: {
+        ...prev.busesByDay,
+        [day]: []
       }
     }));
   };
@@ -806,6 +970,160 @@ const CreateTrip = () => {
     });
   };
 
+  const handleFoodVendorsDayChange = (day, vendorIds) => {
+    setFormData(prev => ({
+      ...prev,
+      foodVendorsByDay: {
+        ...prev.foodVendorsByDay,
+        [day]: vendorIds
+      }
+    }));
+  };
+
+  const handleFoodSchedulesDayChange = (day, scheduleIds) => {
+    setFormData(prev => ({
+      ...prev,
+      foodSchedulesByDay: {
+        ...prev.foodSchedulesByDay,
+        [day]: scheduleIds
+      }
+    }));
+  };
+
+  const handleFoodCategoriesDayChange = (day, categoryIds) => {
+    setFormData(prev => ({
+      ...prev,
+      foodCategoriesByDay: {
+        ...prev.foodCategoriesByDay,
+        [day]: categoryIds
+      }
+    }));
+  };
+
+  const handleFoodItemsDayChange = (day, itemIds) => {
+    setFormData(prev => ({
+      ...prev,
+      foodItemsByDay: {
+        ...prev.foodItemsByDay,
+        [day]: itemIds
+      }
+    }));
+  };
+
+  const handleAddFoodAllDays = () => {
+    setNewFoodAllDays({
+      vendors: [...formData.selectedFoodVendors],
+      schedules: [...formData.selectedFoodSchedules],
+      categories: [...formData.selectedFoodCategories],
+      items: [...formData.selectedFoodItems]
+    });
+    setFoodAllDaysDialog(true);
+  };
+
+  const handleQuickAddFoodEntry = () => {
+    // Reset form first
+    setNewFoodEntry({
+      vendors: [],
+      schedules: [],
+      categories: [],
+      items: []
+    });
+    setFoodAllDaysDialog(true);
+  };
+
+  const handleSaveFoodAllDays = () => {
+    setFormData(prev => ({
+      ...prev,
+      selectedFoodVendors: newFoodAllDays.vendors,
+      selectedFoodSchedules: newFoodAllDays.schedules,
+      selectedFoodCategories: newFoodAllDays.categories,
+      selectedFoodItems: newFoodAllDays.items
+    }));
+    setFoodAllDaysDialog(false);
+  };
+
+  const handleAddFoodEntry = () => {
+    const newEntry = {
+      id: Date.now(),
+      vendors: [...newFoodEntry.vendors],
+      schedules: [...newFoodEntry.schedules],
+      categories: [...newFoodEntry.categories],
+      items: [...newFoodEntry.items]
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      allDaysFoodEntries: [...prev.allDaysFoodEntries, newEntry]
+    }));
+    
+    // Reset form and close modal
+    setNewFoodEntry({
+      vendors: [],
+      schedules: [],
+      categories: [],
+      items: []
+    });
+    setFoodAllDaysDialog(false);
+  };
+
+  const handleDeleteFoodEntry = (entryId) => {
+    setFormData(prev => ({
+      ...prev,
+      allDaysFoodEntries: prev.allDaysFoodEntries.filter(entry => entry.id !== entryId)
+    }));
+  };
+
+  const handleAddDayFood = (day) => {
+    setSelectedDayForFood(day);
+    setNewDayFoodEntry({
+      vendors: [],
+      schedules: [],
+      categories: [],
+      items: []
+    });
+    setDayFoodDialog(true);
+  };
+
+  const handleSaveDayFood = () => {
+    if (!selectedDayForFood) return;
+    
+    const newEntry = {
+      id: Date.now(),
+      vendors: [...newDayFoodEntry.vendors],
+      schedules: [...newDayFoodEntry.schedules],
+      categories: [...newDayFoodEntry.categories],
+      items: [...newDayFoodEntry.items]
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      foodVendorsByDay: {
+        ...prev.foodVendorsByDay,
+        [selectedDayForFood]: [...(prev.foodVendorsByDay[selectedDayForFood] || []), newEntry]
+      }
+    }));
+    
+    // Reset form and close modal
+    setNewDayFoodEntry({
+      vendors: [],
+      schedules: [],
+      categories: [],
+      items: []
+    });
+    setDayFoodDialog(false);
+    setSelectedDayForFood(null);
+  };
+
+  const handleDeleteDayFood = (day, entryId) => {
+    setFormData(prev => ({
+      ...prev,
+      foodVendorsByDay: {
+        ...prev.foodVendorsByDay,
+        [day]: (prev.foodVendorsByDay[day] || []).filter(entry => entry.id !== entryId)
+      }
+    }));
+  };
+
 
   const addEvent = () => {
     if (newEvent.title && newEvent.startTime && newEvent.endTime) {
@@ -818,40 +1136,74 @@ const CreateTrip = () => {
     }
   };
 
-  // Apply events to all days
-  const applyEventsToAllDays = () => {
-    if (formData.selectedEventTitle && formData.selectedEventStartTime && formData.selectedEventEndTime) {
+  // Handle add all days event
+  const handleAddAllDaysEvent = () => {
+    setEditingAllDaysEvent(false);
+    setEditingAllDaysEventIndex(0);
+    setAllDaysEvent({ title: '', description: '', startTime: '', endTime: '' });
+    setAllDaysEventDialog(true);
+  };
+
+  // Handle edit all days event
+  const handleEditAllDaysEvent = (index) => {
+    const existingEvent = formData.allDaysEvents[index];
+    if (existingEvent) {
+      setEditingAllDaysEvent(true);
+      setEditingAllDaysEventIndex(index);
+      setAllDaysEvent({
+        title: existingEvent.title || '',
+        description: existingEvent.description || '',
+        startTime: existingEvent.startTime || '',
+        endTime: existingEvent.endTime || ''
+      });
+      setAllDaysEventDialog(true);
+    }
+  };
+
+  // Handle delete all days event
+  const handleDeleteAllDaysEvent = (index) => {
+    setFormData(prev => {
+      const newAllDaysEvents = prev.allDaysEvents.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        allDaysEvents: newAllDaysEvents
+      };
+    });
+  };
+
+  // Save all days event
+  const saveAllDaysEvent = () => {
+    if (allDaysEvent.title) {
       const event = {
         id: Date.now(),
-        title: formData.selectedEventTitle,
-        description: formData.selectedEventDescription,
-        startTime: formData.selectedEventStartTime,
-        endTime: formData.selectedEventEndTime
+        title: allDaysEvent.title,
+        description: allDaysEvent.description,
+        startTime: allDaysEvent.startTime,
+        endTime: allDaysEvent.endTime
       };
 
-      const eventsByDay = {};
-      tripDays.forEach(day => {
-        eventsByDay[day] = [event];
+      setFormData(prev => {
+        if (editingAllDaysEvent) {
+          // Update existing event
+          const updatedEvents = [...prev.allDaysEvents];
+          updatedEvents[editingAllDaysEventIndex] = event;
+          return {
+            ...prev,
+            allDaysEvents: updatedEvents
+          };
+        } else {
+          // Add new event
+          return {
+            ...prev,
+            allDaysEvents: [...prev.allDaysEvents, event]
+          };
+        }
       });
 
-      setFormData(prev => ({
-        ...prev,
-        eventsByDay
-      }));
-
-      setAppliedToAllDays(prev => ({
-        ...prev,
-        events: true
-      }));
-
-      // Reset form
-      setFormData(prev => ({
-        ...prev,
-        selectedEventTitle: '',
-        selectedEventDescription: '',
-        selectedEventStartTime: '',
-        selectedEventEndTime: ''
-      }));
+      setAllDaysEvent({ title: '', description: '', startTime: '', endTime: '' });
+      setAllDaysEventDialog(false);
+      setEditingAllDaysEvent(false);
+      setEditingAllDaysEventIndex(0);
     }
   };
 
@@ -875,11 +1227,253 @@ const CreateTrip = () => {
     });
   };
 
+  // Handle add event for specific day
+  const handleAddEvent = (day) => {
+    setSelectedDayForEvent(day);
+    setEditingEvent(false);
+    setEditingEventIndex(0);
+    setDayEvent({ title: '', description: '', startTime: '', endTime: '' });
+    setDayEventDialog(true);
+  };
+
+  // Handle edit event for specific day
+  const handleEditEvent = (day, eventIndex = 0) => {
+    const existingEvent = formData.eventsByDay[day]?.[eventIndex];
+    if (existingEvent) {
+      setSelectedDayForEvent(day);
+      setEditingEvent(true);
+      setEditingEventIndex(eventIndex);
+      setDayEvent({
+        title: existingEvent.title || '',
+        description: existingEvent.description || '',
+        startTime: existingEvent.startTime || '',
+        endTime: existingEvent.endTime || ''
+      });
+      setDayEventDialog(true);
+    }
+  };
+
+  // Handle delete event for specific day
+  const handleDeleteEvent = (day, eventIndex = 0) => {
+    setFormData(prev => {
+      const newEventsByDay = { ...prev.eventsByDay };
+      if (newEventsByDay[day]) {
+        if (newEventsByDay[day].length === 1) {
+          // If only one event, remove the entire day
+          delete newEventsByDay[day];
+        } else {
+          // If multiple events, remove the specific event
+          newEventsByDay[day] = newEventsByDay[day].filter((_, index) => index !== eventIndex);
+        }
+      }
+      return {
+        ...prev,
+        eventsByDay: newEventsByDay
+      };
+    });
+  };
+
+  // Save day event
+  const saveDayEvent = () => {
+    if (dayEvent.title && selectedDayForEvent) {
+      const event = {
+        id: Date.now(),
+        title: dayEvent.title,
+        description: dayEvent.description,
+        startTime: dayEvent.startTime,
+        endTime: dayEvent.endTime
+      };
+
+      setFormData(prev => {
+        const currentEvents = prev.eventsByDay[selectedDayForEvent] || [];
+        
+        if (editingEvent) {
+          // Update existing event
+          const updatedEvents = [...currentEvents];
+          updatedEvents[editingEventIndex] = event;
+          return {
+            ...prev,
+            eventsByDay: {
+              ...prev.eventsByDay,
+              [selectedDayForEvent]: updatedEvents
+            }
+          };
+        } else {
+          // Add new event
+          return {
+            ...prev,
+            eventsByDay: {
+              ...prev.eventsByDay,
+              [selectedDayForEvent]: [...currentEvents, event]
+            }
+          };
+        }
+      });
+
+      setDayEvent({ title: '', description: '', startTime: '', endTime: '' });
+      setDayEventDialog(false);
+      setSelectedDayForEvent(null);
+      setEditingEvent(false);
+      setEditingEventIndex(0);
+    }
+  };
+
   const removeEvent = (id) => {
     setFormData(prev => ({
       ...prev,
       events: prev.events.filter(event => event.id !== id)
     }));
+  };
+
+  // Handle finance change for vendors
+  const handleFinanceChange = (vendorId, type, field, value) => {
+    setFormData(prev => {
+      const existingVendor = prev.finance.vendors.find(f => f.vendorId === vendorId && f.type === type);
+      
+      if (existingVendor) {
+        // Update existing vendor
+        const updatedVendors = prev.finance.vendors.map(f => 
+          f.vendorId === vendorId && f.type === type 
+            ? { ...f, [field]: value }
+            : f
+        );
+        return {
+          ...prev,
+          finance: {
+            ...prev.finance,
+            vendors: updatedVendors
+          }
+        };
+      } else {
+        // Add new vendor
+        const newVendor = {
+          id: Date.now(),
+          vendorId,
+          type,
+          amount: field === 'amount' ? value : '',
+          description: field === 'description' ? value : ''
+        };
+        return {
+          ...prev,
+          finance: {
+            ...prev.finance,
+            vendors: [...prev.finance.vendors, newVendor]
+          }
+        };
+      }
+    });
+  };
+
+  // Calculate total amount
+  const calculateTotalAmount = () => {
+    const total = formData.finance.vendors.reduce((sum, vendor) => {
+      const amount = parseFloat(vendor.amount) || 0;
+      return sum + amount;
+    }, 0);
+    return total.toLocaleString('en-IN');
+  };
+
+  // Get selected vendors from transportation and accommodation
+  const getSelectedVendors = () => {
+    const selectedVendors = new Map();
+    
+    // Add transport vendor if selected
+    if (formData.selectedTransportVendor) {
+      const vendorId = formData.selectedTransportVendor;
+      const vendor = transportVendors.find(v => v.id === parseInt(vendorId));
+      if (vendor) {
+        selectedVendors.set(`${vendorId}-transport`, {
+          id: vendorId,
+          type: 'transport',
+          name: vendor.title
+        });
+      }
+    }
+    
+    // Add accommodation vendor if selected (All Days Selection)
+    if (formData.selectedAccommodationVendor) {
+      const vendorId = formData.selectedAccommodationVendor;
+      const vendor = accommodationVendors.find(v => v.id === parseInt(vendorId));
+      if (vendor) {
+        selectedVendors.set(`${vendorId}-accommodation`, {
+          id: vendorId,
+          type: 'accommodation',
+          name: vendor.title
+        });
+      }
+    }
+    
+    // Add day-wise transport vendors (only if different from all days selection)
+    Object.values(formData.vendorsByDay).forEach(vendorId => {
+      if (vendorId && vendorId !== formData.selectedTransportVendor) {
+        const vendor = transportVendors.find(v => v.id === parseInt(vendorId));
+        if (vendor) {
+          selectedVendors.set(`${vendorId}-transport`, {
+            id: vendorId,
+            type: 'transport',
+            name: vendor.title
+          });
+        }
+      }
+    });
+    
+    // Add accommodation vendors from day-wise selection (only if different from all days selection)
+    Object.values(formData.accommodationsByDay).forEach(accommodations => {
+      if (Array.isArray(accommodations)) {
+        accommodations.forEach(accommodation => {
+          if (accommodation.vendor && accommodation.vendor !== formData.selectedAccommodationVendor) {
+            const vendor = accommodationVendors.find(v => v.id === accommodation.vendor);
+            if (vendor) {
+              selectedVendors.set(`${accommodation.vendor}-accommodation`, {
+                id: accommodation.vendor,
+                type: 'accommodation',
+                name: vendor.title
+              });
+            }
+          }
+        });
+      }
+    });
+    
+    // Add food vendors from All Days Selection (new structure)
+    if (formData.allDaysFoodEntries && formData.allDaysFoodEntries.length > 0) {
+      formData.allDaysFoodEntries.forEach(entry => {
+        entry.vendors.forEach(vendorId => {
+          const vendor = foodVendors.find(v => v.id === vendorId);
+          if (vendor) {
+            selectedVendors.set(`${vendorId}-food`, {
+              id: vendorId,
+              type: 'food',
+              name: vendor.title,
+              typeColor: 'success'
+            });
+          }
+        });
+      });
+    }
+    
+    // Add food vendors from day-wise selection (new structure)
+    Object.values(formData.foodVendorsByDay).forEach(dayEntries => {
+      if (Array.isArray(dayEntries)) {
+        dayEntries.forEach(entry => {
+          if (entry.vendors && Array.isArray(entry.vendors)) {
+            entry.vendors.forEach(vendorId => {
+              const vendor = foodVendors.find(v => v.id === vendorId);
+              if (vendor) {
+                selectedVendors.set(`${vendorId}-food`, {
+                  id: vendorId,
+                  type: 'food',
+                  name: vendor.title,
+                  typeColor: 'success'
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+    
+    return Array.from(selectedVendors.values());
   };
 
   const addFinance = () => {
@@ -914,6 +1508,28 @@ const CreateTrip = () => {
 
   const handleSubmit = async () => {
     try {
+      // Only mandatory validations
+      if (!formData.title.trim()) {
+        setSnackbar({ open: true, message: 'Trip title is required', severity: 'error' });
+        return;
+      }
+      if (!formData.destination) {
+        setSnackbar({ open: true, message: 'Destination is required', severity: 'error' });
+        return;
+      }
+      if (!formData.startDate) {
+        setSnackbar({ open: true, message: 'Start date is required', severity: 'error' });
+        return;
+      }
+      if (!formData.endDate) {
+        setSnackbar({ open: true, message: 'End date is required', severity: 'error' });
+        return;
+      }
+      if (formData.startDate >= formData.endDate) {
+        setSnackbar({ open: true, message: 'End date must be after start date', severity: 'error' });
+        return;
+      }
+
       setLoading(true);
       
       // Check if all days are applied (green state)
@@ -925,8 +1541,8 @@ const CreateTrip = () => {
         // If all days applied, use all days selection data
         tripData = {
           ...formData,
-          startDate: formData.startDate?.toISOString(),
-          endDate: formData.endDate?.toISOString(),
+          start_date: formData.startDate?.toISOString(),
+          end_date: formData.endDate?.toISOString(),
           // Use all days selection data
           drivers: formData.selectedDrivers,
           conductors: formData.selectedConductors,
@@ -942,8 +1558,8 @@ const CreateTrip = () => {
         // If not all days applied, use day-wise selection data
         tripData = {
           ...formData,
-          startDate: formData.startDate?.toISOString(),
-          endDate: formData.endDate?.toISOString(),
+          start_date: formData.startDate?.toISOString(),
+          end_date: formData.endDate?.toISOString(),
           // Use day-wise selection data
           driversByDay: formData.driversByDay,
           conductorsByDay: formData.conductorsByDay,
@@ -957,7 +1573,8 @@ const CreateTrip = () => {
         };
       }
       
-      await axios.post('/api/trips', tripData);
+      const response = await axios.post('/api/trips', tripData);
+      console.log('Trip created successfully:', response.data);
       setSnackbar({ open: true, message: 'Trip created successfully!', severity: 'success' });
       
       // Reset form
@@ -978,14 +1595,34 @@ const CreateTrip = () => {
         selectedAccommodationVendor: '',
         selectedAccommodationStartTime: '',
         selectedAccommodationEndTime: '',
+        selectedFoodVendors: [],
+        foodVendorsByDay: {},
+        selectedFoodSchedules: [],
+        selectedFoodCategories: [],
+        selectedFoodItems: [],
+        foodSchedulesByDay: {},
+        foodCategoriesByDay: {},
+        foodItemsByDay: {},
+        allDaysFoodEntries: [],
+        foodVendorsByDay: {},
         events: [],
         finance: { vendors: [], totalAmount: 0 }
       });
-      setAppliedToAllDays({ drivers: false, conductors: false, buses: false, accommodations: false });
+      setAppliedToAllDays({ drivers: false, conductors: false, buses: false, accommodations: false, food: false, events: false });
       setActiveStep(0);
     } catch (error) {
       console.error('Error creating trip:', error);
-      setSnackbar({ open: true, message: error.response?.data?.message || 'Error creating trip', severity: 'error' });
+      console.log('Error response:', error.response?.data);
+      
+      let errorMessage = 'Error creating trip';
+      if (error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors.map(err => err.msg).join(', ');
+        errorMessage = `Validation failed: ${validationErrors}`;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -1045,6 +1682,13 @@ const CreateTrip = () => {
       case 1:
         return (
           <Box>
+            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
+              Transportation
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Select transport vendor and manage drivers, conductors, and buses for your trip
+            </Typography>
+
             {/* All Days Selection */}
             <Box sx={{ mb: 3 }}>
               <Box 
@@ -1073,32 +1717,61 @@ const CreateTrip = () => {
               {allDaysExpanded && (
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 4px 4px', backgroundColor: 'white' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Select drivers, conductors, and buses for all {tripDays.length} days
+                    Select transport vendor, drivers, conductors, and buses for all {tripDays.length} days
                   </Typography>
+
+                  {/* Transport Vendor Selection */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Transport Vendor
+                    </Typography>
+                    <FormControl fullWidth>
+                      <InputLabel>Select Transport Vendor</InputLabel>
+                <Select
+                        value={formData.selectedTransportVendor}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          selectedTransportVendor: e.target.value,
+                          selectedDrivers: [],
+                          selectedConductors: [],
+                          selectedBuses: []
+                        }))}
+                        label="Select Transport Vendor"
+                      >
+                        {transportVendors.map((vendor) => (
+                          <MenuItem key={vendor.id} value={vendor.id}>
+                            {vendor.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+                  </Box>
               
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                       <Box sx={{ flex: 1, minWidth: 300 }}>
                         <DropdownChecklist
                           label="Drivers"
-                          options={drivers.map(driver => ({
+                          options={filteredDrivers.map(driver => ({
                             value: driver.id,
                             label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
                           }))}
                           selectedValues={formData.selectedDrivers}
                           onChange={handleDriverSelectionChange}
+                          disabled={!formData.selectedTransportVendor}
                         />
                       </Box>
                       
                       <Box sx={{ flex: 1, minWidth: 300 }}>
                         <DropdownChecklist
                           label="Conductors"
-                          options={conductors.map(conductor => ({
+                          options={filteredConductors.map(conductor => ({
                             value: conductor.id,
                             label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
                           }))}
                           selectedValues={formData.selectedConductors}
                           onChange={handleConductorSelectionChange}
+                          disabled={!formData.selectedTransportVendor}
                         />
                       </Box>
                     </Box>
@@ -1106,23 +1779,61 @@ const CreateTrip = () => {
           <Box sx={{ width: '100%' }}>
                       <DropdownChecklist
                         label="Buses"
-                        options={buses.map(bus => ({
+                        options={filteredBuses.map(bus => ({
                           value: bus.id,
                           label: `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}`
                         }))}
                         selectedValues={formData.selectedBuses}
                         onChange={handleBusSelectionChange}
+                        disabled={!formData.selectedTransportVendor}
                       />
                     </Box>
                   </Box>
                   
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          selectedTransportVendor: '',
+                          selectedDrivers: [],
+                          selectedConductors: [],
+                          selectedBuses: [],
+                          driversByDay: {},
+                          conductorsByDay: {},
+                          busesByDay: {},
+                          vendorsByDay: {},
+                          timeByDay: {}
+                        }));
+                        setAppliedToAllDays(prev => ({
+                          ...prev,
+                          drivers: false,
+                          conductors: false,
+                          buses: false
+                        }));
+                        setApplyButtonState('default');
+                      }}
+                      sx={{
+                        py: 1.5, 
+                        px: 4,
+                        borderColor: '#f44336',
+                        color: '#f44336',
+                        '&:hover': {
+                          borderColor: '#d32f2f',
+                          backgroundColor: 'rgba(244, 67, 54, 0.04)'
+                        }
+                      }}
+                    >
+                      CLEAR ALL DAYS
+                    </Button>
                     <Button
                       variant="contained"
                       size="large"
                       onClick={applyAllToAllDays}
-                      disabled={formData.selectedDrivers.length === 0 && formData.selectedConductors.length === 0 && formData.selectedBuses.length === 0}
-                      sx={{ 
+                      disabled={!formData.selectedTransportVendor || (formData.selectedDrivers.length === 0 && formData.selectedConductors.length === 0 && formData.selectedBuses.length === 0)}
+                      sx={{
                         py: 1.5, 
                         px: 6,
                         backgroundColor: applyButtonState === 'applied' ? '#4caf50' : 
@@ -1183,87 +1894,221 @@ const CreateTrip = () => {
                       <Alert severity="info" sx={{ mb: 3 }}>
                         To modify individual days, first clear the "All Days Selection" or use the "Apply to All Days" button to update all days.
                       </Alert>
+                      
+                      {/* View Mode - Show applied data */}
+                      <Grid container spacing={1.5}>
+                        {tripDays.map((day, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={day}>
+                            <Card variant="outlined" sx={{ 
+                              p: 1.5, 
+                              height: '100%', 
+                              minHeight: 150, 
+                              maxWidth: 300,
+                              backgroundColor: '#f8f9fa'
+                            }}>
+                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5, fontSize: '0.9rem' }}>
+                                Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </Typography>
+                              
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                {/* Show applied vendor */}
+                                <Box sx={{ p: 1, backgroundColor: 'rgba(25, 118, 210, 0.1)', borderRadius: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                                    Vendor: {transportVendors.find(v => v.id === parseInt(formData.selectedTransportVendor))?.title || 'Not selected'}
+                                  </Typography>
+                                </Box>
+                                
+                                {/* Show applied drivers */}
+                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                    Drivers:
+                                  </Typography>
+                                  {formData.selectedDrivers.length > 0 ? (
+                                    formData.selectedDrivers.map(driverId => {
+                                      const driver = drivers.find(d => d.id === driverId);
+                                      return (
+                                        <Typography key={driverId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                          • {driver ? `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}` : `Driver ${driverId}`}
+                                        </Typography>
+                                      );
+                                    })
+                                  ) : (
+                                    <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                      No drivers selected
+                                    </Typography>
+                                  )}
+                                </Box>
+                                
+                                {/* Show applied conductors */}
+                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                    Conductors:
+                                  </Typography>
+                                  {formData.selectedConductors.length > 0 ? (
+                                    formData.selectedConductors.map(conductorId => {
+                                      const conductor = conductors.find(c => c.id === conductorId);
+                                      return (
+                                        <Typography key={conductorId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                          • {conductor ? `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}` : `Conductor ${conductorId}`}
+                                        </Typography>
+                                      );
+                                    })
+                                  ) : (
+                                    <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                      No conductors selected
+                                    </Typography>
+                                  )}
+                                </Box>
+                                
+                                {/* Show applied buses */}
+                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                    Buses:
+                                  </Typography>
+                                  {formData.selectedBuses.length > 0 ? (
+                                    formData.selectedBuses.map(busId => {
+                                      const bus = buses.find(b => b.id === busId);
+                                      return (
+                                        <Typography key={busId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                          • {bus ? `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}` : `Bus ${busId}`}
+                                        </Typography>
+                                      );
+                                    })
+                                  ) : (
+                                    <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                      No buses selected
+                                    </Typography>
+                                  )}
+                                </Box>
+                                
+                                {/* Show applied timings */}
+                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                    Timings:
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                    Start: {formData.timeByDay[day]?.startTime || 'Not set'}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                    End: {formData.timeByDay[day]?.endTime || 'Not set'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Card>
+            </Grid>
+                        ))}
+                      </Grid>
                     </Box>
                   ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                      Select different drivers, conductors, buses, and timings for specific days
-                    </Typography>
-                  )}
-              
-                  <Grid container spacing={1.5}>
-                    {tripDays.map((day, index) => (
-                      <Grid item xs={12} sm={6} md={4} key={day}>
-                        <Card variant="outlined" sx={{ 
-                          p: 1.5, 
-                          height: '100%', 
-                          minHeight: 150, 
-                          maxWidth: 300,
-                          opacity: appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses ? 0.6 : 1,
-                          pointerEvents: appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses ? 'none' : 'auto'
-                        }}>
-                          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5, fontSize: '0.9rem' }}>
-                            Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </Typography>
-                          
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                            <DropdownChecklist
-                              label="Drivers"
-                              options={drivers.map(driver => ({
-                                value: driver.id,
-                                label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
-                              }))}
-                              selectedValues={formData.driversByDay[day] || []}
-                              onChange={(values) => handleDriverDayChange(day, values)}
-                              disabled={appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses}
-                            />
-                            
-                            <DropdownChecklist
-                              label="Conductors"
-                              options={conductors.map(conductor => ({
-                                value: conductor.id,
-                                label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
-                              }))}
-                              selectedValues={formData.conductorsByDay[day] || []}
-                              onChange={(values) => handleConductorDayChange(day, values)}
-                              disabled={appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses}
-                            />
-                            
-                            <DropdownChecklist
-                              label="Buses"
-                              options={buses.map(bus => ({
-                                value: bus.id,
-                                label: `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}`
-                              }))}
-                              selectedValues={formData.busesByDay[day] || []}
-                              onChange={(values) => handleBusDayChange(day, values)}
-                              disabled={appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses}
-                            />
-
-                            <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
-                              <TimePicker
-                                label="Start Time"
-                                value={formData.timeByDay[day]?.startTime || ''}
-                                onChange={(time) => handleTimeChange(day, 'startTime', time)}
-                                disabled={appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses}
-                              />
+                    <>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Select different drivers, conductors, buses, and timings for specific days
+                      </Typography>
+                      
+                      <Grid container spacing={1.5}>
+                        {tripDays.map((day, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={day}>
+                            <Card variant="outlined" sx={{ 
+                              p: 1.5, 
+                              height: '100%', 
+                              minHeight: 150, 
+                              maxWidth: 300
+                            }}>
+                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5, fontSize: '0.9rem' }}>
+                                Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </Typography>
                               
-                              <TimePicker
-                                label="End Time"
-                                value={formData.timeByDay[day]?.endTime || ''}
-                                onChange={(time) => handleTimeChange(day, 'endTime', time)}
-                                disabled={appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses}
-                              />
-                            </Box>
-                          </Box>
-                        </Card>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                {/* Vendor Selection for this day */}
+                                <FormControl fullWidth size="small">
+                <InputLabel>Transport Vendor</InputLabel>
+                <Select
+                                    value={formData.vendorsByDay[day] || ''}
+                                    onChange={(e) => handleVendorDayChange(day, e.target.value)}
+                  label="Transport Vendor"
+                >
+                  {transportVendors.map((vendor) => (
+                    <MenuItem key={vendor.id} value={vendor.id}>
+                      {vendor.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+                                <DropdownChecklist
+                                  label="Drivers"
+                                  options={formData.vendorsByDay[day] 
+                                    ? drivers.filter(driver => driver.transport_vendor_id === parseInt(formData.vendorsByDay[day])).map(driver => ({
+                                        value: driver.id,
+                                        label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                                      }))
+                                    : []
+                                  }
+                                  selectedValues={formData.driversByDay[day] || []}
+                                  onChange={(values) => handleDriverDayChange(day, values)}
+                                  disabled={!formData.vendorsByDay[day]}
+                                />
+                                
+                                <DropdownChecklist
+                                  label="Conductors"
+                                  options={formData.vendorsByDay[day] 
+                                    ? conductors.filter(conductor => conductor.transport_vendor_id === parseInt(formData.vendorsByDay[day])).map(conductor => ({
+                                        value: conductor.id,
+                                        label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                                      }))
+                                    : []
+                                  }
+                                  selectedValues={formData.conductorsByDay[day] || []}
+                                  onChange={(values) => handleConductorDayChange(day, values)}
+                                  disabled={!formData.vendorsByDay[day]}
+                                />
+                                
+                                <DropdownChecklist
+                                  label="Buses"
+                                  options={formData.vendorsByDay[day] 
+                                    ? buses.filter(bus => bus.transport_vendor_id === parseInt(formData.vendorsByDay[day])).map(bus => ({
+                                        value: bus.id,
+                                        label: `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}`
+                                      }))
+                                    : []
+                                  }
+                                  selectedValues={formData.busesByDay[day] || []}
+                                  onChange={(values) => handleBusDayChange(day, values)}
+                                  disabled={!formData.vendorsByDay[day]}
+                                />
+
+                                <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
+                                  <TimePicker
+                                    label="Start Time"
+                                    value={formData.timeByDay[day]?.startTime || ''}
+                                    onChange={(time) => handleTimeChange(day, 'startTime', time)}
+                                    disabled={false}
+                                  />
+                                  
+                                  <TimePicker
+                                    label="End Time"
+                                    value={formData.timeByDay[day]?.endTime || ''}
+                                    onChange={(time) => handleTimeChange(day, 'endTime', time)}
+                                    disabled={false}
+                                  />
+                                </Box>
+                              </Box>
+                            </Card>
+            </Grid>
+                        ))}
                       </Grid>
-                    ))}
-                  </Grid>
+                    </>
+                  )}
                 </Box>
               )}
             </Box>
@@ -1340,30 +2185,59 @@ const CreateTrip = () => {
 
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                       <Box sx={{ flex: 1, minWidth: 200 }}>
-                        <TextField
+              <TextField
                           label="Start Time"
                           type="time"
                           value={formData.selectedAccommodationStartTime || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationStartTime: e.target.value }))}
-                          fullWidth
-                          InputLabelProps={{ shrink: true }}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
                         />
                       </Box>
                       
                       <Box sx={{ flex: 1, minWidth: 200 }}>
-                        <TextField
+              <TextField
                           label="End Time"
                           type="time"
                           value={formData.selectedAccommodationEndTime || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationEndTime: e.target.value }))}
-                          fullWidth
+                fullWidth
                           InputLabelProps={{ shrink: true }}
                         />
                       </Box>
                     </Box>
                   </Box>
                   
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          selectedAccommodationVendor: '',
+                          selectedAccommodationStartTime: '',
+                          selectedAccommodationEndTime: '',
+                          accommodationsByDay: {}
+                        }));
+                        setAppliedToAllDays(prev => ({
+                          ...prev,
+                          accommodations: false
+                        }));
+                      }}
+                sx={{
+                        py: 1.5, 
+                        px: 4,
+                        borderColor: '#f44336',
+                        color: '#f44336',
+                        '&:hover': {
+                          borderColor: '#d32f2f',
+                          backgroundColor: 'rgba(244, 67, 54, 0.04)'
+                        }
+                      }}
+                    >
+                      CLEAR ALL DAYS
+                    </Button>
                     <Button
                       variant="contained"
                       size="large"
@@ -1483,10 +2357,10 @@ const CreateTrip = () => {
                   ))}
                 </Select>
               </FormControl>
-
+              
                             {/* Time Fields */}
                             <Box sx={{ display: 'flex', gap: 1 }}>
-                              <TextField
+              <TextField
                                 label="Start Time"
                                 type="time"
                                 size="small"
@@ -1526,7 +2400,490 @@ const CreateTrip = () => {
         return (
           <Box>
             <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-              Event Management
+              Food Management
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              Select food vendors for your trip - All Days or Day-wise selection
+            </Typography>
+
+            {/* All Days Selection */}
+            <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: 'white', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <RestaurantIcon color="primary" />
+                  All Days Selection
+                  {appliedToAllDays.food && (
+                    <Chip 
+                      label="Applied" 
+                      size="small" 
+                      color="success" 
+                      sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+                    />
+                  )}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {appliedToAllDays.food && (
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          selectedFoodVendors: [],
+                          foodVendorsByDay: {},
+                          selectedFoodSchedules: [],
+                          selectedFoodCategories: [],
+                          selectedFoodItems: [],
+                          foodSchedulesByDay: {},
+                          foodCategoriesByDay: {},
+                          foodItemsByDay: {},
+                          allDaysFoodEntries: []
+                        }));
+                        setAppliedToAllDays(prev => ({
+                          ...prev,
+                          food: false
+                        }));
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                  <IconButton
+                    color="primary"
+                    onClick={handleQuickAddFoodEntry}
+                    sx={{ 
+                      border: '2px dashed #2196f3',
+                      borderRadius: 2,
+                      width: 48,
+                      height: 48,
+                      '&:hover': {
+                        backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                        borderColor: '#1976d2'
+                      }
+                    }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Click the + icon to add food entries for all days. Each entry can have different vendors, schedules, categories, and items.
+              </Typography>
+
+              {/* Show added food entries */}
+              {formData.allDaysFoodEntries.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>
+                    Added Food Entries:
+                  </Typography>
+                  {formData.allDaysFoodEntries.map((entry, index) => (
+                    <Card key={entry.id} variant="outlined" sx={{ mb: 2, p: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                          {entry.schedules.length > 0 ? 
+                            entry.schedules.map(scheduleId => {
+                              const schedule = foodSchedules.find(s => s.id === scheduleId);
+                              return schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`;
+                            }).join(', ') : 
+                            `Entry ${index + 1}`
+                          }
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteFoodEntry(entry.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                      
+                      <Grid container spacing={1}>
+                        {entry.vendors.length > 0 && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Vendors:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {entry.vendors.map(vendorId => {
+                                const vendor = foodVendors.find(v => v.id === vendorId);
+                                return (
+                                  <Chip
+                                    key={vendorId}
+                                    label={vendor ? vendor.title : `Vendor ${vendorId}`}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                );
+                              })}
+                            </Box>
+                          </Grid>
+                        )}
+                        
+                        {entry.schedules.length > 0 && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Schedules:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {entry.schedules.map(scheduleId => {
+                                const schedule = foodSchedules.find(s => s.id === scheduleId);
+                                return (
+                                  <Chip
+                                    key={scheduleId}
+                                    label={schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`}
+                                    size="small"
+                                    color="secondary"
+                                    variant="outlined"
+                                  />
+                                );
+                              })}
+                            </Box>
+                          </Grid>
+                        )}
+                        
+                        {entry.categories.length > 0 && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Categories:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {entry.categories.map(categoryId => {
+                                const category = foodCategories.find(c => c.id === categoryId);
+                                return (
+                                  <Chip
+                                    key={categoryId}
+                                    label={category ? (category.title || category.name) : `Category ${categoryId}`}
+                                    size="small"
+                                    color="info"
+                                    variant="outlined"
+                                  />
+                                );
+                              })}
+                            </Box>
+                          </Grid>
+                        )}
+                        
+                        {entry.items.length > 0 && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Items:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {entry.items.map(itemId => {
+                                const item = foodItems.find(i => i.id === itemId);
+                                return (
+                                  <Chip
+                                    key={itemId}
+                                    label={item ? (item.title || item.name) : `Item ${itemId}`}
+                                    size="small"
+                                    color="success"
+                                    variant="outlined"
+                                  />
+                                );
+                              })}
+                            </Box>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Card>
+                  ))}
+                </Box>
+              )}
+
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={applyFoodToAllDays}
+                  disabled={formData.allDaysFoodEntries.length === 0}
+                  sx={{ px: 4 }}
+                >
+                  APPLY TO ALL DAYS
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Day-wise Selection */}
+            <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: 'white', mb: 3 }}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  mb: 2, 
+                  cursor: 'pointer',
+                  p: 1,
+                  borderRadius: 1,
+                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+                onClick={() => setFoodDayWiseExpanded(!foodDayWiseExpanded)}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  + Day-wise Selection
+                  {appliedToAllDays.food && (
+                    <Chip 
+                      label="View Mode" 
+                      size="small" 
+                      color="info" 
+                      sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+                    />
+                  )}
+                </Typography>
+                <IconButton size="small">
+                  {foodDayWiseExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+              </Box>
+              
+              {foodDayWiseExpanded && (
+                <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 4px 4px', backgroundColor: 'white' }}>
+                  {appliedToAllDays.food ? (
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        All days have been configured from "All Days Selection". This is view mode.
+                      </Typography>
+                      <Alert severity="info" sx={{ mb: 3 }}>
+                        To modify individual days, first clear the "All Days Selection" or use the "Apply to All Days" button to update all days.
+                      </Alert>
+                      
+                      {/* View Mode - Show applied data */}
+                      <Grid container spacing={1.5}>
+                        {getTripDays().map((day, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={day}>
+                            <Card variant="outlined" sx={{ 
+                              p: 1.5, 
+                              height: '100%', 
+                              minHeight: 120, 
+                              maxWidth: 300,
+                              backgroundColor: '#f8f9fa'
+                            }}>
+                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5, fontSize: '0.9rem' }}>
+                                Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </Typography>
+                              
+                              <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1, mb: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                  Food Vendors:
+                                </Typography>
+                                {formData.selectedFoodVendors.length > 0 ? (
+                                  formData.selectedFoodVendors.map(vendorId => {
+                                    const vendor = foodVendors.find(v => v.id === vendorId);
+                                    return (
+                                      <Typography key={vendorId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                        • {vendor ? vendor.title : `Vendor ${vendorId}`}
+                                      </Typography>
+                                    );
+                                  })
+                                ) : (
+                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                    No food vendors selected
+                                  </Typography>
+                                )}
+                              </Box>
+
+                              <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1, mb: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                  Food Schedules:
+                                </Typography>
+                                {formData.selectedFoodSchedules.length > 0 ? (
+                                  formData.selectedFoodSchedules.map(scheduleId => {
+                                    const schedule = foodSchedules.find(s => s.id === scheduleId);
+                                    return (
+                                      <Typography key={scheduleId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                        • {schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`}
+                                      </Typography>
+                                    );
+                                  })
+                                ) : (
+                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                    No schedules selected
+                                  </Typography>
+                                )}
+                              </Box>
+
+                              <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1, mb: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                  Food Categories:
+                                </Typography>
+                                {formData.selectedFoodCategories.length > 0 ? (
+                                  formData.selectedFoodCategories.map(categoryId => {
+                                    const category = foodCategories.find(c => c.id === categoryId);
+                                    return (
+                                      <Typography key={categoryId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                        • {category ? (category.title || category.name) : `Category ${categoryId}`}
+                                      </Typography>
+                                    );
+                                  })
+                                ) : (
+                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                    No categories selected
+                                  </Typography>
+                                )}
+                              </Box>
+
+                              <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                  Food Items:
+                                </Typography>
+                                {formData.selectedFoodItems.length > 0 ? (
+                                  formData.selectedFoodItems.map(itemId => {
+                                    const item = foodItems.find(i => i.id === itemId);
+                                    return (
+                                      <Typography key={itemId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                        • {item ? (item.title || item.name) : `Item ${itemId}`}
+                                      </Typography>
+                                    );
+                                  })
+                                ) : (
+                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                    No items selected
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  ) : (
+                    <>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Select different food vendors for specific days
+                      </Typography>
+                      
+                      <Grid container spacing={1.5}>
+                        {getTripDays().map((day, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={day}>
+                            <Card variant="outlined" sx={{ 
+                              p: 1.5, 
+                              height: '100%', 
+                              minHeight: 120, 
+                              maxWidth: 300
+                            }}>
+                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5, fontSize: '0.9rem' }}>
+                                Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </Typography>
+                              
+                              {/* Show existing food entries for this day */}
+                              {(formData.foodVendorsByDay[day] || []).length > 0 && (
+                                <Box sx={{ mb: 2 }}>
+                                  {(formData.foodVendorsByDay[day] || []).map((entry, entryIndex) => (
+                                    <Card key={entry.id} variant="outlined" sx={{ mb: 1, p: 1, backgroundColor: '#f8f9fa' }}>
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}>
+                                          {entry.schedules.length > 0 ? 
+                                            entry.schedules.map(scheduleId => {
+                                              const schedule = foodSchedules.find(s => s.id === scheduleId);
+                                              return schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`;
+                                            }).join(', ') : 
+                                            `Entry ${entryIndex + 1}`
+                                          }
+                                        </Typography>
+                                        <IconButton
+                                          size="small"
+                                          color="error"
+                                          onClick={() => handleDeleteDayFood(day, entry.id)}
+                                          sx={{ p: 0.5 }}
+                                        >
+                                          <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                      </Box>
+                                      
+                                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                        {entry.vendors.map(vendorId => {
+                                          const vendor = foodVendors.find(v => v.id === vendorId);
+                                          return (
+                                            <Chip
+                                              key={vendorId}
+                                              label={vendor ? vendor.title : `Vendor ${vendorId}`}
+                                              size="small"
+                                              color="primary"
+                                              variant="outlined"
+                                            />
+                                          );
+                                        })}
+                                        {entry.schedules.map(scheduleId => {
+                                          const schedule = foodSchedules.find(s => s.id === scheduleId);
+                                          return (
+                                            <Chip
+                                              key={scheduleId}
+                                              label={schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`}
+                                              size="small"
+                                              color="secondary"
+                                              variant="outlined"
+                                            />
+                                          );
+                                        })}
+                                        {entry.categories.map(categoryId => {
+                                          const category = foodCategories.find(c => c.id === categoryId);
+                                          return (
+                                            <Chip
+                                              key={categoryId}
+                                              label={category ? (category.title || category.name) : `Category ${categoryId}`}
+                                              size="small"
+                                              color="info"
+                                              variant="outlined"
+                                            />
+                                          );
+                                        })}
+                                        {entry.items.map(itemId => {
+                                          const item = foodItems.find(i => i.id === itemId);
+                                          return (
+                                            <Chip
+                                              key={itemId}
+                                              label={item ? (item.title || item.name) : `Item ${itemId}`}
+                                              size="small"
+                                              color="success"
+                                              variant="outlined"
+                                            />
+                                          );
+                                        })}
+                                      </Box>
+                                    </Card>
+                                  ))}
+                                </Box>
+                              )}
+                              
+                              {/* Add button */}
+                              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => handleAddDayFood(day)}
+                                  sx={{ 
+                                    border: '2px dashed #2196f3',
+                                    borderRadius: 2,
+                                    width: 40,
+                                    height: 40,
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                                      borderColor: '#1976d2'
+                                    }
+                                  }}
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                              </Box>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        );
+
+      case 4:
+        return (
+          <Box>
+            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
+              Events
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               Add events and activities for your trip - All Days or Day-wise selection
@@ -1544,17 +2901,19 @@ const CreateTrip = () => {
                   borderRadius: 1,
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',
                   cursor: 'pointer',
-                  mb: allDaysExpanded ? 2 : 0
+                  mb: allDaysExpanded ? 2 : 0,
+                  opacity: !formData.selectedTransportVendor ? 0.5 : 1,
+                  pointerEvents: !formData.selectedTransportVendor ? 'none' : 'auto'
                 }}
-                onClick={() => setAllDaysExpanded(!allDaysExpanded)}
+                onClick={() => formData.selectedTransportVendor && setAllDaysExpanded(!allDaysExpanded)}
               >
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   All Days Selection
                 </Typography>
-                <IconButton size="small">
+                <IconButton size="small" disabled={!formData.selectedTransportVendor}>
                   {allDaysExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </IconButton>
-              </Box>
+          </Box>
 
               {allDaysExpanded && (
                 <Box sx={{ 
@@ -1569,55 +2928,96 @@ const CreateTrip = () => {
                   </Typography>
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: 'wrap' }}>
-                      <TextField
-                        label="Event Title"
-                        value={formData.selectedEventTitle}
-                        onChange={(e) => setFormData(prev => ({ ...prev, selectedEventTitle: e.target.value }))}
-                        size="small"
-                        sx={{ minWidth: 200, flex: 1 }}
-                      />
-                      <TextField
-                        label="Description"
-                        value={formData.selectedEventDescription}
-                        onChange={(e) => setFormData(prev => ({ ...prev, selectedEventDescription: e.target.value }))}
-                        size="small"
-                        sx={{ minWidth: 200, flex: 1 }}
-                      />
-                      <TextField
-                        label="Start Time"
-                        type="time"
-                        value={formData.selectedEventStartTime}
-                        onChange={(e) => setFormData(prev => ({ ...prev, selectedEventStartTime: e.target.value }))}
-                        size="small"
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ minWidth: 120 }}
-                      />
-                      <TextField
-                        label="End Time"
-                        type="time"
-                        value={formData.selectedEventEndTime}
-                        onChange={(e) => setFormData(prev => ({ ...prev, selectedEventEndTime: e.target.value }))}
-                        size="small"
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ minWidth: 120 }}
-                      />
+                    {/* Add Event Button */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+                      <IconButton
+                        size="large"
+                        onClick={() => setAllDaysEventDialog(true)}
+                        sx={{
+                          backgroundColor: 'primary.main',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: 'primary.dark'
+                          },
+                          mb: 1
+                        }}
+                      >
+                        <AddIcon />
+                      </IconButton>
+                      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                        Add Event for All Days
+                      </Typography>
                     </Box>
                     
-                    <Button
-                      variant="contained"
-                      onClick={applyEventsToAllDays}
-                      sx={{
-                        backgroundColor: appliedToAllDays.events ? '#4caf50' : '#2196f3',
-                        '&:hover': {
-                          backgroundColor: appliedToAllDays.events ? '#45a049' : '#1976d2'
-                        },
-                        px: 4,
-                        py: 1
-                      }}
-                    >
-                      APPLY TO ALL DAYS
-                    </Button>
+                    {/* Show Applied Events */}
+                    {formData.allDaysEvents && formData.allDaysEvents.length > 0 && (
+          <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                            Applied Events:
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                allDaysEvents: [],
+                                eventsByDay: {}
+                              }));
+                              setAppliedToAllDays(prev => ({
+                                ...prev,
+                                events: false
+                              }));
+                            }}
+                            sx={{
+                              borderColor: '#f44336',
+                              color: '#f44336',
+                              '&:hover': {
+                                borderColor: '#d32f2f',
+                                backgroundColor: 'rgba(244, 67, 54, 0.04)'
+                              }
+                            }}
+                          >
+                            CLEAR ALL
+                          </Button>
+                        </Box>
+                        {formData.allDaysEvents.map((event, index) => (
+                          <Card key={event.id} variant="outlined" sx={{ p: 1.5, mb: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                              {event.title}
+                            </Typography>
+                            {event.description && (
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
+                                {event.description}
+                              </Typography>
+                            )}
+                            {(event.startTime || event.endTime) && (
+                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 1 }}>
+                                ⏰ {event.startTime || '--:--'} - {event.endTime || '--:--'}
+                              </Typography>
+                            )}
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEditAllDaysEvent(index)}
+                                sx={{ p: 0.5 }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDeleteAllDaysEvent(index)}
+                                color="error"
+                                sx={{ p: 0.5 }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </Card>
+                        ))}
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               )}
@@ -1697,45 +3097,85 @@ const CreateTrip = () => {
                               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
                                 All Days Selection Applied
                               </Typography>
-                            ) : (
+                            ) : formData.eventsByDay?.[day] && formData.eventsByDay[day].length > 0 ? (
+                              // Show multiple events if exist
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <TextField
-                                  label="Event Title"
-                fullWidth
-                                  size="small"
-                                  value={formData.eventsByDay?.[day]?.[0]?.title || ''}
-                                  onChange={(e) => handleEventFieldChange(day, 'title', e.target.value)}
-                                />
+                                {formData.eventsByDay[day].map((event, eventIndex) => (
+                                  <Card key={event.id} variant="outlined" sx={{ p: 1.5, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                                      {event.title}
+                                    </Typography>
+                                    {event.description && (
+                                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.75rem' }}>
+                                        {event.description}
+                                      </Typography>
+                                    )}
+                                    {(event.startTime || event.endTime) && (
+                                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 1 }}>
+                                        ⏰ {event.startTime || '--:--'} - {event.endTime || '--:--'}
+                                      </Typography>
+                                    )}
+                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleEditEvent(day, eventIndex)}
+                                        sx={{ p: 0.5 }}
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleDeleteEvent(day, eventIndex)}
+                                        color="error"
+                                        sx={{ p: 0.5 }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  </Card>
+                                ))}
                                 
-                                <TextField
-                                  label="Description"
-                                  fullWidth
-                                  size="small"
-                                  value={formData.eventsByDay?.[day]?.[0]?.description || ''}
-                                  onChange={(e) => handleEventFieldChange(day, 'description', e.target.value)}
-                                />
-                                
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                  <TextField
-                                    label="Start Time"
-                                    type="time"
-                                    size="small"
-                                    value={formData.eventsByDay?.[day]?.[0]?.startTime || ''}
-                                    onChange={(e) => handleEventFieldChange(day, 'startTime', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                    sx={{ flex: 1 }}
-                                  />
-                                  
-                                  <TextField
-                                    label="End Time"
-                                    type="time"
-                                    size="small"
-                                    value={formData.eventsByDay?.[day]?.[0]?.endTime || ''}
-                                    onChange={(e) => handleEventFieldChange(day, 'endTime', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                    sx={{ flex: 1 }}
-                                  />
+                                {/* Add More Event Button with Icon */}
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}>
+                                  <IconButton
+                                    size="medium"
+                                    onClick={() => handleAddEvent(day)}
+                                    sx={{
+                                      backgroundColor: 'primary.main',
+                                      color: 'white',
+                                      '&:hover': {
+                                        backgroundColor: 'primary.dark'
+                                      },
+                                      mb: 0.5
+                                    }}
+                                  >
+                                    <AddIcon />
+                                  </IconButton>
+                                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', fontSize: '0.75rem' }}>
+                                    Add More Event
+                                  </Typography>
                                 </Box>
+                              </Box>
+                            ) : (
+                              // Show add button if no event
+                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+                                <IconButton
+                                  size="large"
+                                  onClick={() => handleAddEvent(day)}
+                                  sx={{
+                                    backgroundColor: 'primary.main',
+                                    color: 'white',
+                                    '&:hover': {
+                                      backgroundColor: 'primary.dark'
+                                    },
+                                    mb: 1
+                                  }}
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                  Add Event
+                                </Typography>
                               </Box>
                             )}
                           </Card>
@@ -1749,64 +3189,155 @@ const CreateTrip = () => {
           </Box>
         );
 
-      case 4:
+      case 5:
+        return (
+          <Box>
+            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
+              Finance & Review
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Manage finance information for all vendors and review your trip details
+            </Typography>
+
+            {/* Finance Section */}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
+                  Finance Management
+                </Typography>
+                
+                {/* Selected Vendors Finance */}
+                {(() => {
+                  const selectedVendors = getSelectedVendors();
+                  
+                  if (selectedVendors.length === 0) {
+                    return (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          No vendors selected yet. Please select transport and accommodation vendors in previous steps.
+                        </Typography>
+                      </Box>
+                    );
+                  }
+                  
         return (
           <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">Finance Section</Typography>
-                    <Button
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      onClick={() => setFinanceDialog(true)}
-                      size="small"
-                    >
-                      Add Vendor
-                    </Button>
-                  </Box>
-                  
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Vendor</TableCell>
-                          <TableCell>Amount</TableCell>
-                          <TableCell>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {formData.finance.vendors.map((finance) => (
-                          <TableRow key={finance.id}>
-                            <TableCell>{finance.vendor}</TableCell>
-                            <TableCell>₹{finance.amount}</TableCell>
-                            <TableCell>
-                              <IconButton
+                      {selectedVendors.map((vendor) => (
+                        <Grid item xs={12} md={6} key={`${vendor.type}-${vendor.id}`}>
+                          <Card variant="outlined" sx={{ mb: 2, p: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', flex: 1 }}>
+                                {vendor.name}
+                              </Typography>
+                              <Chip 
+                                label={vendor.type === 'transport' ? 'Transport' : vendor.type === 'accommodation' ? 'Accommodation' : 'Food'} 
+                                size="small" 
+                                color={vendor.typeColor || (vendor.type === 'transport' ? 'primary' : vendor.type === 'accommodation' ? 'secondary' : 'success')}
+                              />
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                                label="Amount (₹)"
+                                type="number"
                                 size="small"
-                                onClick={() => removeFinance(finance.id)}
-                                color="error"
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6">Total Amount:</Typography>
-                    <Typography variant="h6" color="primary">
-                      ₹{formData.finance.totalAmount.toLocaleString()}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
+                                value={formData.finance.vendors.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                                onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
+                                sx={{ flex: 1 }}
+                                InputProps={{
+                                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                                }}
+                              />
+                              <TextField
+                                label="Description"
+                                size="small"
+                                value={formData.finance.vendors.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                                onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
+                                sx={{ flex: 1 }}
+                              />
+                            </Box>
+                          </Card>
+            </Grid>
+                      ))}
+                      
+                      {/* Other Expenses */}
+                      <Grid item xs={12} md={6}>
+                        <Card variant="outlined" sx={{ mb: 2, p: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                            Miscellaneous Expenses
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                              label="Amount (₹)"
+                              type="number"
+                              size="small"
+                              value={formData.finance.vendors.find(f => f.vendorId === 'misc' && f.type === 'other')?.amount || ''}
+                              onChange={(e) => handleFinanceChange('misc', 'other', 'amount', e.target.value)}
+                              sx={{ flex: 1 }}
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                              }}
+                            />
+                            <TextField
+                              label="Description"
+                              size="small"
+                              value={formData.finance.vendors.find(f => f.vendorId === 'misc' && f.type === 'other')?.description || ''}
+                              onChange={(e) => handleFinanceChange('misc', 'other', 'description', e.target.value)}
+                              sx={{ flex: 1 }}
+                            />
+                          </Box>
+                        </Card>
             </Grid>
           </Grid>
+                  );
+                })()}
+
+                {/* Total Amount */}
+                <Card sx={{ mt: 3, backgroundColor: 'primary.main', color: 'white' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                        Total Amount
+                      </Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                        ₹{calculateTotalAmount()}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </CardContent>
+            </Card>
+
+            {/* Trip Summary */}
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
+                  Trip Summary
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">Trip Title</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{formData.title || 'Not specified'}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">Destination</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{formData.destination || 'Not specified'}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">Start Date</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      {formData.startDate ? formData.startDate.toLocaleDateString('en-IN') : 'Not specified'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">End Date</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      {formData.endDate ? formData.endDate.toLocaleDateString('en-IN') : 'Not specified'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
         );
 
       default:
@@ -1965,6 +3496,15 @@ const CreateTrip = () => {
             <Button 
               onClick={handleNext} 
               variant="contained" 
+              disabled={
+                activeStep === 0 && (
+                  !formData.title.trim() || 
+                  !formData.destination || 
+                  !formData.startDate || 
+                  !formData.endDate ||
+                  (formData.startDate && formData.endDate && formData.startDate >= formData.endDate)
+                )
+              }
               sx={{
                 px: 4,
                 py: 1.5,
@@ -1976,6 +3516,11 @@ const CreateTrip = () => {
                 '&:hover': {
                   background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
                   boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                },
+                '&:disabled': {
+                  background: '#e0e0e0',
+                  color: '#9e9e9e',
+                  boxShadow: 'none'
                 }
               }}
             >
@@ -2084,6 +3629,356 @@ const CreateTrip = () => {
           <DialogActions>
             <Button onClick={() => setEventDialog(false)}>Cancel</Button>
             <Button onClick={addEvent} variant="contained">Add</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Day Event Dialog */}
+        <Dialog open={dayEventDialog} onClose={() => setDayEventDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            {editingEvent ? 'Edit Event' : 'Add Event'} - {selectedDayForEvent && new Date(selectedDayForEvent).toLocaleDateString('en-IN', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Event Title"
+                  fullWidth
+                  value={dayEvent.title}
+                  onChange={(e) => setDayEvent(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description (Optional)"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={dayEvent.description}
+                  onChange={(e) => setDayEvent(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Start Time (Optional)"
+                  type="time"
+                  fullWidth
+                  value={dayEvent.startTime}
+                  onChange={(e) => setDayEvent(prev => ({ ...prev, startTime: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="End Time (Optional)"
+                  type="time"
+                  fullWidth
+                  value={dayEvent.endTime}
+                  onChange={(e) => setDayEvent(prev => ({ ...prev, endTime: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDayEventDialog(false)}>Cancel</Button>
+            <Button onClick={saveDayEvent} variant="contained">
+              {editingEvent ? 'Update' : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* All Days Event Dialog */}
+        <Dialog open={allDaysEventDialog} onClose={() => setAllDaysEventDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            {editingAllDaysEvent ? 'Edit Event' : 'Add Event'} - All Days
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Event Title"
+                  fullWidth
+                  value={allDaysEvent.title}
+                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description (Optional)"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={allDaysEvent.description}
+                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Start Time (Optional)"
+                  type="time"
+                  fullWidth
+                  value={allDaysEvent.startTime}
+                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, startTime: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="End Time (Optional)"
+                  type="time"
+                  fullWidth
+                  value={allDaysEvent.endTime}
+                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, endTime: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setAllDaysEventDialog(false)}>Cancel</Button>
+            <Button onClick={saveAllDaysEvent} variant="contained">
+              {editingAllDaysEvent ? 'Update' : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Day Food Dialog */}
+        <Dialog open={dayFoodDialog} onClose={() => setDayFoodDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Add Food Entry for {selectedDayForFood ? new Date(selectedDayForFood).toLocaleDateString('en-IN', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }) : 'Selected Day'}</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="day-food-vendors-label">Food Vendors</InputLabel>
+                <Select
+                  labelId="day-food-vendors-label"
+                  value={newDayFoodEntry.vendors.length > 0 ? newDayFoodEntry.vendors[0] : ''}
+                  onChange={(e) => setNewDayFoodEntry(prev => ({ ...prev, vendors: e.target.value ? [e.target.value] : [] }))}
+                  label="Food Vendors"
+                >
+                  {foodVendors.map((vendor) => (
+                    <MenuItem key={vendor.id} value={vendor.id}>
+                      {vendor.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="day-food-schedules-label">Food Schedules</InputLabel>
+                <Select
+                  labelId="day-food-schedules-label"
+                  value={newDayFoodEntry.schedules.length > 0 ? newDayFoodEntry.schedules[0] : ''}
+                  onChange={(e) => setNewDayFoodEntry(prev => ({ ...prev, schedules: e.target.value ? [e.target.value] : [] }))}
+                  label="Food Schedules"
+                >
+                  {foodSchedules.map((schedule) => (
+                    <MenuItem key={schedule.id} value={schedule.id}>
+                      {schedule.title || schedule.name || `Schedule ${schedule.id}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="day-food-categories-label">Food Categories</InputLabel>
+                <Select
+                  labelId="day-food-categories-label"
+                  multiple
+                  value={newDayFoodEntry.categories}
+                  onChange={(e) => setNewDayFoodEntry(prev => ({ ...prev, categories: e.target.value }))}
+                  label="Food Categories"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((categoryId) => {
+                        const category = foodCategories.find(c => c.id === categoryId);
+                        return (
+                          <Chip
+                            key={categoryId}
+                            label={category ? (category.title || category.name) : `Category ${categoryId}`}
+                            size="small"
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                >
+                  {foodCategories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      <Checkbox checked={newDayFoodEntry.categories.includes(category.id)} />
+                      <ListItemText primary={category.title || category.name || `Category ${category.id}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="day-food-items-label">Food Items</InputLabel>
+                <Select
+                  labelId="day-food-items-label"
+                  multiple
+                  value={newDayFoodEntry.items}
+                  onChange={(e) => setNewDayFoodEntry(prev => ({ ...prev, items: e.target.value }))}
+                  label="Food Items"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((itemId) => {
+                        const item = foodItems.find(i => i.id === itemId);
+                        return (
+                          <Chip
+                            key={itemId}
+                            label={item ? (item.title || item.name) : `Item ${itemId}`}
+                            size="small"
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                >
+                  {foodItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      <Checkbox checked={newDayFoodEntry.items.includes(item.id)} />
+                      <ListItemText primary={item.title || item.name || `Item ${item.id}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDayFoodDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleSaveDayFood} 
+              variant="contained"
+              disabled={newDayFoodEntry.vendors.length === 0 || newDayFoodEntry.schedules.length === 0 || newDayFoodEntry.categories.length === 0 || newDayFoodEntry.items.length === 0}
+            >
+              Add Entry
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Food All Days Dialog */}
+        <Dialog open={foodAllDaysDialog} onClose={() => setFoodAllDaysDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Add Food Entry for All Days</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="food-vendors-label">Food Vendors</InputLabel>
+                <Select
+                  labelId="food-vendors-label"
+                  value={newFoodEntry.vendors.length > 0 ? newFoodEntry.vendors[0] : ''}
+                  onChange={(e) => setNewFoodEntry(prev => ({ ...prev, vendors: e.target.value ? [e.target.value] : [] }))}
+                  label="Food Vendors"
+                >
+                  {foodVendors.map((vendor) => (
+                    <MenuItem key={vendor.id} value={vendor.id}>
+                      {vendor.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="food-schedules-label">Food Schedules</InputLabel>
+                <Select
+                  labelId="food-schedules-label"
+                  value={newFoodEntry.schedules.length > 0 ? newFoodEntry.schedules[0] : ''}
+                  onChange={(e) => setNewFoodEntry(prev => ({ ...prev, schedules: e.target.value ? [e.target.value] : [] }))}
+                  label="Food Schedules"
+                >
+                  {foodSchedules.map((schedule) => (
+                    <MenuItem key={schedule.id} value={schedule.id}>
+                      {schedule.title || schedule.name || `Schedule ${schedule.id}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="food-categories-label">Food Categories</InputLabel>
+                <Select
+                  labelId="food-categories-label"
+                  multiple
+                  value={newFoodEntry.categories}
+                  onChange={(e) => setNewFoodEntry(prev => ({ ...prev, categories: e.target.value }))}
+                  label="Food Categories"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((categoryId) => {
+                        const category = foodCategories.find(c => c.id === categoryId);
+                        return (
+                          <Chip
+                            key={categoryId}
+                            label={category ? (category.title || category.name) : `Category ${categoryId}`}
+                            size="small"
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                >
+                  {foodCategories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      <Checkbox checked={newFoodEntry.categories.includes(category.id)} />
+                      <ListItemText primary={category.title || category.name || `Category ${category.id}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel id="food-items-label">Food Items</InputLabel>
+                <Select
+                  labelId="food-items-label"
+                  multiple
+                  value={newFoodEntry.items}
+                  onChange={(e) => setNewFoodEntry(prev => ({ ...prev, items: e.target.value }))}
+                  label="Food Items"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((itemId) => {
+                        const item = foodItems.find(i => i.id === itemId);
+                        return (
+                          <Chip
+                            key={itemId}
+                            label={item ? (item.title || item.name) : `Item ${itemId}`}
+                            size="small"
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                >
+                  {foodItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      <Checkbox checked={newFoodEntry.items.includes(item.id)} />
+                      <ListItemText primary={item.title || item.name || `Item ${item.id}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setFoodAllDaysDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleAddFoodEntry} 
+              variant="contained"
+              disabled={newFoodEntry.vendors.length === 0 || newFoodEntry.schedules.length === 0 || newFoodEntry.categories.length === 0 || newFoodEntry.items.length === 0}
+            >
+              Add Entry
+            </Button>
           </DialogActions>
         </Dialog>
 
