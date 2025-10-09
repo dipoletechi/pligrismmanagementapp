@@ -47,7 +47,7 @@ const menuItems = [
   { text: 'Support Management', icon: <SupportIcon />, path: '/support', roles: ['superadmin', 'admin'] },
   { text: 'User Management', icon: <PeopleIcon />, path: '/users', roles: ['superadmin'] },
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager'] },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings', roles: ['superadmin', 'admin'] }
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] }
 ];
 
 const MasterDataSubMenu = [

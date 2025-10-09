@@ -233,21 +233,21 @@ const getRolePermissions = (role) => {
       trips: ['create', 'read', 'update', 'delete'],
       finance: [],
       reports: ['read'],
-      settings: []
+      settings: ['read', 'update'] // Allow trip managers to update their settings
     },
     financial_manager: {
       users: [],
       trips: ['read'], // Read-only access to trips
       finance: ['create', 'read', 'update', 'delete'],
       reports: ['create', 'read', 'update', 'delete'],
-      settings: []
+      settings: ['read', 'update'] // Allow financial managers to update their settings
     },
     user: {
       users: [],
       trips: ['read'],
       finance: [],
       reports: [],
-      settings: []
+      settings: ['read', 'update'] // Allow regular users to update their settings
     }
   };
 

@@ -267,12 +267,12 @@ function App() {
                 } 
               />
               
-              {/* Settings - Admin, Superadmin */}
+              {/* Settings - All Users */}
               <Route 
                 path="/settings" 
                 element={
                   <ProtectedRoute 
-                    requiredRoles={['admin', 'superadmin']}
+                    requiredRoles={['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user']}
                     requiredPermissions={[{ module: 'settings', action: 'read' }]}
                   >
                     <MainLayout>
