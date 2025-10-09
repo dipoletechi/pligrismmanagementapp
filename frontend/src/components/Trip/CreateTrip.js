@@ -36,7 +36,11 @@ import {
   Checkbox,
   FormControlLabel,
   AppBar,
-  Toolbar
+  Toolbar,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -61,6 +65,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import axios from 'axios';
 
 const CreateTrip = () => {
+  const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
@@ -116,6 +121,13 @@ const CreateTrip = () => {
     description: ''
   });
 
+  const steps = [
+    'Basic Information',
+    'Transportation',
+    'Accommodation & Events',
+    'Finance & Review'
+  ];
+
   useEffect(() => {
     fetchDropdownData();
   }, []);
@@ -151,6 +163,14 @@ const CreateTrip = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
   const handleDriverChange = (driverId) => {
@@ -261,6 +281,7 @@ const CreateTrip = () => {
         events: [],
         finance: { vendors: [], totalAmount: 0 }
       });
+      setActiveStep(0);
     } catch (error) {
       console.error('Error creating trip:', error);
       setSnackbar({ open: true, message: error.response?.data?.message || 'Error creating trip', severity: 'error' });
@@ -269,142 +290,105 @@ const CreateTrip = () => {
     }
   };
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ flexGrow: 1 }}>
-        {/* Fixed Header */}
-        <AppBar position="sticky" sx={{ bgcolor: 'white', color: 'text.primary', boxShadow: 1 }}>
-          <Toolbar>
-            <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-              Trip Management
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-              sx={{
-                bgcolor: '#1976d2',
-                '&:hover': { bgcolor: '#1565c0' }
-              }}
-            >
-              {loading ? 'Creating...' : 'Create Trip'}
-            </Button>
-          </Toolbar>
-        </AppBar>
-
-        <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocationIcon color="primary" />
-                    Basic Information
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Trip Title"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth>
-                        <InputLabel>Destination</InputLabel>
-                        <Select
-                          name="destination"
-                          value={formData.destination}
-                          onChange={handleChange}
-                          label="Destination"
-                        >
-                          {destinations.map((dest) => (
-                            <MenuItem key={dest.id} value={dest.id}>
-                              {dest.title || dest.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <DateTimePicker
-                        label="Start Date & Time"
-                        value={formData.startDate}
-                        onChange={(newValue) => setFormData(prev => ({ ...prev, startDate: newValue }))}
-                        renderInput={(params) => <TextField {...params} fullWidth />}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <DateTimePicker
-                        label="End Date & Time"
-                        value={formData.endDate}
-                        onChange={(newValue) => setFormData(prev => ({ ...prev, endDate: newValue }))}
-                        renderInput={(params) => <TextField {...params} fullWidth />}
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Drivers & Conductors */}
+  const renderStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return (
+          <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PersonIcon color="primary" />
-                    Drivers & Conductors
-                  </Typography>
-                  
-                  <Typography variant="subtitle2" gutterBottom>Drivers</Typography>
-                  <Box sx={{ maxHeight: 200, overflow: 'auto', mb: 2 }}>
-                    {drivers.map((driver) => (
-                      <FormControlLabel
-                        key={driver.id}
-                        control={
-                          <Checkbox
-                            checked={formData.selectedDrivers.includes(driver.id)}
-                            onChange={() => handleDriverChange(driver.id)}
-                          />
-                        }
-                        label={`${driver.firstName || driver.name} ${driver.lastName || ''}`}
-                      />
-                    ))}
-                  </Box>
-
-                  <Typography variant="subtitle2" gutterBottom>Conductors</Typography>
-                  <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
-                    {conductors.map((conductor) => (
-                      <FormControlLabel
-                        key={conductor.id}
-                        control={
-                          <Checkbox
-                            checked={formData.selectedConductors.includes(conductor.id)}
-                            onChange={() => handleConductorChange(conductor.id)}
-                          />
-                        }
-                        label={`${conductor.firstName || conductor.name} ${conductor.lastName || ''}`}
-                      />
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
+              <TextField
+                fullWidth
+                label="Trip Title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
             </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Destination</InputLabel>
+                <Select
+                  name="destination"
+                  value={formData.destination}
+                  onChange={handleChange}
+                  label="Destination"
+                >
+                  {destinations.map((dest) => (
+                    <MenuItem key={dest.id} value={dest.id}>
+                      {dest.title || dest.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DateTimePicker
+                label="Start Date & Time"
+                value={formData.startDate}
+                onChange={(newValue) => setFormData(prev => ({ ...prev, startDate: newValue }))}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <DateTimePicker
+                label="End Date & Time"
+                value={formData.endDate}
+                onChange={(newValue) => setFormData(prev => ({ ...prev, endDate: newValue }))}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+            </Grid>
+          </Grid>
+        );
 
-            {/* Accommodation */}
+      case 1:
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom>Drivers</Typography>
+              <Box sx={{ maxHeight: 200, overflow: 'auto', mb: 2 }}>
+                {drivers.map((driver) => (
+                  <FormControlLabel
+                    key={driver.id}
+                    control={
+                      <Checkbox
+                        checked={formData.selectedDrivers.includes(driver.id)}
+                        onChange={() => handleDriverChange(driver.id)}
+                      />
+                    }
+                    label={`${driver.firstName || driver.name} ${driver.lastName || ''}`}
+                  />
+                ))}
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom>Conductors</Typography>
+              <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                {conductors.map((conductor) => (
+                  <FormControlLabel
+                    key={conductor.id}
+                    control={
+                      <Checkbox
+                        checked={formData.selectedConductors.includes(conductor.id)}
+                        onChange={() => handleConductorChange(conductor.id)}
+                      />
+                    }
+                    label={`${conductor.firstName || conductor.name} ${conductor.lastName || ''}`}
+                  />
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
+        );
+
+      case 2:
+        return (
+          <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <HotelIcon color="primary" />
-                      Accommodation
-                    </Typography>
+                    <Typography variant="h6">Accommodation</Typography>
                     <Button
                       variant="outlined"
                       startIcon={<AddIcon />}
@@ -447,15 +431,11 @@ const CreateTrip = () => {
               </Card>
             </Grid>
 
-            {/* Event Management */}
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <EventIcon color="primary" />
-                      Event Management
-                    </Typography>
+                    <Typography variant="h6">Events</Typography>
                     <Button
                       variant="outlined"
                       startIcon={<AddIcon />}
@@ -495,16 +475,17 @@ const CreateTrip = () => {
                 </CardContent>
               </Card>
             </Grid>
+          </Grid>
+        );
 
-            {/* Finance Section */}
-            <Grid item xs={12} md={6}>
+      case 3:
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <FinanceIcon color="primary" />
-                      Finance Section
-                    </Typography>
+                    <Typography variant="h6">Finance Section</Typography>
                     <Button
                       variant="outlined"
                       startIcon={<AddIcon />}
@@ -555,7 +536,183 @@ const CreateTrip = () => {
               </Card>
             </Grid>
           </Grid>
-        </Container>
+        );
+
+      default:
+        return 'Unknown step';
+    }
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        {/* Header Section */}
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Typography variant="h3" component="h1" gutterBottom sx={{ 
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Trip Management
+          </Typography>
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+            Create a new pilgrimage trip with all necessary details
+          </Typography>
+          <Box sx={{ 
+            width: 100, 
+            height: 4, 
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            borderRadius: 2,
+            mx: 'auto'
+          }} />
+        </Box>
+
+        <Paper sx={{ 
+          p: 4, 
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+        }}>
+          {/* Progress Stepper */}
+          <Stepper 
+            activeStep={activeStep} 
+            orientation="horizontal"
+            sx={{ 
+              mb: 4,
+              '& .MuiStepLabel-label': {
+                fontWeight: 600,
+                fontSize: '0.9rem'
+              },
+              '& .MuiStepLabel-root .Mui-active': {
+                color: '#1976d2'
+              },
+              '& .MuiStepLabel-root .Mui-completed': {
+                color: '#4caf50'
+              }
+            }}
+          >
+            {steps.map((label, index) => (
+              <Step key={label}>
+                <StepLabel 
+                  StepIconComponent={({ active, completed }) => (
+                    <Box sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: completed ? '#4caf50' : active ? '#1976d2' : '#e0e0e0',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      boxShadow: active ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none'
+                    }}>
+                      {completed ? '✓' : index + 1}
+                    </Box>
+                  )}
+                >
+                  {label}
+                </StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          {/* Step Content */}
+          <Box sx={{ 
+            mt: 4, 
+            p: 3, 
+            borderRadius: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            border: '1px solid rgba(0, 0, 0, 0.05)'
+          }}>
+            {renderStepContent(activeStep)}
+          </Box>
+
+          {/* Navigation Buttons */}
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            pt: 3,
+            mt: 3,
+            borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+          }}>
+            <Button
+              variant={activeStep === 0 ? "outlined" : "contained"}
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              sx={{ 
+                mr: 1,
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                ...(activeStep > 0 && {
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                  }
+                }),
+                ...(activeStep === 0 && {
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                  }
+                })
+              }}
+            >
+              Back
+            </Button>
+            <Box sx={{ flex: '1 1 auto' }} />
+            {activeStep === steps.length - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+                disabled={loading}
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  background: 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)',
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #43a047 30%, #5cb85c 90%)',
+                    boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                  }
+                }}
+                startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              >
+                {loading ? 'Creating...' : 'Create Trip'}
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleNext} 
+                variant="contained" 
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                  }
+                }}
+              >
+                Next
+              </Button>
+            )}
+          </Box>
+        </Paper>
 
         {/* Accommodation Dialog */}
         <Dialog open={accommodationDialog} onClose={() => setAccommodationDialog(false)} maxWidth="sm" fullWidth>
@@ -565,18 +722,18 @@ const CreateTrip = () => {
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>Vendor</InputLabel>
-                  <Select
+                <Select
                     value={newAccommodation.vendor}
                     onChange={(e) => setNewAccommodation(prev => ({ ...prev, vendor: e.target.value }))}
                     label="Vendor"
-                  >
-                    {accommodationVendors.map((vendor) => (
-                      <MenuItem key={vendor.id} value={vendor.id}>
+                >
+                  {accommodationVendors.map((vendor) => (
+                    <MenuItem key={vendor.id} value={vendor.id}>
                         {vendor.title || vendor.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               </Grid>
               <Grid item xs={6}>
                 <DateTimePicker
@@ -624,11 +781,11 @@ const CreateTrip = () => {
                   onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
                 />
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
                   label="Description"
-                  multiline
+                multiline
                   rows={2}
                   value={newEvent.description}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
@@ -686,19 +843,19 @@ const CreateTrip = () => {
                   type="number"
                   value={newFinance.amount}
                   onChange={(e) => setNewFinance(prev => ({ ...prev, amount: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
                   label="Description"
-                  multiline
+                multiline
                   rows={2}
                   value={newFinance.description}
                   onChange={(e) => setNewFinance(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </Grid>
+              />
             </Grid>
+          </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setFinanceDialog(false)}>Cancel</Button>
@@ -706,20 +863,20 @@ const CreateTrip = () => {
           </DialogActions>
         </Dialog>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
         >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+      </Container>
     </LocalizationProvider>
   );
 };
