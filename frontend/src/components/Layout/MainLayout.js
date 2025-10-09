@@ -283,7 +283,7 @@ function MainLayout({ children }) {
                         sx={{ 
                           borderRadius: 1,
                           mb: 0.5,
-                          pl: 4,
+                          pl: 6,
                           ml: 1,
                           mr: 1,
                           backgroundColor: 'transparent',
