@@ -48,6 +48,7 @@ import {
   Edit as EditIcon,
   Save as SaveIcon,
   DirectionsBus as BusIcon,
+  DirectionsBus as TripIcon,
   Person as PersonIcon,
   Business as BusinessIcon,
   LocationOn as LocationIcon,
