@@ -305,7 +305,7 @@ const CreateTrip = () => {
                 required
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} width={250}>
               <FormControl fullWidth>
                 <InputLabel>Destination</InputLabel>
                 <Select
@@ -356,7 +356,7 @@ const CreateTrip = () => {
                         onChange={() => handleDriverChange(driver.id)}
                       />
                     }
-                    label={`${driver.firstName || driver.name} ${driver.lastName || ''}`}
+                    label={`${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`}
                   />
                 ))}
               </Box>
@@ -373,10 +373,10 @@ const CreateTrip = () => {
                         onChange={() => handleConductorChange(conductor.id)}
                       />
                     }
-                    label={`${conductor.firstName || conductor.name} ${conductor.lastName || ''}`}
+                    label={`${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`}
                   />
                 ))}
-              </Box>
+            </Box>
             </Grid>
           </Grid>
         );
@@ -545,174 +545,174 @@ const CreateTrip = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Header Section */}
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography variant="h3" component="h1" gutterBottom sx={{ 
-            fontWeight: 'bold',
-            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ 
+          fontWeight: 'bold',
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
             Trip Management
-          </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-            Create a new pilgrimage trip with all necessary details
-          </Typography>
-          <Box sx={{ 
-            width: 100, 
-            height: 4, 
-            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-            borderRadius: 2,
-            mx: 'auto'
-          }} />
+        </Typography>
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+          Create a new pilgrimage trip with all necessary details
+        </Typography>
+        <Box sx={{ 
+          width: 100, 
+          height: 4, 
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          borderRadius: 2,
+          mx: 'auto'
+        }} />
+      </Box>
+
+      <Paper sx={{ 
+        p: 4, 
+        borderRadius: 3,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+      }}>
+        {/* Progress Stepper */}
+        <Stepper 
+          activeStep={activeStep} 
+          orientation="horizontal"
+          sx={{ 
+            mb: 4,
+            '& .MuiStepLabel-label': {
+              fontWeight: 600,
+              fontSize: '0.9rem'
+            },
+            '& .MuiStepLabel-root .Mui-active': {
+              color: '#1976d2'
+            },
+            '& .MuiStepLabel-root .Mui-completed': {
+              color: '#4caf50'
+            }
+          }}
+        >
+          {steps.map((label, index) => (
+            <Step key={label}>
+              <StepLabel 
+                StepIconComponent={({ active, completed }) => (
+                  <Box sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: completed ? '#4caf50' : active ? '#1976d2' : '#e0e0e0',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    boxShadow: active ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none'
+                  }}>
+                    {completed ? '✓' : index + 1}
+                  </Box>
+                )}
+              >
+                {label}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        {/* Step Content */}
+        <Box sx={{ 
+          mt: 4, 
+          p: 3, 
+          borderRadius: 2,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          border: '1px solid rgba(0, 0, 0, 0.05)'
+        }}>
+          {renderStepContent(activeStep)}
         </Box>
 
-        <Paper sx={{ 
-          p: 4, 
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+        {/* Navigation Buttons */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          pt: 3,
+          mt: 3,
+          borderTop: '1px solid rgba(0, 0, 0, 0.1)'
         }}>
-          {/* Progress Stepper */}
-          <Stepper 
-            activeStep={activeStep} 
-            orientation="horizontal"
+          <Button
+            variant={activeStep === 0 ? "outlined" : "contained"}
+            disabled={activeStep === 0}
+            onClick={handleBack}
             sx={{ 
-              mb: 4,
-              '& .MuiStepLabel-label': {
-                fontWeight: 600,
-                fontSize: '0.9rem'
-              },
-              '& .MuiStepLabel-root .Mui-active': {
-                color: '#1976d2'
-              },
-              '& .MuiStepLabel-root .Mui-completed': {
-                color: '#4caf50'
-              }
+              mr: 1,
+              px: 3,
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              ...(activeStep > 0 && {
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
+              }),
+              ...(activeStep === 0 && {
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                }
+              })
             }}
           >
-            {steps.map((label, index) => (
-              <Step key={label}>
-                <StepLabel 
-                  StepIconComponent={({ active, completed }) => (
-                    <Box sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: completed ? '#4caf50' : active ? '#1976d2' : '#e0e0e0',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      fontSize: '1.1rem',
-                      boxShadow: active ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none'
-                    }}>
-                      {completed ? '✓' : index + 1}
-                    </Box>
-                  )}
-                >
-                  {label}
-                </StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-
-          {/* Step Content */}
-          <Box sx={{ 
-            mt: 4, 
-            p: 3, 
-            borderRadius: 2,
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            border: '1px solid rgba(0, 0, 0, 0.05)'
-          }}>
-            {renderStepContent(activeStep)}
-          </Box>
-
-          {/* Navigation Buttons */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'row', 
-            pt: 3,
-            mt: 3,
-            borderTop: '1px solid rgba(0, 0, 0, 0.1)'
-          }}>
+            Back
+          </Button>
+          <Box sx={{ flex: '1 1 auto' }} />
+          {activeStep === steps.length - 1 ? (
             <Button
-              variant={activeStep === 0 ? "outlined" : "contained"}
-              disabled={activeStep === 0}
-              onClick={handleBack}
-              sx={{ 
-                mr: 1,
-                px: 3,
+              onClick={handleSubmit}
+              variant="contained"
+              disabled={loading}
+              sx={{
+                px: 4,
                 py: 1.5,
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
-                ...(activeStep > 0 && {
-                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
-                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
-                  }
-                }),
-                ...(activeStep === 0 && {
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                  }
-                })
+                background: 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)',
+                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #43a047 30%, #5cb85c 90%)',
+                  boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                }
+              }}
+              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+            >
+              {loading ? 'Creating...' : 'Create Trip'}
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleNext} 
+              variant="contained" 
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                  boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
+                }
               }}
             >
-              Back
+              Next
             </Button>
-            <Box sx={{ flex: '1 1 auto' }} />
-            {activeStep === steps.length - 1 ? (
-              <Button
-                onClick={handleSubmit}
-                variant="contained"
-                disabled={loading}
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  background: 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)',
-                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #43a047 30%, #5cb85c 90%)',
-                    boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
-                  }
-                }}
-                startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-              >
-                {loading ? 'Creating...' : 'Create Trip'}
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleNext} 
-                variant="contained" 
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
-                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)'
-                  }
-                }}
-              >
-                Next
-              </Button>
-            )}
-          </Box>
-        </Paper>
+          )}
+        </Box>
+      </Paper>
 
         {/* Accommodation Dialog */}
         <Dialog open={accommodationDialog} onClose={() => setAccommodationDialog(false)} maxWidth="sm" fullWidth>
@@ -876,7 +876,7 @@ const CreateTrip = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-      </Container>
+    </Container>
     </LocalizationProvider>
   );
 };
