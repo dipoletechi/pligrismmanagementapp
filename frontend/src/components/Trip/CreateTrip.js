@@ -86,6 +86,8 @@ const CreateTrip = () => {
     endDate: null,
     selectedDrivers: [],
     selectedConductors: [],
+    driversByDay: {}, // { '2025-10-11': [driverIds], '2025-10-12': [driverIds] }
+    conductorsByDay: {}, // { '2025-10-11': [conductorIds], '2025-10-12': [conductorIds] }
     accommodations: [],
     events: [],
     finance: {
@@ -127,6 +129,23 @@ const CreateTrip = () => {
     'Accommodation & Events',
     'Finance & Review'
   ];
+
+  // Calculate trip days
+  const getTripDays = () => {
+    if (!formData.startDate || !formData.endDate) return [];
+    
+    const days = [];
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push(new Date(d).toISOString().split('T')[0]);
+    }
+    
+    return days;
+  };
+
+  const tripDays = getTripDays();
 
   useEffect(() => {
     fetchDropdownData();
@@ -188,6 +207,64 @@ const CreateTrip = () => {
       selectedConductors: prev.selectedConductors.includes(conductorId)
         ? prev.selectedConductors.filter(id => id !== conductorId)
         : [...prev.selectedConductors, conductorId]
+    }));
+  };
+
+  // Handle driver selection for specific day
+  const handleDriverDayChange = (day, driverId) => {
+    setFormData(prev => ({
+      ...prev,
+      driversByDay: {
+        ...prev.driversByDay,
+        [day]: prev.driversByDay[day]?.includes(driverId)
+          ? prev.driversByDay[day].filter(id => id !== driverId)
+          : [...(prev.driversByDay[day] || []), driverId]
+      }
+    }));
+  };
+
+  // Handle conductor selection for specific day
+  const handleConductorDayChange = (day, conductorId) => {
+    setFormData(prev => ({
+      ...prev,
+      conductorsByDay: {
+        ...prev.conductorsByDay,
+        [day]: prev.conductorsByDay[day]?.includes(conductorId)
+          ? prev.conductorsByDay[day].filter(id => id !== conductorId)
+          : [...(prev.conductorsByDay[day] || []), conductorId]
+      }
+    }));
+  };
+
+  // Apply same drivers to all days
+  const applyDriversToAllDays = () => {
+    const allDays = tripDays;
+    const selectedDrivers = formData.selectedDrivers;
+    
+    const driversByDay = {};
+    allDays.forEach(day => {
+      driversByDay[day] = [...selectedDrivers];
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      driversByDay
+    }));
+  };
+
+  // Apply same conductors to all days
+  const applyConductorsToAllDays = () => {
+    const allDays = tripDays;
+    const selectedConductors = formData.selectedConductors;
+    
+    const conductorsByDay = {};
+    allDays.forEach(day => {
+      conductorsByDay[day] = [...selectedConductors];
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      conductorsByDay
     }));
   };
 
@@ -343,40 +420,138 @@ const CreateTrip = () => {
 
       case 1:
         return (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom>Drivers</Typography>
-              <Box sx={{ maxHeight: 200, overflow: 'auto', mb: 2 }}>
-                {drivers.map((driver) => (
-                  <FormControlLabel
-                    key={driver.id}
-                    control={
-                      <Checkbox
-                        checked={formData.selectedDrivers.includes(driver.id)}
-                        onChange={() => handleDriverChange(driver.id)}
-                      />
-                    }
-                    label={`${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`}
-                  />
-                ))}
-              </Box>
+          <Grid container spacing={3}>
+            {/* All Days Selection */}
+            <Grid item xs={12}>
+              <Card variant="outlined" sx={{ p: 2, mb: 3, backgroundColor: '#f8f9fa' }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TripIcon color="primary" />
+                  All Days Selection
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Select drivers and conductors for all {tripDays.length} days
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle1" gutterBottom>Drivers</Typography>
+                    <Box sx={{ maxHeight: 150, overflow: 'auto', mb: 2 }}>
+                      {drivers.map((driver) => (
+                        <FormControlLabel
+                          key={driver.id}
+                          control={
+                            <Checkbox
+                              checked={formData.selectedDrivers.includes(driver.id)}
+                              onChange={() => handleDriverChange(driver.id)}
+                            />
+                          }
+                          label={`${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`}
+                        />
+                      ))}
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={applyDriversToAllDays}
+                      disabled={formData.selectedDrivers.length === 0}
+                    >
+                      Apply to All Days
+                    </Button>
+                  </Grid>
+                  
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle1" gutterBottom>Conductors</Typography>
+                    <Box sx={{ maxHeight: 150, overflow: 'auto', mb: 2 }}>
+                      {conductors.map((conductor) => (
+                        <FormControlLabel
+                          key={conductor.id}
+                          control={
+                            <Checkbox
+                              checked={formData.selectedConductors.includes(conductor.id)}
+                              onChange={() => handleConductorChange(conductor.id)}
+                            />
+                          }
+                          label={`${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`}
+                        />
+                      ))}
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={applyConductorsToAllDays}
+                      disabled={formData.selectedConductors.length === 0}
+                    >
+                      Apply to All Days
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom>Conductors</Typography>
-              <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
-                {conductors.map((conductor) => (
-                  <FormControlLabel
-                    key={conductor.id}
-                    control={
-                      <Checkbox
-                        checked={formData.selectedConductors.includes(conductor.id)}
-                        onChange={() => handleConductorChange(conductor.id)}
-                      />
-                    }
-                    label={`${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`}
-                  />
-                ))}
-            </Box>
+
+            {/* Day-wise Selection */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AddIcon color="primary" />
+                Day-wise Selection
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Select different drivers and conductors for specific days
+              </Typography>
+              
+              {tripDays.map((day, index) => (
+                <Card key={day} variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </Typography>
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" gutterBottom>Drivers</Typography>
+                      <Box sx={{ maxHeight: 120, overflow: 'auto' }}>
+                        {drivers.map((driver) => (
+                          <FormControlLabel
+                            key={driver.id}
+                            control={
+                              <Checkbox
+                                checked={formData.driversByDay[day]?.includes(driver.id) || false}
+                                onChange={() => handleDriverDayChange(day, driver.id)}
+                                size="small"
+                              />
+                            }
+                            label={`${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`}
+                            sx={{ fontSize: '0.8rem' }}
+                          />
+                        ))}
+                      </Box>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" gutterBottom>Conductors</Typography>
+                      <Box sx={{ maxHeight: 120, overflow: 'auto' }}>
+                        {conductors.map((conductor) => (
+                          <FormControlLabel
+                            key={conductor.id}
+                            control={
+                              <Checkbox
+                                checked={formData.conductorsByDay[day]?.includes(conductor.id) || false}
+                                onChange={() => handleConductorDayChange(day, conductor.id)}
+                                size="small"
+                              />
+                            }
+                            label={`${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`}
+                            sx={{ fontSize: '0.8rem' }}
+                          />
+                        ))}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Card>
+              ))}
             </Grid>
           </Grid>
         );
