@@ -40,7 +40,9 @@ import {
   Stepper,
   Step,
   StepLabel,
-  StepContent
+  StepContent,
+  OutlinedInput,
+  InputAdornment
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -148,6 +150,127 @@ const CreateTrip = () => {
 
   const tripDays = getTripDays();
 
+  // Dropdown checklist component
+  const DropdownChecklist = ({ 
+    label, 
+    options, 
+    selectedValues, 
+    onChange, 
+    placeholder = "Select items...",
+    disabled = false 
+  }) => {
+    const [open, setOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredOptions = options.filter(option =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleToggle = (value) => {
+      const newSelectedValues = selectedValues.includes(value)
+        ? selectedValues.filter(item => item !== value)
+        : [...selectedValues, value];
+      onChange(newSelectedValues);
+    };
+
+    const handleSelectAll = () => {
+      if (selectedValues.length === filteredOptions.length) {
+        onChange([]);
+      } else {
+        onChange(filteredOptions.map(option => option.value));
+      }
+    };
+
+    const selectedLabels = selectedValues.map(value => 
+      options.find(option => option.value === value)?.label
+    ).filter(Boolean);
+
+    return (
+      <FormControl fullWidth>
+        <InputLabel>{label}</InputLabel>
+        <Select
+          multiple
+          value={selectedValues}
+          onChange={() => {}} // Controlled by custom logic
+          onOpen={() => setOpen(true)}
+          onClose={() => setOpen(false)}
+          open={open}
+          disabled={disabled}
+          input={
+            <OutlinedInput
+              label={label}
+              readOnly
+              onClick={() => setOpen(!open)}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setOpen(!open)}
+                    edge="end"
+                  >
+                    {open ? '▲' : '▼'}
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          }
+          renderValue={() => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {selectedLabels.map((label, index) => (
+                <Chip
+                  key={index}
+                  label={label}
+                  size="small"
+                  onDelete={() => handleToggle(options.find(opt => opt.label === label)?.value)}
+                />
+              ))}
+            </Box>
+          )}
+        >
+          <Box sx={{ p: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <Box sx={{ mt: 1, mb: 1 }}>
+              <Button
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectAll();
+                }}
+                fullWidth
+                variant="outlined"
+              >
+                {selectedValues.length === filteredOptions.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </Box>
+            <Divider />
+          </Box>
+          {filteredOptions.map((option) => (
+            <MenuItem
+              key={option.value}
+              value={option.value}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggle(option.value);
+              }}
+            >
+              <Checkbox
+                checked={selectedValues.includes(option.value)}
+                onChange={() => handleToggle(option.value)}
+              />
+              <ListItemText primary={option.label} />
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  };
+
   useEffect(() => {
     fetchDropdownData();
   }, []);
@@ -212,27 +335,23 @@ const CreateTrip = () => {
   };
 
   // Handle driver selection for specific day
-  const handleDriverDayChange = (day, driverId) => {
+  const handleDriverDayChange = (day, driverIds) => {
     setFormData(prev => ({
       ...prev,
       driversByDay: {
         ...prev.driversByDay,
-        [day]: prev.driversByDay[day]?.includes(driverId)
-          ? prev.driversByDay[day].filter(id => id !== driverId)
-          : [...(prev.driversByDay[day] || []), driverId]
+        [day]: driverIds
       }
     }));
   };
 
   // Handle conductor selection for specific day
-  const handleConductorDayChange = (day, conductorId) => {
+  const handleConductorDayChange = (day, conductorIds) => {
     setFormData(prev => ({
       ...prev,
       conductorsByDay: {
         ...prev.conductorsByDay,
-        [day]: prev.conductorsByDay[day]?.includes(conductorId)
-          ? prev.conductorsByDay[day].filter(id => id !== conductorId)
-          : [...(prev.conductorsByDay[day] || []), conductorId]
+        [day]: conductorIds
       }
     }));
   };
@@ -387,9 +506,9 @@ const CreateTrip = () => {
               <FormControl fullWidth>
                 <InputLabel>Destination</InputLabel>
                 <Select
-                  name="destination"
-                  value={formData.destination}
-                  onChange={handleChange}
+                name="destination"
+                value={formData.destination}
+                onChange={handleChange}
                   label="Destination"
                 >
                   {destinations.map((dest) => (
@@ -435,52 +554,44 @@ const CreateTrip = () => {
                 
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom>Drivers</Typography>
-                    <Box sx={{ maxHeight: 150, overflow: 'auto', mb: 2 }}>
-                      {drivers.map((driver) => (
-                        <FormControlLabel
-                          key={driver.id}
-                          control={
-                            <Checkbox
-                              checked={formData.selectedDrivers.includes(driver.id)}
-                              onChange={() => handleDriverChange(driver.id)}
-                            />
-                          }
-                          label={`${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`}
-                        />
-                      ))}
-                    </Box>
+                    <DropdownChecklist
+                      label="Drivers"
+                      options={drivers.map(driver => ({
+                        value: driver.id,
+                        label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                      }))}
+                      selectedValues={formData.selectedDrivers}
+                      onChange={(values) => setFormData(prev => ({ ...prev, selectedDrivers: values }))}
+                    />
                     <Button
                       variant="outlined"
                       size="small"
                       onClick={applyDriversToAllDays}
                       disabled={formData.selectedDrivers.length === 0}
+                      sx={{ mt: 2 }}
+                      fullWidth
                     >
                       Apply to All Days
                     </Button>
-                  </Grid>
-                  
+            </Grid>
+            
                   <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom>Conductors</Typography>
-                    <Box sx={{ maxHeight: 150, overflow: 'auto', mb: 2 }}>
-                      {conductors.map((conductor) => (
-                        <FormControlLabel
-                          key={conductor.id}
-                          control={
-                            <Checkbox
-                              checked={formData.selectedConductors.includes(conductor.id)}
-                              onChange={() => handleConductorChange(conductor.id)}
-                            />
-                          }
-                          label={`${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`}
-                        />
-                      ))}
-                    </Box>
+                    <DropdownChecklist
+                      label="Conductors"
+                      options={conductors.map(conductor => ({
+                        value: conductor.id,
+                        label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                      }))}
+                      selectedValues={formData.selectedConductors}
+                      onChange={(values) => setFormData(prev => ({ ...prev, selectedConductors: values }))}
+                    />
                     <Button
                       variant="outlined"
                       size="small"
                       onClick={applyConductorsToAllDays}
                       disabled={formData.selectedConductors.length === 0}
+                      sx={{ mt: 2 }}
+                fullWidth
                     >
                       Apply to All Days
                     </Button>
@@ -512,43 +623,27 @@ const CreateTrip = () => {
                   
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
-                      <Typography variant="body2" gutterBottom>Drivers</Typography>
-                      <Box sx={{ maxHeight: 120, overflow: 'auto' }}>
-                        {drivers.map((driver) => (
-                          <FormControlLabel
-                            key={driver.id}
-                            control={
-                              <Checkbox
-                                checked={formData.driversByDay[day]?.includes(driver.id) || false}
-                                onChange={() => handleDriverDayChange(day, driver.id)}
-                                size="small"
-                              />
-                            }
-                            label={`${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`}
-                            sx={{ fontSize: '0.8rem' }}
-                          />
-                        ))}
-                      </Box>
-                    </Grid>
+                      <DropdownChecklist
+                        label="Drivers"
+                        options={drivers.map(driver => ({
+                          value: driver.id,
+                          label: `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}`
+                        }))}
+                        selectedValues={formData.driversByDay[day] || []}
+                        onChange={(values) => handleDriverDayChange(day, values)}
+              />
+            </Grid>
                     
                     <Grid item xs={12} md={6}>
-                      <Typography variant="body2" gutterBottom>Conductors</Typography>
-                      <Box sx={{ maxHeight: 120, overflow: 'auto' }}>
-                        {conductors.map((conductor) => (
-                          <FormControlLabel
-                            key={conductor.id}
-                            control={
-                              <Checkbox
-                                checked={formData.conductorsByDay[day]?.includes(conductor.id) || false}
-                                onChange={() => handleConductorDayChange(day, conductor.id)}
-                                size="small"
-                              />
-                            }
-                            label={`${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`}
-                            sx={{ fontSize: '0.8rem' }}
-                          />
-                        ))}
-                      </Box>
+                      <DropdownChecklist
+                        label="Conductors"
+                        options={conductors.map(conductor => ({
+                          value: conductor.id,
+                          label: `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}`
+                        }))}
+                        selectedValues={formData.conductorsByDay[day] || []}
+                        onChange={(values) => handleConductorDayChange(day, values)}
+                      />
                     </Grid>
                   </Grid>
                 </Card>
@@ -620,7 +715,7 @@ const CreateTrip = () => {
                     >
                       Add Event
                     </Button>
-                  </Box>
+            </Box>
                   
                   {formData.events.map((event) => (
                     <Card key={event.id} variant="outlined" sx={{ mb: 1 }}>
@@ -636,7 +731,7 @@ const CreateTrip = () => {
                                 📍 {event.location}
                               </Typography>
                             )}
-                          </Box>
+          </Box>
                           <IconButton
                             size="small"
                             onClick={() => removeEvent(event.id)}
@@ -644,7 +739,7 @@ const CreateTrip = () => {
                           >
                             <DeleteIcon />
                           </IconButton>
-                        </Box>
+            </Box>
                       </CardContent>
                     </Card>
                   ))}
