@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -53,9 +54,13 @@ function TabPanel({ children, value, index, ...other }) {
 
 const Settings = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Check if coming from profile menu
+  const isFromProfile = location.state?.fromProfile || false;
 
   // Profile state
   const [profileData, setProfileData] = useState({
@@ -204,10 +209,10 @@ const Settings = () => {
     <Container maxWidth="lg">
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Settings
+          {isFromProfile ? 'Profile' : 'Settings'}
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Manage your profile and account settings
+          {isFromProfile ? 'Manage your personal information and account details' : 'Manage your profile and account settings'}
         </Typography>
       </Box>
 

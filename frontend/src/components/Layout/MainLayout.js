@@ -350,7 +350,7 @@ function MainLayout({ children }) {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={() => navigate('/settings')}>
+        <MenuItem onClick={() => navigate('/settings', { state: { fromProfile: true } })}>
           <AccountIcon sx={{ mr: 1 }} />
           Profile
         </MenuItem>
