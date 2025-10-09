@@ -51,34 +51,34 @@ const menuItems = [
 ];
 
 const MasterDataSubMenu = [
-  { text: 'Destinations', path: '/master-data/destinations' },
-  { text: 'Amenities', path: '/master-data/amenities' },
-  { text: 'Food Management', path: '/master-data/food' }
+  { text: 'Destinations', path: '/master-data/destinations', permissions: { module: 'destinations', action: 'read' } },
+  { text: 'Amenities', path: '/master-data/amenities', permissions: { module: 'amenities', action: 'read' } },
+  { text: 'Food Management', path: '/master-data/food', permissions: { module: 'food', action: 'read' } }
 ];
 
 const TripSubMenu = [
-  { text: 'Create Trip', path: '/trips/create' },
-  { text: 'List Trips', path: '/trips/list' },
-  { text: 'Trip Tracking', path: '/trips/tracking' }
+  { text: 'Create Trip', path: '/trips/create', permissions: { module: 'trips', action: 'create' } },
+  { text: 'List Trips', path: '/trips/list', permissions: { module: 'trips', action: 'read' } },
+  { text: 'Trip Tracking', path: '/trips/tracking', permissions: { module: 'trips', action: 'read' } }
 ];
 
 const FinanceSubMenu = [
-  { text: 'Vendors', path: '/finance/vendors' },
-  { text: 'Budget Management', path: '/finance/budget' },
-  { text: 'Vendor Finance', path: '/finance/vendor-finance' }
+  { text: 'Vendors', path: '/finance/vendors', permissions: { module: 'finance', action: 'read' } },
+  { text: 'Budget Management', path: '/finance/budget', permissions: { module: 'finance', action: 'read' } },
+  { text: 'Vendor Finance', path: '/finance/vendor-finance', permissions: { module: 'finance', action: 'read' } }
 ];
 
 const VendorsSubMenu = [
-  { text: 'Accommodation', path: '/vendors/accommodation' },
-  { text: 'Food', path: '/vendors/food' },
-  { text: 'Transport', path: '/vendors/transport' }
+  { text: 'Accommodation', path: '/vendors/accommodation', permissions: { module: 'vendors', action: 'read' } },
+  { text: 'Food', path: '/vendors/food', permissions: { module: 'vendors', action: 'read' } },
+  { text: 'Transport', path: '/vendors/transport', permissions: { module: 'vendors', action: 'read' } }
 ];
 
 function MainLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
-  const { user, logout, hasAnyRole } = useAuth();
+  const { user, logout, hasAnyRole, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -132,18 +132,31 @@ function MainLayout({ children }) {
   };
 
   const getSubMenu = (path) => {
+    let subMenu = [];
     switch (path) {
       case '/master-data':
-        return MasterDataSubMenu;
+        subMenu = MasterDataSubMenu;
+        break;
       case '/trips':
-        return TripSubMenu;
+        subMenu = TripSubMenu;
+        break;
       case '/finance':
-        return FinanceSubMenu;
+        subMenu = FinanceSubMenu;
+        break;
       case '/vendors':
-        return VendorsSubMenu;
+        subMenu = VendorsSubMenu;
+        break;
       default:
         return [];
     }
+    
+    // Filter submenu items based on permissions
+    return subMenu.filter(item => {
+      if (item.permissions) {
+        return hasPermission(item.permissions.module, item.permissions.action);
+      }
+      return true; // If no permissions specified, show the item
+    });
   };
 
   const drawer = (

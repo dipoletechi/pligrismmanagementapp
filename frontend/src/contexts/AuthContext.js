@@ -219,35 +219,55 @@ const getRolePermissions = (role) => {
       trips: ['create', 'read', 'update', 'delete'],
       finance: ['create', 'read', 'update', 'delete'],
       reports: ['create', 'read', 'update', 'delete'],
-      settings: ['create', 'read', 'update', 'delete']
+      settings: ['create', 'read', 'update', 'delete'],
+      destinations: ['create', 'read', 'update', 'delete'],
+      amenities: ['create', 'read', 'update', 'delete'],
+      food: ['create', 'read', 'update', 'delete'],
+      vendors: ['create', 'read', 'update', 'delete']
     },
     admin: {
       users: ['read'], // Admin cannot manage users
       trips: ['create', 'read', 'update', 'delete'],
       finance: ['create', 'read', 'update', 'delete'],
       reports: ['create', 'read', 'update', 'delete'],
-      settings: ['create', 'read', 'update', 'delete']
+      settings: ['create', 'read', 'update', 'delete'],
+      destinations: ['create', 'read', 'update', 'delete'],
+      amenities: ['create', 'read', 'update', 'delete'],
+      food: ['create', 'read', 'update', 'delete'],
+      vendors: ['create', 'read', 'update', 'delete']
     },
     trip_manager: {
       users: [],
       trips: ['create', 'read', 'update', 'delete'],
       finance: [],
       reports: ['read'],
-      settings: ['read', 'update'] // Allow trip managers to update their settings
+      settings: ['read', 'update'], // Allow trip managers to update their settings
+      destinations: [],
+      amenities: [],
+      food: [],
+      vendors: []
     },
     financial_manager: {
       users: [],
       trips: ['read'], // Read-only access to trips
       finance: ['create', 'read', 'update', 'delete'],
       reports: ['create', 'read', 'update', 'delete'],
-      settings: ['read', 'update'] // Allow financial managers to update their settings
+      settings: ['read', 'update'], // Allow financial managers to update their settings
+      destinations: [],
+      amenities: [],
+      food: [],
+      vendors: []
     },
     user: {
       users: [],
       trips: ['read'],
       finance: [],
       reports: [],
-      settings: ['read', 'update'] // Allow regular users to update their settings
+      settings: ['read', 'update'], // Allow regular users to update their settings
+      destinations: [],
+      amenities: [],
+      food: [],
+      vendors: []
     }
   };
 
