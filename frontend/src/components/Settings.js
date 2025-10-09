@@ -231,94 +231,130 @@ const Settings = () => {
 
         {/* Profile Tab */}
         <TabPanel value={activeTab} index={0}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Avatar
-                    sx={{ 
-                      width: 100, 
-                      height: 100, 
-                      mx: 'auto', 
-                      mb: 2,
-                      bgcolor: 'primary.main',
-                      fontSize: '2rem'
-                    }}
-                  >
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </Avatar>
-                  <Typography variant="h6" gutterBottom>
-                    {user?.name || 'User'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {user?.email || 'user@example.com'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Role: {user?.role || 'User'}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} md={8}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 4, 
+            alignItems: 'flex-start',
+            flexDirection: { xs: 'column', md: 'row' }
+          }}>
+            {/* Left Side - User Info Display */}
+            <Box sx={{ 
+              minWidth: { xs: '100%', md: 300 },
+              p: 3,
+              borderRadius: 2,
+              border: '1px solid #e0e0e0',
+              backgroundColor: '#fafafa',
+              textAlign: { xs: 'center', md: 'left' }
+            }}>
+              <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                <Avatar
+                  sx={{ 
+                    width: 80, 
+                    height: 80, 
+                    bgcolor: 'primary.main',
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </Avatar>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 2,
+                    right: 2,
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    backgroundColor: '#4caf50',
+                    border: '2px solid white'
+                  }}
+                />
+              </Box>
+              
+              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+                {user?.name || 'User'}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                {user?.email || 'user@example.com'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Role: {user?.role || 'User'}
+              </Typography>
+            </Box>
+
+            {/* Right Side - Edit Form */}
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 400 } }}>
               <form onSubmit={handleProfileSubmit}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Full Name"
-                      name="name"
-                      value={profileData.name}
-                      onChange={handleProfileChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      name="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={handleProfileChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Phone"
-                      name="phone"
-                      value={profileData.phone}
-                      onChange={handleProfileChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Address"
-                      name="address"
-                      multiline
-                      rows={3}
-                      value={profileData.address}
-                      onChange={handleProfileChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Full Name *"
+                    name="name"
+                    value={profileData.name}
+                    onChange={handleProfileChange}
+                    required
+                    variant="outlined"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <TextField
+                    fullWidth
+                    label="Email *"
+                    name="email"
+                    type="email"
+                    value={profileData.email}
+                    onChange={handleProfileChange}
+                    required
+                    variant="outlined"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <TextField
+                    fullWidth
+                    label="Phone"
+                    name="phone"
+                    value={profileData.phone}
+                    onChange={handleProfileChange}
+                    variant="outlined"
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <TextField
+                    fullWidth
+                    label="Address"
+                    name="address"
+                    multiline
+                    rows={4}
+                    value={profileData.address}
+                    onChange={handleProfileChange}
+                    variant="outlined"
+                    placeholder="Enter your address"
+                    sx={{ mb: 3 }}
+                  />
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <Button
                       type="submit"
                       variant="contained"
-                      startIcon={<SaveIcon />}
+                      startIcon={<PersonIcon />}
                       disabled={loading}
-                      sx={{ mt: 2 }}
+                      sx={{ 
+                        px: 4,
+                        py: 1.5,
+                        borderRadius: 2,
+                        textTransform: 'uppercase',
+                        fontWeight: 'bold',
+                        fontSize: '0.9rem'
+                      }}
                     >
                       {loading ? <CircularProgress size={20} /> : 'Update Profile'}
                     </Button>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </form>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </TabPanel>
 
         {/* Change Password Tab */}
