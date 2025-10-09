@@ -14,6 +14,7 @@ const SupportTicket = require('./SupportTicket');
 const FoodSchedule = require('./FoodSchedule');
 const FoodCategory = require('./FoodCategory');
 const FoodItem = require('./FoodItem');
+const Event = require('./Event');
 
 // Associations
 FoodCategory.hasMany(FoodItem, {
@@ -83,7 +84,8 @@ module.exports = {
   SupportTicket,
   FoodSchedule,
   FoodCategory,
-  FoodItem
+  FoodItem,
+  Event
 };
 
 

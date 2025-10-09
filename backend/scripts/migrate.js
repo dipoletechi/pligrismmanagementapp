@@ -72,9 +72,20 @@ class DatabaseMigrator {
       const tablesExist = await this.checkTablesExist();
       
       if (tablesExist) {
-        console.log('ℹ️  Database tables already exist, skipping migration');
-        console.log('✅ Database is ready to use');
-        return;
+        console.log('ℹ️  Database tables already exist, checking for new migrations...');
+        
+        // Check if selected_drivers column exists in trips table
+        const [columnExists] = await this.connection.execute(
+          "SELECT COUNT(*) as columnCount FROM information_schema.columns WHERE table_schema = ? AND table_name = 'trips' AND column_name = 'selected_drivers'",
+          [this.dbName]
+        );
+        
+        if (columnExists[0].columnCount === 0) {
+          console.log('🔄 New columns not found in trips table, running migrations...');
+        } else {
+          console.log('✅ All migrations already applied, skipping');
+          return;
+        }
       }
 
       const migrationsDir = path.join(__dirname, '..', 'migrations');

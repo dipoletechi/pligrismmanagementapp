@@ -32,12 +32,20 @@ router.get('/:id', protect, async (req, res) => {
 
 // Create trip
 router.post('/', protect, authorize('superadmin', 'admin', 'trip_manager'), [
-  body('title').trim().notEmpty(),
-  body('start_date').isISO8601(),
-  body('end_date').isISO8601()
+  body('title').trim().notEmpty().withMessage('Title is required'),
+  body('destination').trim().notEmpty().withMessage('Destination is required'),
+  body('start_date').isISO8601().withMessage('Valid start date is required'),
+  body('end_date').isISO8601().withMessage('Valid end date is required')
 ], async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) {
+    console.log('Validation errors:', errors.array());
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Validation failed',
+      errors: errors.array() 
+    });
+  }
   
   try {
     const tripData = { ...req.body, created_by: req.user.id };
