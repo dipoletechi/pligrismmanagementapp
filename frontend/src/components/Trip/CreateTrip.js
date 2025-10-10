@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -43,7 +43,9 @@ import {
   StepLabel,
   StepContent,
   OutlinedInput,
-  InputAdornment
+  InputAdornment,
+  Radio,
+  RadioGroup
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -66,7 +68,8 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   KeyboardArrowUp as ArrowUpIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -75,6 +78,7 @@ import axios from 'axios';
 
 const CreateTrip = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -84,9 +88,7 @@ const CreateTrip = () => {
   const isViewMode = location.state?.isViewMode || false;
   const editingTrip = location.state?.editingTrip || null;
   
-  console.log('CreateTrip component - isEditMode:', isEditMode);
-  console.log('CreateTrip component - editingTrip:', editingTrip);
-  console.log('CreateTrip component - location.state:', location.state);
+  
   
   // Data for dropdowns
   const [destinations, setDestinations] = useState([]);
@@ -102,15 +104,15 @@ const CreateTrip = () => {
 
   // Form data - Initialize with editing trip data if available
   const [formData, setFormData] = useState(() => {
-    if (editingTrip) {
+    if (editingTrip && (isEditMode || isViewMode)) {
       console.log('Initializing formData with editingTrip:', editingTrip);
       return {
         title: editingTrip.title || '',
         destination: editingTrip.destination || '',
         startDate: editingTrip.start_date ? new Date(editingTrip.start_date) : null,
         endDate: editingTrip.end_date ? new Date(editingTrip.end_date) : null,
-        // Get transport vendor from vendorsByDay or use empty string
-        selectedTransportVendor: editingTrip.vendors_by_day ? (() => {
+        // Get transport vendor from transport_vendor_id or vendorsByDay
+        selectedTransportVendor: editingTrip.transport_vendor_id || (editingTrip.vendors_by_day ? (() => {
           try {
             const vendorsByDay = JSON.parse(editingTrip.vendors_by_day);
             const firstDay = Object.keys(vendorsByDay)[0];
@@ -118,7 +120,7 @@ const CreateTrip = () => {
           } catch {
             return '';
           }
-        })() : '',
+        })() : ''),
         // Parse JSON fields if they exist (using underscore field names from database)
         selectedDrivers: editingTrip.selected_drivers ? JSON.parse(editingTrip.selected_drivers) : [],
         selectedConductors: editingTrip.selected_conductors ? JSON.parse(editingTrip.selected_conductors) : [],
@@ -147,7 +149,14 @@ const CreateTrip = () => {
         selectedEventDescription: editingTrip.selected_event_description || '',
         selectedEventStartTime: editingTrip.selected_event_start_time || '',
         selectedEventEndTime: editingTrip.selected_event_end_time || '',
-        finance: editingTrip.finance_data ? JSON.parse(editingTrip.finance_data) : { vendors: [], totalAmount: 0 }
+        finance: editingTrip.finance_data ? JSON.parse(editingTrip.finance_data) : { 
+          vendors: [], 
+          otherExpenses: [], 
+          transportExpenses: [],
+          accommodationExpenses: [],
+          foodExpenses: [],
+          totalAmount: 0 
+        }
       };
     } else {
       return {
@@ -193,13 +202,154 @@ const CreateTrip = () => {
     }
   });
   
-  // Collapse states for sections
-  const [allDaysExpanded, setAllDaysExpanded] = useState(false);
-  const [dayWiseExpanded, setDayWiseExpanded] = useState(false);
-  const [foodAllDaysExpanded, setFoodAllDaysExpanded] = useState(false);
-  const [foodDayWiseExpanded, setFoodDayWiseExpanded] = useState(false);
+
+  // Expand sections when data is loaded in edit mode
+  useEffect(() => {
+    if (isEditMode && editingTrip) {
+      // Expand transport section if we have data
+      if ((formData.selectedDrivers?.length || 0) > 0 || (formData.selectedConductors?.length || 0) > 0 || (formData.selectedBuses?.length || 0) > 0) {
+        setAllDaysExpanded(true);
+      }
+      
+      // Expand day-wise section if we have day-wise data
+      if (Object.keys(formData.driversByDay || {}).length > 0) {
+        setDayWiseExpanded(true);
+      }
+      
+      // Expand accommodation section if we have data
+      if (formData.selectedAccommodationVendor || Object.keys(formData.accommodationsByDay || {}).length > 0) {
+        setAccommodationAllDaysExpanded(true);
+      }
+      
+      // Expand food section if we have data
+      if ((formData.selectedFoodVendors?.length || 0) > 0 || (formData.selectedFoodSchedules?.length || 0) > 0 || 
+          (formData.selectedFoodCategories?.length || 0) > 0 || (formData.selectedFoodItems?.length || 0) > 0 ||
+          Object.keys(formData.foodVendorsByDay || {}).length > 0) {
+        setFoodAllDaysExpanded(true);
+      }
+      
+      // Expand events section if we have data
+      if (formData.selectedEventTitle || (formData.allDaysEvents?.length || 0) > 0 || Object.keys(formData.eventsByDay || {}).length > 0) {
+        setEventsAllDaysExpanded(true);
+      }
+    }
+  }, [isEditMode, editingTrip, formData.selectedDrivers, formData.selectedConductors, formData.selectedBuses, formData.driversByDay, formData.selectedAccommodationVendor, formData.accommodationsByDay, formData.selectedFoodVendors, formData.selectedFoodSchedules, formData.selectedFoodCategories, formData.selectedFoodItems, formData.foodVendorsByDay, formData.selectedEventTitle, formData.allDaysEvents, formData.eventsByDay]);
+  
+  // Collapse states for sections - expand if we have data in edit mode
+  const [allDaysExpanded, setAllDaysExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have any transport data (drivers, conductors, or buses)
+      const hasDrivers = editingTrip.selected_drivers && editingTrip.selected_drivers !== '[]' && editingTrip.selected_drivers !== '[]';
+      const hasConductors = editingTrip.selected_conductors && editingTrip.selected_conductors !== '[]' && editingTrip.selected_conductors !== '[]';
+      const hasBuses = editingTrip.selected_buses && editingTrip.selected_buses !== '[]' && editingTrip.selected_buses !== '[]';
+      
+      // Also check if we have any day-wise data
+      const hasDayWiseDrivers = editingTrip.drivers_by_day && editingTrip.drivers_by_day !== '{}' && editingTrip.drivers_by_day !== '{}';
+      
+      return hasDrivers || hasConductors || hasBuses || hasDayWiseDrivers;
+    }
+    return false;
+  });
+  const [dayWiseExpanded, setDayWiseExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have day-wise transport data
+      const hasDayWiseDrivers = editingTrip.drivers_by_day && editingTrip.drivers_by_day !== '{}' && editingTrip.drivers_by_day !== '{}';
+      const hasDayWiseConductors = editingTrip.conductors_by_day && editingTrip.conductors_by_day !== '{}' && editingTrip.conductors_by_day !== '{}';
+      const hasDayWiseBuses = editingTrip.buses_by_day && editingTrip.buses_by_day !== '{}' && editingTrip.buses_by_day !== '{}';
+      return hasDayWiseDrivers || hasDayWiseConductors || hasDayWiseBuses;
+    }
+    return false;
+  });
+  const [accommodationAllDaysExpanded, setAccommodationAllDaysExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have accommodation data
+      const hasAccommodation = editingTrip.accommodation_vendor_id || editingTrip.accommodation_start_time || editingTrip.accommodation_end_time;
+      return hasAccommodation;
+    }
+    return false;
+  });
+  const [accommodationDayWiseExpanded, setAccommodationDayWiseExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have day-wise accommodation data
+      const hasDayWiseAccommodation = editingTrip.accommodations_by_day && editingTrip.accommodations_by_day !== '{}' && editingTrip.accommodations_by_day !== '{}';
+      return hasDayWiseAccommodation;
+    }
+    return false;
+  });
+  const [foodAllDaysExpanded, setFoodAllDaysExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have food data
+      const hasFood = editingTrip.food_vendors || editingTrip.food_schedules || editingTrip.food_categories || editingTrip.food_items;
+      return hasFood;
+    }
+    return false;
+  });
+  const [foodDayWiseExpanded, setFoodDayWiseExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have day-wise food data
+      const hasDayWiseFood = editingTrip.food_vendors_by_day && editingTrip.food_vendors_by_day !== '{}' && editingTrip.food_vendors_by_day !== '{}';
+      return hasDayWiseFood;
+    }
+    return false;
+  });
+  const [eventsAllDaysExpanded, setEventsAllDaysExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have events data
+      const hasEvents = editingTrip.all_days_events && editingTrip.all_days_events !== '[]' && editingTrip.all_days_events !== '[]';
+      return hasEvents;
+    }
+    return false;
+  });
+  const [eventsDayWiseExpanded, setEventsDayWiseExpanded] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      // Check if we have day-wise events data
+      const hasDayWiseEvents = editingTrip.events_by_day && editingTrip.events_by_day !== '{}' && editingTrip.events_by_day !== '{}';
+      return hasDayWiseEvents;
+    }
+    return false;
+  });
+  // Initialize selection types based on existing data in edit/view mode
+  const [selectionType, setSelectionType] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      const hasAllDaysData = !!(editingTrip.selected_drivers && editingTrip.selected_drivers !== '[]');
+      const hasDayWiseData = !!(editingTrip.drivers_by_day && editingTrip.drivers_by_day !== '{}');
+      if (hasAllDaysData && !hasDayWiseData) return 'allDays';
+      if (hasDayWiseData && !hasAllDaysData) return 'dayWise';
+    }
+    return 'allDays';
+  });
+  
+  const [accommodationSelectionType, setAccommodationSelectionType] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      const hasAllDaysData = !!(editingTrip.selected_accommodation_vendor && editingTrip.selected_accommodation_vendor !== '');
+      const hasDayWiseData = !!(editingTrip.accommodations_by_day && editingTrip.accommodations_by_day !== '{}');
+      if (hasAllDaysData && !hasDayWiseData) return 'allDays';
+      if (hasDayWiseData && !hasAllDaysData) return 'dayWise';
+    }
+    return 'allDays';
+  });
+  
+  const [foodSelectionType, setFoodSelectionType] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      const hasAllDaysData = !!(editingTrip.all_days_food_entries && editingTrip.all_days_food_entries !== '[]');
+      const hasDayWiseData = !!(editingTrip.food_vendors_by_day && editingTrip.food_vendors_by_day !== '{}');
+      if (hasAllDaysData && !hasDayWiseData) return 'allDays';
+      if (hasDayWiseData && !hasAllDaysData) return 'dayWise';
+    }
+    return 'allDays';
+  });
+  
+  const [eventsSelectionType, setEventsSelectionType] = useState(() => {
+    if ((isEditMode || isViewMode) && editingTrip) {
+      const hasAllDaysData = !!(editingTrip.all_days_events && editingTrip.all_days_events !== '[]');
+      const hasDayWiseData = !!(editingTrip.events_by_day && editingTrip.events_by_day !== '{}');
+      if (hasAllDaysData && !hasDayWiseData) return 'allDays';
+      if (hasDayWiseData && !hasAllDaysData) return 'dayWise';
+    }
+    return 'allDays';
+  });
   const [appliedToAllDays, setAppliedToAllDays] = useState(() => {
-    if (editingTrip) {
+    if ((isEditMode || isViewMode) && editingTrip) {
       // Check if all days data exists for each section
       return {
         drivers: !!(editingTrip.selected_drivers && editingTrip.selected_drivers !== '[]'),
@@ -220,6 +370,7 @@ const CreateTrip = () => {
       };
     }
   });
+
   
   // Apply button states
   const [applyButtonState, setApplyButtonState] = useState('default'); // 'default', 'applied', 'changed'
@@ -369,6 +520,7 @@ const CreateTrip = () => {
     );
 
     const handleToggle = (value) => {
+      if (disabled) return;
       const newSelectedValues = selectedValues.includes(value)
         ? selectedValues.filter(item => item !== value)
         : [...selectedValues, value];
@@ -376,7 +528,8 @@ const CreateTrip = () => {
     };
 
     const handleSelectAll = () => {
-      if (selectedValues.length === filteredOptions.length) {
+      if (disabled) return;
+      if ((selectedValues?.length || 0) === (filteredOptions?.length || 0)) {
         onChange([]);
       } else {
         onChange(filteredOptions.map(option => option.value));
@@ -394,7 +547,7 @@ const CreateTrip = () => {
           multiple
           value={selectedValues}
           onChange={() => {}} // Controlled by custom logic
-          onOpen={() => setOpen(true)}
+          onOpen={() => !disabled && setOpen(true)}
           onClose={() => setOpen(false)}
           open={open}
           disabled={disabled}
@@ -402,7 +555,7 @@ const CreateTrip = () => {
           input={
             <OutlinedInput
               readOnly
-              onClick={() => setOpen(!open)}
+              onClick={() => !disabled && setOpen(!open)}
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
                   border: '1px solid #e0e0e0',
@@ -420,7 +573,8 @@ const CreateTrip = () => {
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton
-                    onClick={() => setOpen(!open)}
+                    onClick={() => !disabled && setOpen(!open)}
+                    disabled={disabled}
                     edge="end"
                     size="small"
                   >
@@ -437,7 +591,7 @@ const CreateTrip = () => {
                   key={index}
                   label={label}
                   size="small"
-                  onDelete={() => handleToggle(options.find(opt => opt.label === label)?.value)}
+                  onDelete={disabled ? undefined : () => handleToggle(options.find(opt => opt.label === label)?.value)}
                 />
               ))}
             </Box>
@@ -449,8 +603,9 @@ const CreateTrip = () => {
               size="small"
               placeholder="Search..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => !disabled && setSearchTerm(e.target.value)}
               onClick={(e) => e.stopPropagation()}
+              disabled={disabled}
             />
             <Box sx={{ mt: 1, mb: 1 }}>
               <Button
@@ -459,10 +614,11 @@ const CreateTrip = () => {
                   e.stopPropagation();
                   handleSelectAll();
                 }}
+                disabled={disabled}
                 fullWidth
                 variant="outlined"
               >
-                {selectedValues.length === filteredOptions.length ? 'Deselect All' : 'Select All'}
+                {(selectedValues?.length || 0) === (filteredOptions?.length || 0) ? 'Deselect All' : 'Select All'}
               </Button>
             </Box>
             <Divider />
@@ -473,12 +629,14 @@ const CreateTrip = () => {
               value={option.value}
               onClick={(e) => {
                 e.stopPropagation();
-                handleToggle(option.value);
+                if (!disabled) handleToggle(option.value);
               }}
+              disabled={disabled}
             >
               <Checkbox
                 checked={selectedValues.includes(option.value)}
-                onChange={() => handleToggle(option.value)}
+                onChange={() => !disabled && handleToggle(option.value)}
+                disabled={disabled}
               />
               <ListItemText primary={option.label} />
             </MenuItem>
@@ -490,15 +648,61 @@ const CreateTrip = () => {
 
   useEffect(() => {
     fetchDropdownData();
-  }, []);
-
-  // Debug useEffect for edit mode
-  useEffect(() => {
-    if (isEditMode && editingTrip) {
-      console.log('Edit mode - formData after initialization:', formData);
-      console.log('Edit mode - appliedToAllDays after initialization:', appliedToAllDays);
+    if (!isEditMode && !isViewMode) {
+      loadSavedTripData();
     }
-  }, [isEditMode, editingTrip, formData, appliedToAllDays]);
+  }, [isEditMode, isViewMode]);
+
+  // Reset form for fresh component load
+  useEffect(() => {
+    if (!isEditMode && !isViewMode) {
+      // Clear localStorage and reset form for fresh component
+      localStorage.removeItem('currentTripId');
+      setFormData({
+        title: '',
+        destination: '',
+        startDate: null,
+        endDate: null,
+        selectedTransportVendor: '',
+        selectedDrivers: [],
+        selectedConductors: [],
+        selectedBuses: [],
+        driversByDay: {},
+        conductorsByDay: {},
+        busesByDay: {},
+        vendorsByDay: {},
+        timeByDay: {},
+        accommodationsByDay: {},
+        selectedAccommodationVendor: '',
+        selectedAccommodationStartTime: '',
+        selectedAccommodationEndTime: '',
+        selectedFoodVendors: [],
+        selectedFoodSchedules: [],
+        selectedFoodCategories: [],
+        selectedFoodItems: [],
+        foodVendorsByDay: {},
+        foodSchedulesByDay: {},
+        foodCategoriesByDay: {},
+        foodItemsByDay: {},
+        allDaysFoodEntries: [],
+        selectedEventTitle: '',
+        selectedEventDescription: '',
+        selectedEventStartTime: '',
+        selectedEventEndTime: '',
+        allDaysEvents: [],
+        eventsByDay: {},
+        finance: { 
+          vendors: [], 
+          otherExpenses: [],
+          transportExpenses: [],
+          accommodationExpenses: [],
+          foodExpenses: []
+        }
+      });
+      setActiveStep(0);
+    }
+  }, [isEditMode, isViewMode]);
+
 
   const fetchDropdownData = async () => {
     try {
@@ -545,16 +749,28 @@ const CreateTrip = () => {
   const handleDriverSelectionChange = (values) => {
     setFormData(prev => ({ ...prev, selectedDrivers: values }));
     checkForChanges();
+    // Auto-save when drivers are selected
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
   };
 
   const handleConductorSelectionChange = (values) => {
     setFormData(prev => ({ ...prev, selectedConductors: values }));
     checkForChanges();
+    // Auto-save when conductors are selected
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
   };
 
   const handleBusSelectionChange = (values) => {
     setFormData(prev => ({ ...prev, selectedBuses: values }));
     checkForChanges();
+    // Auto-save when buses are selected
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
   };
 
   const handleDriverChange = (driverId) => {
@@ -577,78 +793,377 @@ const CreateTrip = () => {
     checkForChanges();
   };
 
-  const applyDriversToAllDays = () => {
-    const allDays = getTripDays();
-    const driversByDay = {};
-    allDays.forEach(day => {
-      driversByDay[day] = formData.selectedDrivers;
-    });
+
+  // Handle radio button changes and clear opposite data
+  const handleSelectionTypeChange = (newType) => {
+    setSelectionType(newType);
+    
+    // Clear opposite data immediately
+    if (newType === 'allDays') {
+      // Clear day-wise data
     setFormData(prev => ({
       ...prev,
-      driversByDay
-    }));
-    setAppliedToAllDays(prev => ({ ...prev, drivers: true }));
+        driversByDay: {},
+        conductorsByDay: {},
+        busesByDay: {},
+        vendorsByDay: {},
+        timeByDay: {}
+      }));
+    } else {
+      // Clear all-days data
+      setFormData(prev => ({
+        ...prev,
+        selectedDrivers: [],
+        selectedConductors: [],
+        selectedBuses: []
+      }));
+    }
+    
+    // Auto-save when radio button changes
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
   };
 
-  const applyConductorsToAllDays = () => {
-    const allDays = getTripDays();
-    const conductorsByDay = {};
-    allDays.forEach(day => {
-      conductorsByDay[day] = formData.selectedConductors;
-    });
+  const handleAccommodationSelectionTypeChange = (newType) => {
+    setAccommodationSelectionType(newType);
+    
+    // Clear opposite data immediately
+    if (newType === 'allDays') {
+      // Clear day-wise data
     setFormData(prev => ({
       ...prev,
-      conductorsByDay
-    }));
-    setAppliedToAllDays(prev => ({ ...prev, conductors: true }));
+        accommodationsByDay: {}
+      }));
+    } else {
+      // Clear all-days data
+      setFormData(prev => ({
+        ...prev,
+        selectedAccommodationVendor: '',
+        selectedAccommodationStartTime: '',
+        selectedAccommodationEndTime: ''
+      }));
+    }
+    
+    // Auto-save when radio button changes
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
   };
 
-  const applyAccommodationsToAllDays = () => {
-    const allDays = getTripDays();
-    const accommodationsByDay = {};
-    const accommodation = {
-      id: Date.now(),
-      vendor: formData.selectedAccommodationVendor,
-      startTime: new Date(`2000-01-01T${formData.selectedAccommodationStartTime}`),
-      endTime: new Date(`2000-01-01T${formData.selectedAccommodationEndTime}`)
-    };
+  const handleFoodSelectionTypeChange = (newType) => {
+    setFoodSelectionType(newType);
     
-    allDays.forEach(day => {
-      accommodationsByDay[day] = [accommodation];
-    });
-    
+    // Clear opposite data immediately
+    if (newType === 'allDays') {
+      // Clear day-wise data
     setFormData(prev => ({
       ...prev,
-      accommodationsByDay
-    }));
-    setAppliedToAllDays(prev => ({ ...prev, accommodations: true }));
+        foodVendorsByDay: {},
+        foodSchedulesByDay: {},
+        foodCategoriesByDay: {},
+        foodItemsByDay: {}
+      }));
+    } else {
+      // Clear all-days data
+      setFormData(prev => ({
+        ...prev,
+        selectedFoodVendors: [],
+        selectedFoodSchedules: [],
+        selectedFoodCategories: [],
+        selectedFoodItems: [],
+        allDaysFoodEntries: []
+      }));
+    }
+    
+    // Auto-save when radio button changes
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
   };
 
-  const applyFoodToAllDays = () => {
-    const allDays = getTripDays();
-    const foodVendorsByDay = {};
-    const foodSchedulesByDay = {};
-    const foodCategoriesByDay = {};
-    const foodItemsByDay = {};
+  const handleEventsSelectionTypeChange = (newType) => {
+    setEventsSelectionType(newType);
     
-    allDays.forEach(day => {
-      foodVendorsByDay[day] = [...formData.selectedFoodVendors];
-      foodSchedulesByDay[day] = [...formData.selectedFoodSchedules];
-      foodCategoriesByDay[day] = [...formData.selectedFoodCategories];
-      foodItemsByDay[day] = [...formData.selectedFoodItems];
-    });
+    // Clear opposite data immediately
+    if (newType === 'allDays') {
+      // Clear day-wise data
+      setFormData(prev => ({
+        ...prev,
+        eventsByDay: {}
+      }));
+    } else {
+      // Clear all-days data
+      setFormData(prev => ({
+        ...prev,
+        allDaysEvents: [],
+        selectedEventTitle: '',
+        selectedEventDescription: '',
+        selectedEventStartTime: '',
+        selectedEventEndTime: ''
+      }));
+    }
     
+    // Auto-save when radio button changes
+    setTimeout(() => {
+      saveStepData(activeStep);
+    }, 100);
+  };
+
+  // Load saved trip data
+  const loadSavedTripData = async () => {
+    // Add timestamp to force refresh
+    const timestamp = new Date().getTime();
+    console.log('Loading trip data at:', timestamp);
+    try {
+      const currentTripId = localStorage.getItem('currentTripId');
+      if (currentTripId && !isEditMode && !isViewMode) {
+        const response = await axios.get(`/api/trips/${currentTripId}?t=${timestamp}`);
+        const tripData = response.data.data;
+        
+        // Update form data with saved trip data
     setFormData(prev => ({
       ...prev,
-      foodVendorsByDay,
-      foodSchedulesByDay,
-      foodCategoriesByDay,
-      foodItemsByDay
-    }));
-    setAppliedToAllDays(prev => ({ ...prev, food: true }));
+          title: tripData.title || '',
+          destination: tripData.destination || '',
+          startDate: tripData.start_date ? new Date(tripData.start_date) : null,
+          endDate: tripData.end_date ? new Date(tripData.end_date) : null,
+          selectedTransportVendor: tripData.transport_vendor_id || '',
+          selectedDrivers: tripData.selected_drivers ? JSON.parse(tripData.selected_drivers) : [],
+          selectedConductors: tripData.selected_conductors ? JSON.parse(tripData.selected_conductors) : [],
+          selectedBuses: tripData.selected_buses ? JSON.parse(tripData.selected_buses) : [],
+          selectedAccommodationVendor: tripData.selected_accommodation_vendor || '',
+          selectedAccommodationStartTime: tripData.selected_accommodation_start_time || '',
+          selectedAccommodationEndTime: tripData.selected_accommodation_end_time || '',
+          selectedFoodVendors: tripData.selected_food_vendors ? JSON.parse(tripData.selected_food_vendors) : [],
+          selectedFoodSchedules: tripData.selected_food_schedules ? JSON.parse(tripData.selected_food_schedules) : [],
+          selectedFoodCategories: tripData.selected_food_categories ? JSON.parse(tripData.selected_food_categories) : [],
+          selectedFoodItems: tripData.selected_food_items ? JSON.parse(tripData.selected_food_items) : [],
+          selectedEventTitle: tripData.selected_event_title || '',
+          selectedEventDescription: tripData.selected_event_description || '',
+          selectedEventStartTime: tripData.selected_event_start_time || '',
+          selectedEventEndTime: tripData.selected_event_end_time || '',
+          driversByDay: tripData.drivers_by_day ? JSON.parse(tripData.drivers_by_day) : {},
+          conductorsByDay: tripData.conductors_by_day ? JSON.parse(tripData.conductors_by_day) : {},
+          busesByDay: tripData.buses_by_day ? JSON.parse(tripData.buses_by_day) : {},
+          vendorsByDay: tripData.vendors_by_day ? JSON.parse(tripData.vendors_by_day) : {},
+          timeByDay: tripData.time_by_day ? JSON.parse(tripData.time_by_day) : {},
+          accommodationsByDay: tripData.accommodations_by_day ? JSON.parse(tripData.accommodations_by_day) : {},
+          selectedAccommodationVendor: tripData.selected_accommodation_vendor || '',
+          selectedAccommodationStartTime: tripData.selected_accommodation_start_time || '',
+          selectedAccommodationEndTime: tripData.selected_accommodation_end_time || '',
+          selectedFoodVendors: tripData.selected_food_vendors ? JSON.parse(tripData.selected_food_vendors) : [],
+          foodVendorsByDay: tripData.food_vendors_by_day ? JSON.parse(tripData.food_vendors_by_day) : {},
+          selectedFoodSchedules: tripData.selected_food_schedules ? JSON.parse(tripData.selected_food_schedules) : [],
+          selectedFoodCategories: tripData.selected_food_categories ? JSON.parse(tripData.selected_food_categories) : [],
+          selectedFoodItems: tripData.selected_food_items ? JSON.parse(tripData.selected_food_items) : [],
+          foodSchedulesByDay: tripData.food_schedules_by_day ? JSON.parse(tripData.food_schedules_by_day) : {},
+          foodCategoriesByDay: tripData.food_categories_by_day ? JSON.parse(tripData.food_categories_by_day) : {},
+          foodItemsByDay: tripData.food_items_by_day ? JSON.parse(tripData.food_items_by_day) : {},
+          allDaysFoodEntries: tripData.all_days_food_entries ? JSON.parse(tripData.all_days_food_entries) : [],
+          eventsByDay: tripData.events_by_day ? JSON.parse(tripData.events_by_day) : {},
+          allDaysEvents: tripData.all_days_events ? JSON.parse(tripData.all_days_events) : [],
+          selectedEventTitle: tripData.selected_event_title || '',
+          selectedEventDescription: tripData.selected_event_description || '',
+          selectedEventStartTime: tripData.selected_event_start_time || '',
+          selectedEventEndTime: tripData.selected_event_end_time || '',
+          finance: (() => {
+            console.log('Loading finance data for trip:', tripData.title);
+            console.log('Raw finance_data:', tripData.finance_data);
+            
+            if (tripData.finance_data) {
+              try {
+                const parsed = JSON.parse(tripData.finance_data);
+                console.log('Parsed finance data:', parsed);
+                return parsed;
+              } catch (error) {
+                console.error('Error parsing finance_data:', error);
+                return { 
+                  vendors: [], 
+                  otherExpenses: [],
+                  transportExpenses: [],
+                  accommodationExpenses: [],
+                  foodExpenses: [],
+                  totalAmount: 0 
+                };
+              }
+            } else {
+              console.log('No finance_data, using default');
+              return { 
+                vendors: [], 
+                otherExpenses: [],
+                transportExpenses: [],
+                accommodationExpenses: [],
+                foodExpenses: [],
+                totalAmount: 0 
+              };
+            }
+          })()
+        }));
+
+        // Restore radio button selections
+        if (tripData.selection_type) {
+          setSelectionType(tripData.selection_type);
+        }
+        if (tripData.accommodation_selection_type) {
+          setAccommodationSelectionType(tripData.accommodation_selection_type);
+        }
+        if (tripData.food_selection_type) {
+          setFoodSelectionType(tripData.food_selection_type);
+        }
+        if (tripData.events_selection_type) {
+          setEventsSelectionType(tripData.events_selection_type);
+        }
+        
+        console.log('Loaded saved trip data');
+      }
+    } catch (error) {
+      console.error('Error loading saved trip data:', error);
+    }
+  };
+
+  // Save data for current step
+  const saveStepData = async (step) => {
+    try {
+      // Don't save any data in view mode
+      if (isViewMode) {
+        return;
+      }
+      
+      // Only save if we have basic information (step 0 data)
+      if (!formData.title.trim() || !formData.destination || !formData.startDate || !formData.endDate) {
+        return;
+      }
+
+      // Prepare trip data for current step based on radio button selections
+      const tripData = {
+        title: formData.title,
+        destination: formData.destination,
+        start_date: formData.startDate?.toISOString(),
+        end_date: formData.endDate?.toISOString(),
+        transport_vendor_id: formData.selectedTransportVendor || null,
+        current_step: step, // Track current step
+        
+        // Transportation data based on selection type
+        ...(selectionType === 'allDays' ? {
+          selected_drivers: JSON.stringify(formData.selectedDrivers),
+          selected_conductors: JSON.stringify(formData.selectedConductors),
+          selected_buses: JSON.stringify(formData.selectedBuses),
+          drivers_by_day: JSON.stringify({}),
+          conductors_by_day: JSON.stringify({}),
+          buses_by_day: JSON.stringify({}),
+          vendors_by_day: JSON.stringify({}),
+          time_by_day: JSON.stringify({})
+        } : {
+          selected_drivers: JSON.stringify([]),
+          selected_conductors: JSON.stringify([]),
+          selected_buses: JSON.stringify([]),
+          drivers_by_day: JSON.stringify(formData.driversByDay),
+          conductors_by_day: JSON.stringify(formData.conductorsByDay),
+          buses_by_day: JSON.stringify(formData.busesByDay),
+          vendors_by_day: JSON.stringify(formData.vendorsByDay),
+          time_by_day: JSON.stringify(formData.timeByDay)
+        }),
+        
+        // Accommodation data based on selection type
+        ...(accommodationSelectionType === 'allDays' ? {
+          selected_accommodation_vendor: formData.selectedAccommodationVendor,
+          selected_accommodation_start_time: formData.selectedAccommodationStartTime,
+          selected_accommodation_end_time: formData.selectedAccommodationEndTime,
+          accommodations_by_day: JSON.stringify({})
+        } : {
+          selected_accommodation_vendor: '',
+          selected_accommodation_start_time: '',
+          selected_accommodation_end_time: '',
+          accommodations_by_day: JSON.stringify(formData.accommodationsByDay)
+        }),
+        
+        // Food data based on selection type
+        ...(foodSelectionType === 'allDays' ? {
+          selected_food_vendors: JSON.stringify(formData.selectedFoodVendors),
+          selected_food_schedules: JSON.stringify(formData.selectedFoodSchedules),
+          selected_food_categories: JSON.stringify(formData.selectedFoodCategories),
+          selected_food_items: JSON.stringify(formData.selectedFoodItems),
+          all_days_food_entries: JSON.stringify(formData.allDaysFoodEntries),
+          food_vendors_by_day: JSON.stringify({}),
+          food_schedules_by_day: JSON.stringify({}),
+          food_categories_by_day: JSON.stringify({}),
+          food_items_by_day: JSON.stringify({})
+        } : {
+          selected_food_vendors: JSON.stringify([]),
+          selected_food_schedules: JSON.stringify([]),
+          selected_food_categories: JSON.stringify([]),
+          selected_food_items: JSON.stringify([]),
+          all_days_food_entries: JSON.stringify([]),
+          food_vendors_by_day: JSON.stringify(formData.foodVendorsByDay),
+          food_schedules_by_day: JSON.stringify(formData.foodSchedulesByDay),
+          food_categories_by_day: JSON.stringify(formData.foodCategoriesByDay),
+          food_items_by_day: JSON.stringify(formData.foodItemsByDay)
+        }),
+        
+        // Events data based on selection type
+        ...(eventsSelectionType === 'allDays' ? {
+          all_days_events: JSON.stringify(formData.allDaysEvents),
+          selected_event_title: formData.selectedEventTitle,
+          selected_event_description: formData.selectedEventDescription,
+          selected_event_start_time: formData.selectedEventStartTime,
+          selected_event_end_time: formData.selectedEventEndTime,
+          events_by_day: JSON.stringify({})
+        } : {
+          all_days_events: JSON.stringify([]),
+          selected_event_title: '',
+          selected_event_description: '',
+          selected_event_start_time: '',
+          selected_event_end_time: '',
+          events_by_day: JSON.stringify(formData.eventsByDay)
+        }),
+        
+        // Save radio button selections
+        selection_type: selectionType,
+        accommodation_selection_type: accommodationSelectionType,
+        food_selection_type: foodSelectionType,
+        events_selection_type: eventsSelectionType,
+        
+        finance_data: JSON.stringify(formData.finance),
+        use_all_days_selection: false
+      };
+
+      if (isEditMode && editingTrip) {
+        // Update existing trip
+        await axios.put(`/api/trips/${editingTrip.id}`, tripData);
+        console.log(`Step ${step} data saved for existing trip`);
+      } else {
+        // Check if we have a trip ID from previous saves
+        const currentTripId = localStorage.getItem('currentTripId');
+        
+        if (currentTripId) {
+          // Update existing trip
+          await axios.put(`/api/trips/${currentTripId}`, tripData);
+          console.log(`Step ${step} data updated for trip ID: ${currentTripId}`);
+        } else {
+          // Create new trip
+          const response = await axios.post('/api/trips', tripData);
+          console.log(`Step ${step} data saved for new trip:`, response.data);
+          
+          // Store trip ID for future updates
+          if (response.data && response.data.data && response.data.data.id) {
+            localStorage.setItem('currentTripId', response.data.data.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error saving step ${step} data:`, error);
+      // Don't show error to user for auto-save, just log it
+    }
   };
 
   const handleNext = () => {
+    // In view mode, only navigate between steps without any validation or data saving
+    if (isViewMode) {
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      return;
+    }
+    
     // Validate current step before moving to next
     if (activeStep === 0) {
       // Basic Information validation
@@ -672,12 +1187,39 @@ const CreateTrip = () => {
         setSnackbar({ open: true, message: 'End date must be after start date', severity: 'error' });
         return;
       }
+      
+      // If validation passes, create the trip immediately and then move to next step
+      handleSubmit(true).then((tripId) => {
+        // Store the trip ID for subsequent steps
+        if (tripId) {
+          localStorage.setItem('currentTripId', tripId);
+          console.log('Trip ID stored for subsequent steps:', tripId);
+        }
+        // Move to next step after successful trip creation
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      }).catch((error) => {
+        console.error('Error creating trip:', error);
+        setSnackbar({ open: true, message: 'Error creating trip. Please try again.', severity: 'error' });
+      });
+      return;
     }
+    
+    // Save current step data before moving to next
+    saveStepData(activeStep);
     
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
 
   const handleBack = () => {
+    // In view mode, only navigate between steps without any data saving
+    if (isViewMode) {
+      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+      return;
+    }
+    
+    // Save current step data before moving back
+    saveStepData(activeStep);
+    
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
@@ -705,47 +1247,12 @@ const CreateTrip = () => {
   };
 
   // Apply all selections to all days
-  const applyAllToAllDays = () => {
-    const allDays = tripDays;
-    const selectedDrivers = formData.selectedDrivers;
-    const selectedConductors = formData.selectedConductors;
-    const selectedBuses = formData.selectedBuses;
-    
-    const driversByDay = {};
-    const conductorsByDay = {};
-    const busesByDay = {};
-    const vendorsByDay = {};
-    
-    allDays.forEach(day => {
-      driversByDay[day] = [...selectedDrivers];
-      conductorsByDay[day] = [...selectedConductors];
-      busesByDay[day] = [...selectedBuses];
-      vendorsByDay[day] = formData.selectedTransportVendor;
-    });
-    
-    setFormData(prev => ({
-      ...prev,
-      driversByDay,
-      conductorsByDay,
-      busesByDay,
-      vendorsByDay
-    }));
-    
-    setAppliedToAllDays(prev => ({
-      ...prev,
-      drivers: true,
-      conductors: true,
-      buses: true
-    }));
-    
-    setApplyButtonState('applied');
-  };
 
   // Check if any selection has changed
   const checkForChanges = () => {
-    const hasDrivers = formData.selectedDrivers.length > 0;
-    const hasConductors = formData.selectedConductors.length > 0;
-    const hasBuses = formData.selectedBuses.length > 0;
+    const hasDrivers = (formData.selectedDrivers?.length || 0) > 0;
+    const hasConductors = (formData.selectedConductors?.length || 0) > 0;
+    const hasBuses = (formData.selectedBuses?.length || 0) > 0;
     
     if (hasDrivers || hasConductors || hasBuses) {
       setApplyButtonState('changed');
@@ -1342,7 +1849,7 @@ const CreateTrip = () => {
     setFormData(prev => {
       const newEventsByDay = { ...prev.eventsByDay };
       if (newEventsByDay[day]) {
-        if (newEventsByDay[day].length === 1) {
+        if ((newEventsByDay[day]?.length || 0) === 1) {
           // If only one event, remove the entire day
           delete newEventsByDay[day];
         } else {
@@ -1448,12 +1955,235 @@ const CreateTrip = () => {
     });
   };
 
+  // Handle other expense changes
+  const handleOtherExpenseChange = (index, field, value) => {
+    setFormData(prev => {
+      const currentFinance = prev.finance || { vendors: [], otherExpenses: [], transportExpenses: [], accommodationExpenses: [], foodExpenses: [] };
+      const updatedExpenses = [...(currentFinance.otherExpenses || [])];
+      if (!updatedExpenses[index]) {
+        updatedExpenses[index] = { description: '', amount: '' };
+      }
+      updatedExpenses[index][field] = value;
+      
+      return {
+        ...prev,
+        finance: {
+          ...currentFinance,
+          otherExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Add new other expense
+  const handleAddOtherExpense = () => {
+    setFormData(prev => {
+      const currentFinance = prev.finance || { vendors: [], otherExpenses: [], transportExpenses: [], accommodationExpenses: [], foodExpenses: [] };
+      return {
+        ...prev,
+        finance: {
+          ...currentFinance,
+          otherExpenses: [...(currentFinance.otherExpenses || []), { description: '', amount: '' }]
+        }
+      };
+    });
+  };
+
+  // Remove other expense
+  const handleRemoveOtherExpense = (index) => {
+    setFormData(prev => {
+      const currentFinance = prev.finance || { vendors: [], otherExpenses: [], transportExpenses: [], accommodationExpenses: [], foodExpenses: [] };
+      const updatedExpenses = [...(currentFinance.otherExpenses || [])];
+      updatedExpenses.splice(index, 1);
+      
+      return {
+        ...prev,
+        finance: {
+          ...currentFinance,
+          otherExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Add new transport expense
+  const handleAddTransportExpense = () => {
+    setFormData(prev => ({
+      ...prev,
+      finance: {
+        ...prev.finance,
+        transportExpenses: [...(prev.finance?.transportExpenses || []), { 
+          id: Date.now(), 
+          description: '', 
+          amount: '' 
+        }]
+      }
+    }));
+  };
+
+  // Add new accommodation expense
+  const handleAddAccommodationExpense = () => {
+    setFormData(prev => ({
+      ...prev,
+      finance: {
+        ...prev.finance,
+        accommodationExpenses: [...(prev.finance?.accommodationExpenses || []), { 
+          id: Date.now(), 
+          description: '', 
+          amount: '' 
+        }]
+      }
+    }));
+  };
+
+  // Add new food expense
+  const handleAddFoodExpense = () => {
+    setFormData(prev => ({
+      ...prev,
+      finance: {
+        ...prev.finance,
+        foodExpenses: [...(prev.finance?.foodExpenses || []), { 
+          id: Date.now(), 
+          description: '', 
+          amount: '' 
+        }]
+      }
+    }));
+  };
+
+  // Handle transport expense changes
+  const handleTransportExpenseChange = (index, field, value) => {
+    setFormData(prev => {
+      const updatedExpenses = [...(prev.finance?.transportExpenses || [])];
+      if (!updatedExpenses[index]) {
+        updatedExpenses[index] = { id: Date.now(), description: '', amount: '' };
+      }
+      updatedExpenses[index][field] = value;
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          transportExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Handle accommodation expense changes
+  const handleAccommodationExpenseChange = (index, field, value) => {
+    setFormData(prev => {
+      const updatedExpenses = [...(prev.finance?.accommodationExpenses || [])];
+      if (!updatedExpenses[index]) {
+        updatedExpenses[index] = { id: Date.now(), description: '', amount: '' };
+      }
+      updatedExpenses[index][field] = value;
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          accommodationExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Handle food expense changes
+  const handleFoodExpenseChange = (index, field, value) => {
+    setFormData(prev => {
+      const updatedExpenses = [...(prev.finance?.foodExpenses || [])];
+      if (!updatedExpenses[index]) {
+        updatedExpenses[index] = { id: Date.now(), description: '', amount: '' };
+      }
+      updatedExpenses[index][field] = value;
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          foodExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Remove transport expense
+  const handleRemoveTransportExpense = (index) => {
+    setFormData(prev => {
+      const updatedExpenses = [...(prev.finance?.transportExpenses || [])];
+      updatedExpenses.splice(index, 1);
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          transportExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Remove accommodation expense
+  const handleRemoveAccommodationExpense = (index) => {
+    setFormData(prev => {
+      const updatedExpenses = [...(prev.finance?.accommodationExpenses || [])];
+      updatedExpenses.splice(index, 1);
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          accommodationExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
+  // Remove food expense
+  const handleRemoveFoodExpense = (index) => {
+    setFormData(prev => {
+      const updatedExpenses = [...(prev.finance?.foodExpenses || [])];
+      updatedExpenses.splice(index, 1);
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          foodExpenses: updatedExpenses
+        }
+      };
+    });
+  };
+
   // Calculate total amount
   const calculateTotalAmount = () => {
-    const total = formData.finance.vendors.reduce((sum, vendor) => {
+    const vendorTotal = (formData.finance?.vendors || []).reduce((sum, vendor) => {
       const amount = parseFloat(vendor.amount) || 0;
       return sum + amount;
     }, 0);
+    
+    const otherExpensesTotal = (formData.finance?.otherExpenses || []).reduce((sum, expense) => {
+      const amount = parseFloat(expense.amount) || 0;
+      return sum + amount;
+    }, 0);
+
+    const transportExpensesTotal = (formData.finance?.transportExpenses || []).reduce((sum, expense) => {
+      const amount = parseFloat(expense.amount) || 0;
+      return sum + amount;
+    }, 0);
+
+    const accommodationExpensesTotal = (formData.finance?.accommodationExpenses || []).reduce((sum, expense) => {
+      const amount = parseFloat(expense.amount) || 0;
+      return sum + amount;
+    }, 0);
+
+    const foodExpensesTotal = (formData.finance?.foodExpenses || []).reduce((sum, expense) => {
+      const amount = parseFloat(expense.amount) || 0;
+      return sum + amount;
+    }, 0);
+    
+    const total = vendorTotal + otherExpensesTotal + transportExpensesTotal + accommodationExpensesTotal + foodExpensesTotal;
     return total.toLocaleString('en-IN');
   };
 
@@ -1520,7 +2250,7 @@ const CreateTrip = () => {
     });
     
     // Add food vendors from All Days Selection (new structure)
-    if (formData.allDaysFoodEntries && formData.allDaysFoodEntries.length > 0) {
+    if (formData.allDaysFoodEntries && (formData.allDaysFoodEntries?.length || 0) > 0) {
       formData.allDaysFoodEntries.forEach(entry => {
         entry.vendors.forEach(vendorId => {
           const vendor = foodVendors.find(v => v.id === vendorId);
@@ -1590,7 +2320,14 @@ const CreateTrip = () => {
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isFromStep0 = false, statusId = 1) => {
+    // Don't submit anything in view mode
+    if (isViewMode) {
+      return;
+    }
+    
+    let tripId = null; // Declare tripId at function level
+    
     try {
       // Only mandatory validations
       if (!formData.title.trim()) {
@@ -1619,6 +2356,8 @@ const CreateTrip = () => {
       // Check if all days are applied (green state)
       const isAllDaysApplied = appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses && appliedToAllDays.events;
       
+      // Data clearing is now handled immediately when radio buttons change
+      
       let tripData;
       
       // Prepare trip data for database
@@ -1627,6 +2366,7 @@ const CreateTrip = () => {
         destination: formData.destination,
         start_date: formData.startDate?.toISOString(),
         end_date: formData.endDate?.toISOString(),
+        transport_vendor_id: formData.selectedTransportVendor || null,
         // Convert complex data to JSON strings for database storage
         selected_drivers: JSON.stringify(formData.selectedDrivers),
         selected_conductors: JSON.stringify(formData.selectedConductors),
@@ -1656,20 +2396,39 @@ const CreateTrip = () => {
         selected_event_start_time: formData.selectedEventStartTime,
         selected_event_end_time: formData.selectedEventEndTime,
         finance_data: JSON.stringify(formData.finance),
-        use_all_days_selection: isAllDaysApplied
+        use_all_days_selection: isAllDaysApplied,
+        trip_status_id: statusId
       };
       
       let response;
+      
       if (isEditMode && editingTrip) {
         response = await axios.put(`/api/trips/${editingTrip.id}`, tripData);
         console.log('Trip updated successfully:', response.data);
         setSnackbar({ open: true, message: 'Trip updated successfully!', severity: 'success' });
+        tripId = editingTrip.id;
       } else {
         response = await axios.post('/api/trips', tripData);
         console.log('Trip created successfully:', response.data);
       setSnackbar({ open: true, message: 'Trip created successfully!', severity: 'success' });
+        
+        // Extract trip ID from response
+        if (response.data && response.data.data && response.data.data.id) {
+          tripId = response.data.data.id;
+        }
+        
+        // Only navigate to trip list if this is the final submit (not from step 0)
+        if (!isFromStep0) {
+          // Clean up localStorage and navigate to trip list after successful creation
+          localStorage.removeItem('currentTripId');
+          setTimeout(() => {
+            navigate('/trips/list');
+          }, 1500); // Wait 1.5 seconds to show success message
+        }
       }
       
+      // Only reset form if this is the final submit (not from step 0)
+      if (!isFromStep0) {
       // Reset form
       setFormData({
         title: '',
@@ -1699,10 +2458,18 @@ const CreateTrip = () => {
         allDaysFoodEntries: [],
         foodVendorsByDay: {},
         events: [],
-        finance: { vendors: [], totalAmount: 0 }
+        finance: { 
+          vendors: [], 
+          otherExpenses: [],
+          transportExpenses: [],
+          accommodationExpenses: [],
+          foodExpenses: [],
+          totalAmount: 0 
+        }
       });
       setAppliedToAllDays({ drivers: false, conductors: false, buses: false, accommodations: false, food: false, events: false });
       setActiveStep(0);
+      }
     } catch (error) {
       console.error('Error creating trip:', error);
       console.log('Error response:', error.response?.data);
@@ -1719,6 +2486,9 @@ const CreateTrip = () => {
     } finally {
       setLoading(false);
     }
+    
+    // Return trip ID for step 0 navigation
+    return tripId;
   };
 
   const renderStepContent = (step) => {
@@ -1779,14 +2549,56 @@ const CreateTrip = () => {
       case 1:
         return (
           <Box>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-              Transportation
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Select transport vendor and manage drivers, conductors, and buses for your trip
-            </Typography>
 
-            {/* All Days Selection */}
+            {/* Selection Type Radio Buttons */}
+            <Card sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                Choose Selection Type
+            </Typography>
+              <RadioGroup
+                row
+                value={selectionType}
+                onChange={(e) => handleSelectionTypeChange(e.target.value)}
+                sx={{ mt: 2 }}
+                disabled={isViewMode}
+              >
+                <FormControlLabel
+                  value="allDays"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TripIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        All Days Selection
+            </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+                <FormControlLabel
+                  value="dayWise"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        Day Wise Selection
+                      </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+              </RadioGroup>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {selectionType === 'allDays' 
+                  ? 'Apply the same transport configuration to all days of the trip'
+                  : 'Configure different transport settings for each day of the trip'
+                }
+              </Typography>
+            </Card>
+
+            {/* All Days Selection - Only show when allDays is selected */}
+            {selectionType === 'allDays' && (
             <Box sx={{ mb: 3 }}>
               <Box 
                 sx={{
@@ -1814,7 +2626,7 @@ const CreateTrip = () => {
               {allDaysExpanded && (
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 4px 4px', backgroundColor: 'white' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Select transport vendor, drivers, conductors, and buses for all {tripDays.length} days
+                    Select transport vendor, drivers, conductors, and buses for all {tripDays?.length || 0} days
                   </Typography>
 
                   {/* Transport Vendor Selection */}
@@ -1834,6 +2646,7 @@ const CreateTrip = () => {
                           selectedBuses: []
                         }))}
                         label="Select Transport Vendor"
+                        disabled={isViewMode}
                       >
                         {transportVendors.map((vendor) => (
                           <MenuItem key={vendor.id} value={vendor.id}>
@@ -1855,7 +2668,7 @@ const CreateTrip = () => {
                           }))}
                           selectedValues={formData.selectedDrivers}
                           onChange={handleDriverSelectionChange}
-                          disabled={!formData.selectedTransportVendor}
+                          disabled={!formData.selectedTransportVendor || isViewMode}
                         />
                       </Box>
                       
@@ -1868,7 +2681,7 @@ const CreateTrip = () => {
                           }))}
                           selectedValues={formData.selectedConductors}
                           onChange={handleConductorSelectionChange}
-                          disabled={!formData.selectedTransportVendor}
+                          disabled={!formData.selectedTransportVendor || isViewMode}
                         />
                       </Box>
                     </Box>
@@ -1882,7 +2695,7 @@ const CreateTrip = () => {
                         }))}
                         selectedValues={formData.selectedBuses}
                         onChange={handleBusSelectionChange}
-                        disabled={!formData.selectedTransportVendor}
+                        disabled={!formData.selectedTransportVendor || isViewMode}
                       />
                     </Box>
                   </Box>
@@ -1891,6 +2704,7 @@ const CreateTrip = () => {
                     <Button
                       variant="outlined"
                       size="large"
+                      disabled={isViewMode}
                       onClick={() => {
                         setFormData(prev => ({
                           ...prev,
@@ -1923,33 +2737,17 @@ const CreateTrip = () => {
                         }
                       }}
                     >
-                      CLEAR ALL DAYS
-                    </Button>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={applyAllToAllDays}
-                      disabled={!formData.selectedTransportVendor || (formData.selectedDrivers.length === 0 && formData.selectedConductors.length === 0 && formData.selectedBuses.length === 0)}
-                      sx={{
-                        py: 1.5, 
-                        px: 6,
-                        backgroundColor: applyButtonState === 'applied' ? '#4caf50' : 
-                                       applyButtonState === 'changed' ? '#2196f3' : 'primary.main',
-                        '&:hover': {
-                          backgroundColor: applyButtonState === 'applied' ? '#45a049' : 
-                                         applyButtonState === 'changed' ? '#1976d2' : 'primary.dark',
-                        }
-                      }}
-                    >
-                      {applyButtonState === 'applied' ? 'Applied to All Days' : 'Apply to All Days'}
+                      CLEAR
                     </Button>
                   </Box>
                   
                 </Box>
               )}
             </Box>
+            )}
 
-            {/* Day-wise Selection */}
+            {/* Day-wise Selection - Only show when dayWise is selected */}
+            {selectionType === 'dayWise' && (
             <Box sx={{ mb: 3 }}>
               <Box 
                 sx={{ 
@@ -2025,12 +2823,12 @@ const CreateTrip = () => {
                                   <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                     Drivers:
                                   </Typography>
-                                  {formData.selectedDrivers.length > 0 ? (
+                                  {(formData.selectedDrivers?.length || 0) > 0 ? (
                                     formData.selectedDrivers.map(driverId => {
                                       const driver = drivers.find(d => d.id === driverId);
                                       return (
                                         <Typography key={driverId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                          • {driver ? `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}` : `Driver ${driverId}`}
+                                          • {driver ? `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}` : `Driver ID: ${driverId}`}
                                         </Typography>
                                       );
                                     })
@@ -2046,7 +2844,7 @@ const CreateTrip = () => {
                                   <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                     Conductors:
                                   </Typography>
-                                  {formData.selectedConductors.length > 0 ? (
+                                  {(formData.selectedConductors?.length || 0) > 0 ? (
                                     formData.selectedConductors.map(conductorId => {
                                       const conductor = conductors.find(c => c.id === conductorId);
                                       return (
@@ -2067,12 +2865,12 @@ const CreateTrip = () => {
                                   <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                     Buses:
                                   </Typography>
-                                  {formData.selectedBuses.length > 0 ? (
+                                  {(formData.selectedBuses?.length || 0) > 0 ? (
                                     formData.selectedBuses.map(busId => {
                                       const bus = buses.find(b => b.id === busId);
                                       return (
                                         <Typography key={busId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                          • {bus ? `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}` : `Bus ${busId}`}
+                                          • {bus ? `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}` : `Bus ID: ${busId}`}
                                         </Typography>
                                       );
                                     })
@@ -2153,7 +2951,7 @@ const CreateTrip = () => {
                                   }
                                   selectedValues={formData.driversByDay[day] || []}
                                   onChange={(values) => handleDriverDayChange(day, values)}
-                                  disabled={!formData.vendorsByDay[day]}
+                                  disabled={!formData.vendorsByDay[day] || isViewMode}
                                 />
                                 
                                 <DropdownChecklist
@@ -2167,7 +2965,7 @@ const CreateTrip = () => {
                                   }
                                   selectedValues={formData.conductorsByDay[day] || []}
                                   onChange={(values) => handleConductorDayChange(day, values)}
-                                  disabled={!formData.vendorsByDay[day]}
+                                  disabled={!formData.vendorsByDay[day] || isViewMode}
                                 />
                                 
                                 <DropdownChecklist
@@ -2181,7 +2979,7 @@ const CreateTrip = () => {
                                   }
                                   selectedValues={formData.busesByDay[day] || []}
                                   onChange={(values) => handleBusDayChange(day, values)}
-                                  disabled={!formData.vendorsByDay[day]}
+                                  disabled={!formData.vendorsByDay[day] || isViewMode}
                                 />
 
                                 <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
@@ -2209,20 +3007,62 @@ const CreateTrip = () => {
                 </Box>
               )}
             </Box>
+            )}
           </Box>
         );
 
       case 2:
         return (
           <Box>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-              Accommodation Management
+            {/* Selection Type Radio Buttons for Accommodation */}
+            <Card sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                Choose Selection Type
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Select accommodations for all days or individual days with start and end times
+              <RadioGroup
+                row
+                value={accommodationSelectionType}
+                onChange={(e) => handleAccommodationSelectionTypeChange(e.target.value)}
+                disabled={isViewMode}
+                sx={{ mt: 2 }}
+              >
+                <FormControlLabel
+                  value="allDays"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <HotelIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        All Days Selection
             </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+                <FormControlLabel
+                  value="dayWise"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        Day Wise Selection
+                      </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+              </RadioGroup>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {accommodationSelectionType === 'allDays' 
+                  ? 'Apply the same accommodation configuration to all days of the trip'
+                  : 'Configure different accommodation settings for each day of the trip'
+                }
+              </Typography>
+            </Card>
 
-            {/* All Days Selection */}
+            {/* All Days Selection - Only show when allDays is selected */}
+            {accommodationSelectionType === 'allDays' && (
             <Box sx={{ mb: 3 }}>
               <Box 
                 sx={{ 
@@ -2257,7 +3097,7 @@ const CreateTrip = () => {
               {allDaysExpanded && (
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 4px 4px', backgroundColor: 'white' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Select accommodations for all {tripDays.length} days
+                    Select accommodations for all {tripDays?.length || 0} days
                   </Typography>
               
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -2269,6 +3109,7 @@ const CreateTrip = () => {
                             value={formData.selectedAccommodationVendor || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationVendor: e.target.value }))}
                   label="Accommodation Vendor"
+                  disabled={isViewMode}
                 >
                   {accommodationVendors.map((vendor) => (
                     <MenuItem key={vendor.id} value={vendor.id}>
@@ -2289,6 +3130,7 @@ const CreateTrip = () => {
                           onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationStartTime: e.target.value }))}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
+                disabled={isViewMode}
                         />
                       </Box>
                       
@@ -2300,6 +3142,7 @@ const CreateTrip = () => {
                           onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationEndTime: e.target.value }))}
                 fullWidth
                           InputLabelProps={{ shrink: true }}
+                          disabled={isViewMode}
                         />
                       </Box>
                     </Box>
@@ -2309,6 +3152,7 @@ const CreateTrip = () => {
                     <Button
                       variant="outlined"
                       size="large"
+                      disabled={isViewMode}
                       onClick={() => {
                         setFormData(prev => ({
                           ...prev,
@@ -2333,30 +3177,16 @@ const CreateTrip = () => {
                         }
                       }}
                     >
-                      CLEAR ALL DAYS
-                    </Button>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={applyAccommodationsToAllDays}
-                      disabled={!formData.selectedAccommodationVendor || !formData.selectedAccommodationStartTime || !formData.selectedAccommodationEndTime}
-                      sx={{ 
-                        py: 1.5, 
-                        px: 6,
-                        backgroundColor: appliedToAllDays.accommodations ? '#4caf50' : 'primary.main',
-                        '&:hover': {
-                          backgroundColor: appliedToAllDays.accommodations ? '#45a049' : 'primary.dark',
-                        }
-                      }}
-                    >
-                      {appliedToAllDays.accommodations ? 'Applied to All Days' : 'Apply to All Days'}
+                      CLEAR
                     </Button>
                   </Box>
                 </Box>
               )}
             </Box>
+            )}
 
-            {/* Day-wise Selection */}
+            {/* Day-wise Selection - Only show when dayWise is selected */}
+            {accommodationSelectionType === 'dayWise' && (
             <Box sx={{ mb: 3 }}>
               <Box 
                 sx={{ 
@@ -2427,7 +3257,7 @@ const CreateTrip = () => {
                           
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                             {/* Vendor Multi-Selection */}
-                            <FormControl fullWidth size="small" disabled={appliedToAllDays.accommodations}>
+                            <FormControl fullWidth size="small" disabled={appliedToAllDays.accommodations || isViewMode}>
                               <InputLabel>Vendors</InputLabel>
                 <Select
                                 multiple
@@ -2464,7 +3294,7 @@ const CreateTrip = () => {
                                 value={formData.accommodationsByDay?.[day]?.[0]?.startTime ? 
                                   new Date(formData.accommodationsByDay[day][0].startTime).toTimeString().slice(0, 5) : ''}
                                 onChange={(e) => handleAccommodationTimeChange(day, 'startTime', e.target.value)}
-                                disabled={appliedToAllDays.accommodations}
+                                disabled={appliedToAllDays.accommodations || isViewMode}
                                 InputLabelProps={{ shrink: true }}
                                 sx={{ flex: 1 }}
                               />
@@ -2476,7 +3306,7 @@ const CreateTrip = () => {
                                 value={formData.accommodationsByDay?.[day]?.[0]?.endTime ? 
                                   new Date(formData.accommodationsByDay[day][0].endTime).toTimeString().slice(0, 5) : ''}
                                 onChange={(e) => handleAccommodationTimeChange(day, 'endTime', e.target.value)}
-                                disabled={appliedToAllDays.accommodations}
+                                disabled={appliedToAllDays.accommodations || isViewMode}
                                 InputLabelProps={{ shrink: true }}
                                 sx={{ flex: 1 }}
                               />
@@ -2490,20 +3320,63 @@ const CreateTrip = () => {
                 </Box>
               )}
             </Box>
+            )}
           </Box>
         );
 
       case 3:
         return (
           <Box>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-              Food Management
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              Select food vendors for your trip - All Days or Day-wise selection
-            </Typography>
 
-            {/* All Days Selection */}
+            {/* Selection Type Radio Buttons for Food Management */}
+            <Card sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                Choose Selection Type
+            </Typography>
+              <RadioGroup
+                row
+                value={foodSelectionType}
+                onChange={(e) => handleFoodSelectionTypeChange(e.target.value)}
+                disabled={isViewMode}
+                sx={{ mt: 2 }}
+              >
+                <FormControlLabel
+                  value="allDays"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <RestaurantIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        All Days Selection
+            </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+                <FormControlLabel
+                  value="dayWise"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        Day Wise Selection
+                      </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+              </RadioGroup>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {foodSelectionType === 'allDays' 
+                  ? 'Apply the same food configuration to all days of the trip'
+                  : 'Configure different food settings for each day of the trip'
+                }
+              </Typography>
+            </Card>
+
+            {/* All Days Selection - Only show when allDays is selected */}
+            {foodSelectionType === 'allDays' && (
             <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: 'white', mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -2524,6 +3397,7 @@ const CreateTrip = () => {
                       variant="outlined"
                       color="error"
                       size="small"
+                      disabled={isViewMode}
                       onClick={() => {
                         setFormData(prev => ({
                           ...prev,
@@ -2549,6 +3423,7 @@ const CreateTrip = () => {
                   <IconButton
                     color="primary"
                     onClick={handleQuickAddFoodEntry}
+                    disabled={isViewMode}
                     sx={{ 
                       border: '2px dashed #2196f3',
                       borderRadius: 2,
@@ -2565,21 +3440,20 @@ const CreateTrip = () => {
                 </Box>
               </Box>
               
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Click the + icon to add food entries for all days. Each entry can have different vendors, schedules, categories, and items.
-              </Typography>
 
               {/* Show added food entries */}
-              {formData.allDaysFoodEntries.length > 0 && (
+              {(formData.allDaysFoodEntries?.length || 0) > 0 && (
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>
                     Added Food Entries:
                   </Typography>
+                  <Grid container spacing={1}>
                   {formData.allDaysFoodEntries.map((entry, index) => (
-                    <Card key={entry.id} variant="outlined" sx={{ mb: 2, p: 2 }}>
+                      <Grid item xs={12} md={6} key={entry.id}>
+                        <Card variant="outlined" sx={{ mb: 1, p: 1.5, height: '100%' }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                          {entry.schedules.length > 0 ? 
+                          {(entry.schedules?.length || 0) > 0 ? 
                             entry.schedules.map(scheduleId => {
                               const schedule = foodSchedules.find(s => s.id === scheduleId);
                               return schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`;
@@ -2591,13 +3465,14 @@ const CreateTrip = () => {
                           size="small"
                           color="error"
                           onClick={() => handleDeleteFoodEntry(entry.id)}
+                          disabled={isViewMode}
                         >
                           <DeleteIcon />
                         </IconButton>
                       </Box>
                       
                       <Grid container spacing={1}>
-                        {entry.vendors.length > 0 && (
+                        {(entry.vendors?.length || 0) > 0 && (
                           <Grid item xs={12} sm={6}>
                             <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Vendors:</Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -2617,7 +3492,7 @@ const CreateTrip = () => {
                           </Grid>
                         )}
                         
-                        {entry.schedules.length > 0 && (
+                        {(entry.schedules?.length || 0) > 0 && (
                           <Grid item xs={12} sm={6}>
                             <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Schedules:</Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -2637,7 +3512,7 @@ const CreateTrip = () => {
                           </Grid>
                         )}
                         
-                        {entry.categories.length > 0 && (
+                        {(entry.categories?.length || 0) > 0 && (
                           <Grid item xs={12} sm={6}>
                             <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Categories:</Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -2657,7 +3532,7 @@ const CreateTrip = () => {
                           </Grid>
                         )}
                         
-                        {entry.items.length > 0 && (
+                        {(entry.items?.length || 0) > 0 && (
                           <Grid item xs={12} sm={6}>
                             <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', mb: 0.5 }}>Items:</Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -2678,24 +3553,17 @@ const CreateTrip = () => {
                         )}
                       </Grid>
                     </Card>
+                      </Grid>
                   ))}
+                  </Grid>
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={applyFoodToAllDays}
-                  disabled={formData.allDaysFoodEntries.length === 0}
-                  sx={{ px: 4 }}
-                >
-                  APPLY TO ALL DAYS
-                </Button>
               </Box>
-            </Box>
+            )}
 
-            {/* Day-wise Selection */}
+            {/* Day-wise Selection - Only show when dayWise is selected */}
+            {foodSelectionType === 'dayWise' && (
             <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: 'white', mb: 3 }}>
               <Box 
                 sx={{ 
@@ -2761,7 +3629,7 @@ const CreateTrip = () => {
                                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                   Food Vendors:
                                 </Typography>
-                                {formData.selectedFoodVendors.length > 0 ? (
+                                {(formData.selectedFoodVendors?.length || 0) > 0 ? (
                                   formData.selectedFoodVendors.map(vendorId => {
                                     const vendor = foodVendors.find(v => v.id === vendorId);
                                     return (
@@ -2781,7 +3649,7 @@ const CreateTrip = () => {
                                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                   Food Schedules:
                                 </Typography>
-                                {formData.selectedFoodSchedules.length > 0 ? (
+                                {(formData.selectedFoodSchedules?.length || 0) > 0 ? (
                                   formData.selectedFoodSchedules.map(scheduleId => {
                                     const schedule = foodSchedules.find(s => s.id === scheduleId);
                                     return (
@@ -2801,7 +3669,7 @@ const CreateTrip = () => {
                                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                   Food Categories:
                                 </Typography>
-                                {formData.selectedFoodCategories.length > 0 ? (
+                                {(formData.selectedFoodCategories?.length || 0) > 0 ? (
                                   formData.selectedFoodCategories.map(categoryId => {
                                     const category = foodCategories.find(c => c.id === categoryId);
                                     return (
@@ -2821,7 +3689,7 @@ const CreateTrip = () => {
                                 <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                                   Food Items:
                                 </Typography>
-                                {formData.selectedFoodItems.length > 0 ? (
+                                {(formData.selectedFoodItems?.length || 0) > 0 ? (
                                   formData.selectedFoodItems.map(itemId => {
                                     const item = foodItems.find(i => i.id === itemId);
                                     return (
@@ -2866,13 +3734,13 @@ const CreateTrip = () => {
                               </Typography>
                               
                               {/* Show existing food entries for this day */}
-                              {(formData.foodVendorsByDay[day] || []).length > 0 && (
+                              {((formData.foodVendorsByDay?.[day] || [])?.length || 0) > 0 && (
                                 <Box sx={{ mb: 2 }}>
                                   {(formData.foodVendorsByDay[day] || []).map((entry, entryIndex) => (
                                     <Card key={entry.id} variant="outlined" sx={{ mb: 1, p: 1, backgroundColor: '#f8f9fa' }}>
                                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}>
-                                          {entry.schedules.length > 0 ? 
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                          {(entry.schedules?.length || 0) > 0 ? 
                                             entry.schedules.map(scheduleId => {
                                               const schedule = foodSchedules.find(s => s.id === scheduleId);
                                               return schedule ? (schedule.title || schedule.name) : `Schedule ${scheduleId}`;
@@ -2884,6 +3752,7 @@ const CreateTrip = () => {
                                           size="small"
                                           color="error"
                                           onClick={() => handleDeleteDayFood(day, entry.id)}
+                                          disabled={isViewMode}
                                           sx={{ p: 0.5 }}
                                         >
                                           <DeleteIcon fontSize="small" />
@@ -2950,6 +3819,7 @@ const CreateTrip = () => {
                                 <IconButton
                                   color="primary"
                                   onClick={() => handleAddDayFood(day)}
+                                  disabled={isViewMode}
                                   sx={{ 
                                     border: '2px dashed #2196f3',
                                     borderRadius: 2,
@@ -2973,20 +3843,62 @@ const CreateTrip = () => {
                 </Box>
               )}
             </Box>
+            )}
           </Box>
         );
 
       case 4:
         return (
           <Box>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-              Events
+            {/* Selection Type Radio Buttons for Events */}
+            <Card sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                Choose Selection Type
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Add events and activities for your trip - All Days or Day-wise selection
+              <RadioGroup
+                row
+                value={eventsSelectionType}
+                onChange={(e) => handleEventsSelectionTypeChange(e.target.value)}
+                disabled={isViewMode}
+                sx={{ mt: 2 }}
+              >
+                <FormControlLabel
+                  value="allDays"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <EventIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        All Days Selection
             </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+                <FormControlLabel
+                  value="dayWise"
+                  control={<Radio color="primary" disabled={isViewMode} />}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarIcon color="primary" />
+                      <Typography variant="body1" fontWeight="500">
+                        Day Wise Selection
+                      </Typography>
+                    </Box>
+                  }
+                  disabled={isViewMode}
+                />
+              </RadioGroup>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {eventsSelectionType === 'allDays' 
+                  ? 'Apply the same events to all days of the trip'
+                  : 'Configure different events for each day of the trip'
+                }
+              </Typography>
+            </Card>
 
-            {/* All Days Selection */}
+            {/* All Days Selection - Only show when allDays is selected */}
+            {eventsSelectionType === 'allDays' && (
             <Box sx={{ mb: 4 }}>
               <Box 
                 sx={{ 
@@ -2998,16 +3910,14 @@ const CreateTrip = () => {
                   borderRadius: 1,
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',
                   cursor: 'pointer',
-                  mb: allDaysExpanded ? 2 : 0,
-                  opacity: !formData.selectedTransportVendor ? 0.5 : 1,
-                  pointerEvents: !formData.selectedTransportVendor ? 'none' : 'auto'
+                  mb: allDaysExpanded ? 2 : 0
                 }}
-                onClick={() => formData.selectedTransportVendor && setAllDaysExpanded(!allDaysExpanded)}
+                onClick={() => setAllDaysExpanded(!allDaysExpanded)}
               >
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   All Days Selection
                 </Typography>
-                <IconButton size="small" disabled={!formData.selectedTransportVendor}>
+                <IconButton size="small">
                   {allDaysExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </IconButton>
           </Box>
@@ -3030,6 +3940,7 @@ const CreateTrip = () => {
                       <IconButton
                         size="large"
                         onClick={() => setAllDaysEventDialog(true)}
+                        disabled={isViewMode}
                         sx={{
                           backgroundColor: 'primary.main',
                           color: 'white',
@@ -3047,7 +3958,7 @@ const CreateTrip = () => {
                     </Box>
                     
                     {/* Show Applied Events */}
-                    {formData.allDaysEvents && formData.allDaysEvents.length > 0 && (
+                    {formData.allDaysEvents && (formData.allDaysEvents?.length || 0) > 0 && (
           <Box sx={{ width: '100%' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                           <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
@@ -3056,6 +3967,7 @@ const CreateTrip = () => {
                           <Button
                             variant="outlined"
                             size="small"
+                            disabled={isViewMode}
                             onClick={() => {
                               setFormData(prev => ({
                                 ...prev,
@@ -3106,6 +4018,7 @@ const CreateTrip = () => {
                                 size="small"
                                 onClick={() => handleDeleteAllDaysEvent(index)}
                                 color="error"
+                                disabled={isViewMode}
                                 sx={{ p: 0.5 }}
                               >
                                 <DeleteIcon fontSize="small" />
@@ -3119,8 +4032,10 @@ const CreateTrip = () => {
                 </Box>
               )}
             </Box>
+            )}
 
-            {/* Day-wise Selection */}
+            {/* Day-wise Selection - Only show when dayWise is selected */}
+            {eventsSelectionType === 'dayWise' && (
             <Box>
               <Box 
                 sx={{ 
@@ -3165,7 +4080,7 @@ const CreateTrip = () => {
                     Select different events for each day of your trip
                   </Typography>
                   
-                  {tripDays.length === 0 ? (
+                  {(tripDays?.length || 0) === 0 ? (
                     <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
                       Please select start and end dates first
                     </Typography>
@@ -3194,7 +4109,7 @@ const CreateTrip = () => {
                               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
                                 All Days Selection Applied
                               </Typography>
-                            ) : formData.eventsByDay?.[day] && formData.eventsByDay[day].length > 0 ? (
+                            ) : formData.eventsByDay?.[day] && (formData.eventsByDay[day]?.length || 0) > 0 ? (
                               // Show multiple events if exist
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                                 {formData.eventsByDay[day].map((event, eventIndex) => (
@@ -3224,6 +4139,7 @@ const CreateTrip = () => {
                                         size="small"
                                         onClick={() => handleDeleteEvent(day, eventIndex)}
                                         color="error"
+                                        disabled={isViewMode}
                                         sx={{ p: 0.5 }}
                                       >
                                         <DeleteIcon fontSize="small" />
@@ -3237,6 +4153,7 @@ const CreateTrip = () => {
                                   <IconButton
                                     size="medium"
                                     onClick={() => handleAddEvent(day)}
+                                    disabled={isViewMode}
                                     sx={{
                                       backgroundColor: 'primary.main',
                                       color: 'white',
@@ -3259,6 +4176,7 @@ const CreateTrip = () => {
                                 <IconButton
                                   size="large"
                                   onClick={() => handleAddEvent(day)}
+                                  disabled={isViewMode}
                                   sx={{
                                     backgroundColor: 'primary.main',
                                     color: 'white',
@@ -3283,155 +4201,495 @@ const CreateTrip = () => {
                 </Box>
               )}
             </Box>
+            )}
           </Box>
         );
 
       case 5:
         return (
           <Box>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-              Finance & Review
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Manage finance information for all vendors and review your trip details
-            </Typography>
-
-            {/* Finance Section */}
+            {/* Finance Section - Table Format */}
             <Card sx={{ mb: 4 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
                   Finance Management
                 </Typography>
                 
-                {/* Selected Vendors Finance */}
+                {/* Finance Table */}
+                <Box sx={{ border: '2px solid #000', borderRadius: 2, overflow: 'hidden' }}>
+                  {/* Transport Section */}
+                  <Box sx={{ borderBottom: '1px solid #000' }}>
+                    <Box sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      p: 2, 
+                      borderBottom: '1px solid #000',
+                      borderRadius: '8px 8px 0 0',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      position: 'relative'
+                    }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        Transport
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 2 }}>
                 {(() => {
-                  const selectedVendors = getSelectedVendors();
+                        const transportVendors = getSelectedVendors().filter(v => v.type === 'transport');
+                        const hasTransportData = transportVendors.length > 0 || (formData.finance?.transportExpenses?.length || 0) > 0;
                   
-                  if (selectedVendors.length === 0) {
+                        if (!hasTransportData) {
                     return (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Typography variant="body1" color="text.secondary">
-                          No vendors selected yet. Please select transport and accommodation vendors in previous steps.
-                        </Typography>
+                            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                              <TextField
+                                placeholder="Transport Item 1"
+                                size="small"
+                                sx={{ flex: 1 }}
+                                disabled={isViewMode}
+                              />
+                              <TextField
+                                placeholder="Note"
+                                size="small"
+                                sx={{ flex: 1 }}
+                                disabled={isViewMode}
+                              />
+                              <TextField
+                                placeholder="Amount"
+                                type="number"
+                                size="small"
+                                sx={{ width: 120 }}
+                                disabled={isViewMode}
+                              />
                       </Box>
                     );
                   }
-                  
         return (
-          <Grid container spacing={3}>
-                      {selectedVendors.map((vendor) => (
-                        <Grid item xs={12} md={6} key={`${vendor.type}-${vendor.id}`}>
-                          <Card variant="outlined" sx={{ mb: 2, p: 2 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', flex: 1 }}>
-                                {vendor.name}
-                              </Typography>
-                              <Chip 
-                                label={vendor.type === 'transport' ? 'Transport' : vendor.type === 'accommodation' ? 'Accommodation' : 'Food'} 
+                          <>
+                            {transportVendors.map((vendor, index) => (
+                              <Box key={`transport-${vendor.id}`} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                <TextField
+                                  value={vendor.name}
                                 size="small" 
-                                color={vendor.typeColor || (vendor.type === 'transport' ? 'primary' : vendor.type === 'accommodation' ? 'secondary' : 'success')}
-                              />
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                  sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  placeholder="Note"
+                                  size="small"
+                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                                  onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
+                                  sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
               <TextField
                                 label="Amount (₹)"
                                 type="number"
                                 size="small"
-                                value={formData.finance.vendors.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
                                 onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
-                                sx={{ flex: 1 }}
+                                  sx={{ width: 120 }}
+                                  disabled={isViewMode}
                                 InputProps={{
                                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                                 }}
                               />
+                              </Box>
+                            ))}
+                            {(formData.finance?.transportExpenses || []).map((expense, index) => (
+                              <Box key={`transport-expense-${expense.id}`} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
                               <TextField
-                                label="Description"
+                                  placeholder="Transport Item"
                                 size="small"
-                                value={formData.finance.vendors.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
-                                onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
+                                  value={expense.description || ''}
+                                  onChange={(e) => handleTransportExpenseChange(index, 'description', e.target.value)}
                                 sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  placeholder="Note"
+                                  size="small"
+                                  value={expense.note || ''}
+                                  onChange={(e) => handleTransportExpenseChange(index, 'note', e.target.value)}
+                                  sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  label="Amount (₹)"
+                                  type="number"
+                                  size="small"
+                                  value={expense.amount || ''}
+                                  onChange={(e) => handleTransportExpenseChange(index, 'amount', e.target.value)}
+                                  sx={{ width: 120 }}
+                                  disabled={isViewMode}
+                                InputProps={{
+                                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                                }}
+                              />
+                                {!isViewMode && (
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handleRemoveTransportExpense(index)}
+                                    sx={{ color: 'error.main' }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                )}
+                            </Box>
+                            ))}
+                          </>
+                        );
+                      })()}
+                    </Box>
+                  </Box>
+
+                  {/* Accommodation Section */}
+                  <Box sx={{ borderBottom: '1px solid #000' }}>
+                    <Box sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      p: 2, 
+                      borderBottom: '1px solid #000',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      position: 'relative'
+                    }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        Accommodation
+                          </Typography>
+                    </Box>
+                    <Box sx={{ p: 2 }}>
+                      {(() => {
+                        const accommodationVendors = getSelectedVendors().filter(v => v.type === 'accommodation');
+                        const hasAccommodationData = accommodationVendors.length > 0 || (formData.finance?.accommodationExpenses?.length || 0) > 0;
+                        
+                        if (!hasAccommodationData) {
+                          return (
+                            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                              <TextField
+                                placeholder="Accommodation Item 1"
+                                size="small"
+                                sx={{ flex: 1 }}
+                                disabled={isViewMode}
+                              />
+                              <TextField
+                                placeholder="Note"
+                                size="small"
+                                sx={{ flex: 1 }}
+                                disabled={isViewMode}
+                              />
+                              <TextField
+                                placeholder="Amount"
+                                type="number"
+                                size="small"
+                                sx={{ width: 120 }}
+                                disabled={isViewMode}
                               />
                             </Box>
-                          </Card>
-            </Grid>
-                      ))}
-                      
-                      {/* Other Expenses */}
-                      <Grid item xs={12} md={6}>
-                        <Card variant="outlined" sx={{ mb: 2, p: 2 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                            Miscellaneous Expenses
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          );
+                        }
+                        return (
+                          <>
+                            {accommodationVendors.map((vendor, index) => (
+                              <Box key={`accommodation-${vendor.id}`} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                <TextField
+                                  value={vendor.name}
+                                  size="small"
+                                  sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  placeholder="Note"
+                                  size="small"
+                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                                onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
+                                sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
               <TextField
                               label="Amount (₹)"
                               type="number"
                               size="small"
-                              value={formData.finance.vendors.find(f => f.vendorId === 'misc' && f.type === 'other')?.amount || ''}
-                              onChange={(e) => handleFinanceChange('misc', 'other', 'amount', e.target.value)}
+                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                                  onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
+                                  sx={{ width: 120 }}
+                                  disabled={isViewMode}
+                                  InputProps={{
+                                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                                  }}
+                              />
+                            </Box>
+                            ))}
+                            {(formData.finance?.accommodationExpenses || []).map((expense, index) => (
+                              <Box key={`accommodation-expense-${expense.id}`} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                                <TextField
+                                  placeholder="Accommodation Item"
+                                  size="small"
+                                  value={expense.description || ''}
+                                  onChange={(e) => handleAccommodationExpenseChange(index, 'description', e.target.value)}
                               sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  placeholder="Note"
+                                  size="small"
+                                  value={expense.note || ''}
+                                  onChange={(e) => handleAccommodationExpenseChange(index, 'note', e.target.value)}
+                                  sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  label="Amount (₹)"
+                                  type="number"
+                                  size="small"
+                                  value={expense.amount || ''}
+                                  onChange={(e) => handleAccommodationExpenseChange(index, 'amount', e.target.value)}
+                                  sx={{ width: 120 }}
+                                  disabled={isViewMode}
                               InputProps={{
                                 startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                               }}
                             />
-                            <TextField
-                              label="Description"
+                                {!isViewMode && (
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handleRemoveAccommodationExpense(index)}
+                                    sx={{ color: 'error.main' }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                )}
+                              </Box>
+                            ))}
+                          </>
+                        );
+                      })()}
+                    </Box>
+                  </Box>
+
+                  {/* Food Management Section */}
+                  <Box sx={{ borderBottom: '1px solid #000' }}>
+                    <Box sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      p: 2, 
+                      borderBottom: '1px solid #000',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      position: 'relative'
+                    }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        Food Management
+                          </Typography>
+                    </Box>
+                    <Box sx={{ p: 2 }}>
+                      {(() => {
+                        const foodVendors = getSelectedVendors().filter(v => v.type === 'food');
+                        const hasFoodData = foodVendors.length > 0 || (formData.finance?.foodExpenses?.length || 0) > 0;
+                        
+                        if (!hasFoodData) {
+                          return (
+                            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <TextField
+                                placeholder="Food Item 1"
                               size="small"
-                              value={formData.finance.vendors.find(f => f.vendorId === 'misc' && f.type === 'other')?.description || ''}
-                              onChange={(e) => handleFinanceChange('misc', 'other', 'description', e.target.value)}
                               sx={{ flex: 1 }}
+                                disabled={isViewMode}
+                              />
+                              <TextField
+                                placeholder="Note"
+                                size="small"
+                                sx={{ flex: 1 }}
+                                disabled={isViewMode}
+                              />
+                              <TextField
+                                placeholder="Amount"
+                              type="number"
+                              size="small"
+                                sx={{ width: 120 }}
+                                disabled={isViewMode}
                             />
                           </Box>
-                        </Card>
-            </Grid>
-          </Grid>
+                          );
+                        }
+                        return (
+                          <>
+                            {foodVendors.map((vendor, index) => (
+                          <Box key={`food-${vendor.id}`} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                            <TextField
+                              value={vendor.name}
+                              size="small"
+                              sx={{ flex: 1 }}
+                              disabled={isViewMode}
+                            />
+                            <TextField
+                              placeholder="Note"
+                              size="small"
+                              value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                              onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
+                              sx={{ flex: 1 }}
+                              disabled={isViewMode}
+                            />
+                            <TextField
+                              label="Amount (₹)"
+                              type="number"
+                              size="small"
+                              value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                              onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
+                              sx={{ width: 120 }}
+                              disabled={isViewMode}
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                              }}
+                            />
+                          </Box>
+                            ))}
+                            {(formData.finance?.foodExpenses || []).map((expense, index) => (
+                              <Box key={`food-expense-${expense.id}`} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                            <TextField
+                                  placeholder="Food Item"
+                              size="small"
+                                  value={expense.description || ''}
+                                  onChange={(e) => handleFoodExpenseChange(index, 'description', e.target.value)}
+                              sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  placeholder="Note"
+                                  size="small"
+                                  value={expense.note || ''}
+                                  onChange={(e) => handleFoodExpenseChange(index, 'note', e.target.value)}
+                                  sx={{ flex: 1 }}
+                                  disabled={isViewMode}
+                                />
+                                <TextField
+                                  label="Amount (₹)"
+                                  type="number"
+                                  size="small"
+                                  value={expense.amount || ''}
+                                  onChange={(e) => handleFoodExpenseChange(index, 'amount', e.target.value)}
+                                  sx={{ width: 120 }}
+                                  disabled={isViewMode}
+                                  InputProps={{
+                                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                                  }}
+                                />
+                                {!isViewMode && (
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handleRemoveFoodExpense(index)}
+                                    sx={{ color: 'error.main' }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                )}
+                          </Box>
+                            ))}
+                          </>
                   );
                 })()}
+                    </Box>
+                  </Box>
 
-                {/* Total Amount */}
-                <Card sx={{ mt: 3, backgroundColor: 'primary.main', color: 'white' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        Total Amount
+                  {/* Other Section */}
+                  <Box>
+                    <Box sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      p: 2, 
+                      borderBottom: '1px solid #000',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      position: 'relative'
+                    }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        Other
                       </Typography>
-                      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                      {!isViewMode && (
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleAddOtherExpense()}
+                          sx={{ 
+                            position: 'absolute',
+                            right: 16,
+                            backgroundColor: '#000', 
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#333' }
+                          }}
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      )}
+                    </Box>
+                    <Box sx={{ p: 2 }}>
+                      {(formData.finance?.otherExpenses || []).map((expense, index) => (
+                        <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                          <TextField
+                            placeholder="Other Expense"
+                            size="small"
+                            value={expense.description || ''}
+                            onChange={(e) => handleOtherExpenseChange(index, 'description', e.target.value)}
+                            sx={{ flex: 1 }}
+                            disabled={isViewMode}
+                          />
+                          <TextField
+                            label="Amount (₹)"
+                            type="number"
+                            size="small"
+                            value={expense.amount || ''}
+                            onChange={(e) => handleOtherExpenseChange(index, 'amount', e.target.value)}
+                            sx={{ width: 120 }}
+                            disabled={isViewMode}
+                            InputProps={{
+                              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                            }}
+                          />
+                          {!isViewMode && (
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleRemoveOtherExpense(index)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )}
+                        </Box>
+                      )) || (
+                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                          <TextField
+                            placeholder="Other Expense"
+                            size="small"
+                            sx={{ flex: 1 }}
+                            disabled={isViewMode}
+                          />
+                          <TextField
+                            placeholder="Amount"
+                            type="number"
+                            size="small"
+                            sx={{ width: 120 }}
+                            disabled={isViewMode}
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* Total Section */}
+                  <Box sx={{ 
+                    backgroundColor: '#000', 
+                    color: 'white', 
+                    p: 2,
+                    borderRadius: '0 0 8px 8px'
+                  }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                        TOTAL
+                      </Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                         ₹{calculateTotalAmount()}
                       </Typography>
                     </Box>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
-
-            {/* Trip Summary */}
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-                  Trip Summary
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">Trip Title</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{formData.title || 'Not specified'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">Destination</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{formData.destination || 'Not specified'}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">Start Date</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {formData.startDate ? formData.startDate.toLocaleDateString('en-IN') : 'Not specified'}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">End Date</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {formData.endDate ? formData.endDate.toLocaleDateString('en-IN') : 'Not specified'}
-                    </Typography>
-                  </Grid>
-                </Grid>
+                  </Box>
+                    </Box>
               </CardContent>
             </Card>
           </Box>
@@ -3567,9 +4825,51 @@ const CreateTrip = () => {
             Back
           </Button>
           <Box sx={{ flex: '1 1 auto' }} />
-          {activeStep === steps.length - 1 && !isViewMode ? (
+          {activeStep === (steps?.length || 0) - 1 && isViewMode ? (
             <Button
-              onClick={handleSubmit}
+              onClick={() => navigate('/trips/list')}
+              variant="contained"
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)',
+                boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #d32f2f 30%, #e53935 90%)',
+                  boxShadow: '0 6px 16px rgba(244, 67, 54, 0.4)'
+                }
+              }}
+            >
+              Close
+            </Button>
+          ) : activeStep === (steps?.length || 0) - 1 && !isViewMode ? (
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button 
+                onClick={() => handleSubmit(false, 1)} 
+                variant="outlined"
+                disabled={loading}
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderColor: '#ff9800',
+                  color: '#ff9800',
+                  '&:hover': {
+                    borderColor: '#f57c00',
+                    backgroundColor: 'rgba(255, 152, 0, 0.04)'
+                  }
+                }}
+                startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              >
+                {loading ? 'Saving...' : 'Save As Draft'}
+              </Button>
+              <Button 
+                onClick={() => handleSubmit(false, 2)} 
               variant="contained"
               disabled={loading}
               sx={{
@@ -3587,8 +4887,9 @@ const CreateTrip = () => {
               }}
               startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
             >
-              {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Trip' : 'Create Trip')}
+                {loading ? 'Publishing...' : 'Publish Trip'}
             </Button>
+            </Box>
           ) : (
             <Button 
               onClick={handleNext} 
@@ -3730,17 +5031,71 @@ const CreateTrip = () => {
         </Dialog>
 
         {/* Day Event Dialog */}
-        <Dialog open={dayEventDialog} onClose={() => setDayEventDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>
+        <Dialog 
+          open={dayEventDialog} 
+          onClose={() => setDayEventDialog(false)} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              overflow: 'hidden'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            py: 3,
+            px: 3,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '1px',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)'
+            }
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                p: 1, 
+                borderRadius: '50%', 
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <CalendarIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
             {editingEvent ? 'Edit Event' : 'Add Event'} - {selectedDayForEvent && new Date(selectedDayForEvent).toLocaleDateString('en-IN', { 
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
               day: 'numeric' 
             })}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.85rem' }}>
+                  Create an event for this specific day
+                </Typography>
+              </Box>
+            </Box>
           </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
+          
+          <DialogContent sx={{ p: 3, backgroundColor: '#fafafa' }}>
+            <Box sx={{ 
+              backgroundColor: 'white', 
+              borderRadius: 2, 
+              p: 3, 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              border: '1px solid #e8e8e8'
+            }}>
+              <Grid container spacing={3}>
               <Grid item xs={12}>
                 <TextField
                   label="Event Title"
@@ -3748,18 +5103,52 @@ const CreateTrip = () => {
                   value={dayEvent.title}
                   onChange={(e) => setDayEvent(prev => ({ ...prev, title: e.target.value }))}
                   required
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
+                
               <Grid item xs={12}>
                 <TextField
                   label="Description (Optional)"
                   fullWidth
                   multiline
-                  rows={3}
+                    rows={4}
                   value={dayEvent.description}
                   onChange={(e) => setDayEvent(prev => ({ ...prev, description: e.target.value }))}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
+                
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Start Time (Optional)"
@@ -3768,8 +5157,25 @@ const CreateTrip = () => {
                   value={dayEvent.startTime}
                   onChange={(e) => setDayEvent(prev => ({ ...prev, startTime: e.target.value }))}
                   InputLabelProps={{ shrink: true }}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
+                
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="End Time (Optional)"
@@ -3778,25 +5184,136 @@ const CreateTrip = () => {
                   value={dayEvent.endTime}
                   onChange={(e) => setDayEvent(prev => ({ ...prev, endTime: e.target.value }))}
                   InputLabelProps={{ shrink: true }}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
             </Grid>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDayEventDialog(false)}>Cancel</Button>
-            <Button onClick={saveDayEvent} variant="contained">
-              {editingEvent ? 'Update' : 'Save'}
+          
+          <DialogActions sx={{ 
+            p: 3, 
+            backgroundColor: '#f8f9fa',
+            borderTop: '1px solid #e8e8e8',
+            gap: 2
+          }}>
+            <Button 
+              onClick={() => setDayEventDialog(false)}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 500,
+                borderColor: '#d0d0d0',
+                color: '#666',
+                '&:hover': {
+                  borderColor: '#999',
+                  backgroundColor: '#f5f5f5'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={saveDayEvent} 
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  boxShadow: '0 6px 16px rgba(102, 126, 234, 0.5)',
+                }
+              }}
+            >
+              {editingEvent ? 'Update Event' : 'Save Event'}
             </Button>
           </DialogActions>
         </Dialog>
 
         {/* All Days Event Dialog */}
-        <Dialog open={allDaysEventDialog} onClose={() => setAllDaysEventDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>
+        <Dialog 
+          open={allDaysEventDialog} 
+          onClose={() => setAllDaysEventDialog(false)} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              overflow: 'hidden'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            py: 3,
+            px: 3,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '1px',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)'
+            }
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                p: 1, 
+                borderRadius: '50%', 
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <EventIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
             {editingAllDaysEvent ? 'Edit Event' : 'Add Event'} - All Days
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.85rem' }}>
+                  Create an event that applies to all days of your trip
+                </Typography>
+              </Box>
+            </Box>
           </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
+          
+          <DialogContent sx={{ p: 3, backgroundColor: '#fafafa' }}>
+            <Box sx={{ 
+              backgroundColor: 'white', 
+              borderRadius: 2, 
+              p: 3, 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              border: '1px solid #e8e8e8'
+            }}>
+              <Grid container spacing={3}>
               <Grid item xs={12}>
                 <TextField
                   label="Event Title"
@@ -3804,18 +5321,52 @@ const CreateTrip = () => {
                   value={allDaysEvent.title}
                   onChange={(e) => setAllDaysEvent(prev => ({ ...prev, title: e.target.value }))}
                   required
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
+                
               <Grid item xs={12}>
                 <TextField
                   label="Description (Optional)"
                   fullWidth
                   multiline
-                  rows={3}
+                    rows={4}
                   value={allDaysEvent.description}
                   onChange={(e) => setAllDaysEvent(prev => ({ ...prev, description: e.target.value }))}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
+                
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Start Time (Optional)"
@@ -3824,8 +5375,25 @@ const CreateTrip = () => {
                   value={allDaysEvent.startTime}
                   onChange={(e) => setAllDaysEvent(prev => ({ ...prev, startTime: e.target.value }))}
                   InputLabelProps={{ shrink: true }}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
+                
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="End Time (Optional)"
@@ -3834,14 +5402,71 @@ const CreateTrip = () => {
                   value={allDaysEvent.endTime}
                   onChange={(e) => setAllDaysEvent(prev => ({ ...prev, endTime: e.target.value }))}
                   InputLabelProps={{ shrink: true }}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                          borderWidth: 2,
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#667eea',
+                      },
+                    }}
                 />
               </Grid>
             </Grid>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAllDaysEventDialog(false)}>Cancel</Button>
-            <Button onClick={saveAllDaysEvent} variant="contained">
-              {editingAllDaysEvent ? 'Update' : 'Save'}
+          
+          <DialogActions sx={{ 
+            p: 3, 
+            backgroundColor: '#f8f9fa',
+            borderTop: '1px solid #e8e8e8',
+            gap: 2
+          }}>
+            <Button 
+              onClick={() => setAllDaysEventDialog(false)}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 500,
+                borderColor: '#d0d0d0',
+                color: '#666',
+                '&:hover': {
+                  borderColor: '#999',
+                  backgroundColor: '#f5f5f5'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={saveAllDaysEvent} 
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                px: 4,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  boxShadow: '0 6px 16px rgba(102, 126, 234, 0.5)',
+                }
+              }}
+            >
+              {editingAllDaysEvent ? 'Update Event' : 'Save Event'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -3860,7 +5485,7 @@ const CreateTrip = () => {
                 <InputLabel id="day-food-vendors-label">Food Vendors</InputLabel>
                 <Select
                   labelId="day-food-vendors-label"
-                  value={newDayFoodEntry.vendors.length > 0 ? newDayFoodEntry.vendors[0] : ''}
+                  value={(newDayFoodEntry.vendors?.length || 0) > 0 ? newDayFoodEntry.vendors[0] : ''}
                   onChange={(e) => setNewDayFoodEntry(prev => ({ ...prev, vendors: e.target.value ? [e.target.value] : [] }))}
                   label="Food Vendors"
                 >
@@ -3876,7 +5501,7 @@ const CreateTrip = () => {
                 <InputLabel id="day-food-schedules-label">Food Schedules</InputLabel>
                 <Select
                   labelId="day-food-schedules-label"
-                  value={newDayFoodEntry.schedules.length > 0 ? newDayFoodEntry.schedules[0] : ''}
+                  value={(newDayFoodEntry.schedules?.length || 0) > 0 ? newDayFoodEntry.schedules[0] : ''}
                   onChange={(e) => setNewDayFoodEntry(prev => ({ ...prev, schedules: e.target.value ? [e.target.value] : [] }))}
                   label="Food Schedules"
                 >
@@ -3958,7 +5583,7 @@ const CreateTrip = () => {
             <Button 
               onClick={handleSaveDayFood} 
               variant="contained"
-              disabled={newDayFoodEntry.vendors.length === 0 || newDayFoodEntry.schedules.length === 0 || newDayFoodEntry.categories.length === 0 || newDayFoodEntry.items.length === 0}
+              disabled={(newDayFoodEntry.vendors?.length || 0) === 0 || (newDayFoodEntry.schedules?.length || 0) === 0 || (newDayFoodEntry.categories?.length || 0) === 0 || (newDayFoodEntry.items?.length || 0) === 0}
             >
               Add Entry
             </Button>
@@ -3974,7 +5599,7 @@ const CreateTrip = () => {
                 <InputLabel id="food-vendors-label">Food Vendors</InputLabel>
                 <Select
                   labelId="food-vendors-label"
-                  value={newFoodEntry.vendors.length > 0 ? newFoodEntry.vendors[0] : ''}
+                  value={(newFoodEntry.vendors?.length || 0) > 0 ? newFoodEntry.vendors[0] : ''}
                   onChange={(e) => setNewFoodEntry(prev => ({ ...prev, vendors: e.target.value ? [e.target.value] : [] }))}
                   label="Food Vendors"
                 >
@@ -3990,7 +5615,7 @@ const CreateTrip = () => {
                 <InputLabel id="food-schedules-label">Food Schedules</InputLabel>
                 <Select
                   labelId="food-schedules-label"
-                  value={newFoodEntry.schedules.length > 0 ? newFoodEntry.schedules[0] : ''}
+                  value={(newFoodEntry.schedules?.length || 0) > 0 ? newFoodEntry.schedules[0] : ''}
                   onChange={(e) => setNewFoodEntry(prev => ({ ...prev, schedules: e.target.value ? [e.target.value] : [] }))}
                   label="Food Schedules"
                 >
@@ -4072,7 +5697,7 @@ const CreateTrip = () => {
             <Button 
               onClick={handleAddFoodEntry} 
               variant="contained"
-              disabled={newFoodEntry.vendors.length === 0 || newFoodEntry.schedules.length === 0 || newFoodEntry.categories.length === 0 || newFoodEntry.items.length === 0}
+              disabled={(newFoodEntry.vendors?.length || 0) === 0 || (newFoodEntry.schedules?.length || 0) === 0 || (newFoodEntry.categories?.length || 0) === 0 || (newFoodEntry.items?.length || 0) === 0}
             >
               Add Entry
             </Button>

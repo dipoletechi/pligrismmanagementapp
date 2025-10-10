@@ -22,7 +22,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -44,16 +48,27 @@ const TripList = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
+  const [tripStatuses, setTripStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [tripModal, setTripModal] = useState({ open: false, trip: null });
   const [trackingModal, setTrackingModal] = useState({ open: false, trip: null });
+  const [statusChangeModal, setStatusChangeModal] = useState({ open: false, trip: null, newStatus: '' });
 
   const statusColors = {
-    planned: 'default',
-    active: 'info',
-    completed: 'success',
-    cancelled: 'error'
+    'Draft': 'default',
+    'Published': 'info',
+    'Completed': 'success',
+    'Cancelled': 'error'
+  };
+
+  const fetchTripStatuses = async () => {
+    try {
+      const response = await axios.get('/api/trip-status');
+      setTripStatuses(response.data.data.items || []);
+    } catch (error) {
+      console.error('Error fetching trip statuses:', error);
+    }
   };
 
   const fetchTrips = async () => {
@@ -90,7 +105,7 @@ const TripList = () => {
   };
 
   useEffect(() => {
-    const initializeTrips = async () => {
+    const initializeData = async () => {
       console.log('TripList useEffect - isAuthenticated:', isAuthenticated);
       console.log('TripList useEffect - user:', user);
       console.log('TripList useEffect - token:', localStorage.getItem('token'));
@@ -101,16 +116,16 @@ const TripList = () => {
       // Check if user is authenticated
       const token = localStorage.getItem('token');
       if (token && user) {
-        console.log('User authenticated, fetching trips...');
-        await fetchTrips();
+        console.log('User authenticated, fetching data...');
+        await Promise.all([fetchTrips(), fetchTripStatuses()]);
       } else {
         console.log('User not authenticated, stopping loading');
         setLoading(false);
       }
     };
 
-    initializeTrips();
-  }, []); // Run only once on mount
+    initializeData();
+  }, [user, isAuthenticated]); // Run when user or authentication status changes
 
   const handleEditTrip = (trip) => {
     console.log('Edit button clicked for trip:', trip);
@@ -142,6 +157,53 @@ const TripList = () => {
 
   const handleCloseTrackingModal = () => {
     setTrackingModal({ open: false, trip: null });
+  };
+
+  const handleStatusChange = (trip) => {
+    setStatusChangeModal({ 
+      open: true, 
+      trip: trip, 
+      newStatus: trip.tripStatus?.id || '' 
+    });
+  };
+
+  const handleCloseStatusModal = () => {
+    setStatusChangeModal({ open: false, trip: null, newStatus: '' });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    try {
+      const { trip, newStatus } = statusChangeModal;
+      if (!trip || !newStatus) return;
+
+      const response = await axios.patch(`/api/trips/${trip.id}/status`, {
+        trip_status_id: parseInt(newStatus)
+      });
+
+      // Update the trip in the local state
+      setTrips(prevTrips => 
+        prevTrips.map(t => 
+          t.id === trip.id 
+            ? { ...t, tripStatus: tripStatuses.find(s => s.id === parseInt(newStatus)) }
+            : t
+        )
+      );
+
+      setSnackbar({
+        open: true,
+        message: 'Trip status updated successfully',
+        severity: 'success'
+      });
+
+      handleCloseStatusModal();
+    } catch (error) {
+      console.error('Error updating trip status:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Error updating trip status',
+        severity: 'error'
+      });
+    }
   };
 
   const handleTripIconClick = (trip) => {
@@ -422,15 +484,32 @@ const TripList = () => {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={trip.status} 
-                        color={statusColors[trip.status]} 
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          borderRadius: 2
-                        }}
-                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip 
+                          label={trip.tripStatus?.name || 'Draft'} 
+                          color={statusColors[trip.tripStatus?.name] || 'default'} 
+                          size="small"
+                          sx={{
+                            fontWeight: 600,
+                            borderRadius: 2
+                          }}
+                        />
+                        {(user?.role === 'superadmin' || user?.role === 'admin') && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleStatusChange(trip)}
+                            sx={{
+                              color: '#1976d2',
+                              '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.1)'
+                              }
+                            }}
+                            title="Change Status"
+                          >
+                            <EditIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        )}
+                      </Box>
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
@@ -851,6 +930,71 @@ const TripList = () => {
         </Dialog>
 
       {/* Snackbar */}
+      {/* Status Change Modal */}
+      <Dialog
+        open={statusChangeModal.open}
+        onClose={handleCloseStatusModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Change Trip Status
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Trip: <strong>{statusChangeModal.trip?.title}</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Current Status: <strong>{statusChangeModal.trip?.tripStatus?.name || 'Draft'}</strong>
+            </Typography>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>New Status</InputLabel>
+              <Select
+                value={statusChangeModal.newStatus}
+                onChange={(e) => setStatusChangeModal(prev => ({ ...prev, newStatus: e.target.value }))}
+                label="New Status"
+              >
+                {tripStatuses.length === 0 ? (
+                  <MenuItem disabled>
+                    <Typography variant="body2" color="text.secondary">
+                      Loading statuses...
+                    </Typography>
+                  </MenuItem>
+                ) : (
+                  tripStatuses.map((status) => (
+                    <MenuItem key={status.id} value={status.id}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip 
+                          label={status.name} 
+                          color={statusColors[status.name] || 'default'} 
+                          size="small"
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {status.description}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseStatusModal}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmStatusChange}
+            variant="contained"
+            disabled={!statusChangeModal.newStatus || statusChangeModal.newStatus === statusChangeModal.trip?.tripStatus?.id}
+          >
+            Update Status
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

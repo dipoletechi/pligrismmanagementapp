@@ -301,8 +301,21 @@ function MainLayout({ children }) {
                             }
                           })
                         }}
-                        onClick={() => navigate(subItem.path)}
-                        selected={false}
+                        onClick={() => {
+                          // For Create Trip, always navigate with fresh state
+                          if (subItem.path === '/trips/create') {
+                            navigate(subItem.path, { 
+                              state: { 
+                                isEditMode: false, 
+                                isViewMode: false, 
+                                editingTrip: null 
+                              } 
+                            });
+                          } else {
+                            navigate(subItem.path);
+                          }
+                        }}
+                        selected={location.pathname === subItem.path && !location.state?.isEditMode && !location.state?.isViewMode}
                       >
                         <ListItemText 
                           primary={subItem.text}
