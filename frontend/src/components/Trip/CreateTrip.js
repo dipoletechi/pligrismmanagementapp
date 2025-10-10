@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -73,9 +74,19 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import axios from 'axios';
 
 const CreateTrip = () => {
+  const location = useLocation();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  
+  // Check if we're in edit mode or view mode
+  const isEditMode = location.state?.isEditMode || false;
+  const isViewMode = location.state?.isViewMode || false;
+  const editingTrip = location.state?.editingTrip || null;
+  
+  console.log('CreateTrip component - isEditMode:', isEditMode);
+  console.log('CreateTrip component - editingTrip:', editingTrip);
+  console.log('CreateTrip component - location.state:', location.state);
   
   // Data for dropdowns
   const [destinations, setDestinations] = useState([]);
@@ -89,45 +100,96 @@ const CreateTrip = () => {
   const [foodItems, setFoodItems] = useState([]);
   const [transportVendors, setTransportVendors] = useState([]);
 
-  // Form data
-  const [formData, setFormData] = useState({
+  // Form data - Initialize with editing trip data if available
+  const [formData, setFormData] = useState(() => {
+    if (editingTrip) {
+      console.log('Initializing formData with editingTrip:', editingTrip);
+      return {
+        title: editingTrip.title || '',
+        destination: editingTrip.destination || '',
+        startDate: editingTrip.start_date ? new Date(editingTrip.start_date) : null,
+        endDate: editingTrip.end_date ? new Date(editingTrip.end_date) : null,
+        // Get transport vendor from vendorsByDay or use empty string
+        selectedTransportVendor: editingTrip.vendors_by_day ? (() => {
+          try {
+            const vendorsByDay = JSON.parse(editingTrip.vendors_by_day);
+            const firstDay = Object.keys(vendorsByDay)[0];
+            return vendorsByDay[firstDay] || '';
+          } catch {
+            return '';
+          }
+        })() : '',
+        // Parse JSON fields if they exist (using underscore field names from database)
+        selectedDrivers: editingTrip.selected_drivers ? JSON.parse(editingTrip.selected_drivers) : [],
+        selectedConductors: editingTrip.selected_conductors ? JSON.parse(editingTrip.selected_conductors) : [],
+        selectedBuses: editingTrip.selected_buses ? JSON.parse(editingTrip.selected_buses) : [],
+        driversByDay: editingTrip.drivers_by_day ? JSON.parse(editingTrip.drivers_by_day) : {},
+        conductorsByDay: editingTrip.conductors_by_day ? JSON.parse(editingTrip.conductors_by_day) : {},
+        busesByDay: editingTrip.buses_by_day ? JSON.parse(editingTrip.buses_by_day) : {},
+        vendorsByDay: editingTrip.vendors_by_day ? JSON.parse(editingTrip.vendors_by_day) : {},
+        timeByDay: editingTrip.time_by_day ? JSON.parse(editingTrip.time_by_day) : {},
+        accommodationsByDay: editingTrip.accommodations_by_day ? JSON.parse(editingTrip.accommodations_by_day) : {},
+        selectedAccommodationVendor: editingTrip.selected_accommodation_vendor || '',
+        selectedAccommodationStartTime: editingTrip.selected_accommodation_start_time || '',
+        selectedAccommodationEndTime: editingTrip.selected_accommodation_end_time || '',
+        selectedFoodVendors: editingTrip.selected_food_vendors ? JSON.parse(editingTrip.selected_food_vendors) : [],
+        foodVendorsByDay: editingTrip.food_vendors_by_day ? JSON.parse(editingTrip.food_vendors_by_day) : {},
+        selectedFoodSchedules: editingTrip.selected_food_schedules ? JSON.parse(editingTrip.selected_food_schedules) : [],
+        selectedFoodCategories: editingTrip.selected_food_categories ? JSON.parse(editingTrip.selected_food_categories) : [],
+        selectedFoodItems: editingTrip.selected_food_items ? JSON.parse(editingTrip.selected_food_items) : [],
+        foodSchedulesByDay: editingTrip.food_schedules_by_day ? JSON.parse(editingTrip.food_schedules_by_day) : {},
+        foodCategoriesByDay: editingTrip.food_categories_by_day ? JSON.parse(editingTrip.food_categories_by_day) : {},
+        foodItemsByDay: editingTrip.food_items_by_day ? JSON.parse(editingTrip.food_items_by_day) : {},
+        allDaysFoodEntries: editingTrip.all_days_food_entries ? JSON.parse(editingTrip.all_days_food_entries) : [],
+        eventsByDay: editingTrip.events_by_day ? JSON.parse(editingTrip.events_by_day) : {},
+        allDaysEvents: editingTrip.all_days_events ? JSON.parse(editingTrip.all_days_events) : [],
+        selectedEventTitle: editingTrip.selected_event_title || '',
+        selectedEventDescription: editingTrip.selected_event_description || '',
+        selectedEventStartTime: editingTrip.selected_event_start_time || '',
+        selectedEventEndTime: editingTrip.selected_event_end_time || '',
+        finance: editingTrip.finance_data ? JSON.parse(editingTrip.finance_data) : { vendors: [], totalAmount: 0 }
+      };
+    } else {
+      return {
     title: '',
     destination: '',
-    startDate: null,
-    endDate: null,
-    selectedTransportVendor: '',
-    selectedDrivers: [],
-    selectedConductors: [],
-    selectedBuses: [],
-    driversByDay: {}, // { '2025-10-11': [driverIds], '2025-10-12': [driverIds] }
-    conductorsByDay: {}, // { '2025-10-11': [conductorIds], '2025-10-12': [conductorIds] }
-    busesByDay: {}, // { '2025-10-11': [busIds], '2025-10-12': [busIds] }
-    vendorsByDay: {}, // { '2025-10-11': vendorId, '2025-10-12': vendorId }
-    timeByDay: {}, // { '2025-10-11': { startTime: '08:00', endTime: '18:00' } }
-    accommodations: [],
-    accommodationsByDay: {}, // { '2025-10-11': [accommodations], '2025-10-12': [accommodations] }
-    selectedAccommodationVendor: '',
-    selectedAccommodationStartTime: '',
-    selectedAccommodationEndTime: '',
-    selectedFoodVendors: [], // Array of selected food vendor IDs for All Days
-    foodVendorsByDay: {}, // { '2025-10-11': [vendorIds], '2025-10-12': [vendorIds] }
-    selectedFoodSchedules: [], // Selected food schedules for All Days (multi-select)
-    selectedFoodCategories: [], // Selected food categories for All Days
-    selectedFoodItems: [], // Selected food items for All Days
-    foodSchedulesByDay: {}, // { '2025-10-11': [scheduleIds], '2025-10-12': [scheduleIds] }
-    foodCategoriesByDay: {}, // { '2025-10-11': [categoryIds], '2025-10-12': [categoryIds] }
-    foodItemsByDay: {}, // { '2025-10-11': [itemIds], '2025-10-12': [itemIds] }
-    allDaysFoodEntries: [], // Array of food entries for all days
-    events: [],
-    eventsByDay: {}, // { '2025-10-11': [events], '2025-10-12': [events] }
-    allDaysEvents: [], // Events applied to all days
-    selectedEventTitle: '',
-    selectedEventDescription: '',
-    selectedEventStartTime: '',
-    selectedEventEndTime: '',
-    finance: {
-      vendors: [],
-      totalAmount: 0
+        startDate: null,
+        endDate: null,
+        selectedTransportVendor: '',
+        selectedDrivers: [],
+        selectedConductors: [],
+        selectedBuses: [],
+        driversByDay: {}, // { '2025-10-11': [driverIds], '2025-10-12': [driverIds] }
+        conductorsByDay: {}, // { '2025-10-11': [conductorIds], '2025-10-12': [conductorIds] }
+        busesByDay: {}, // { '2025-10-11': [busIds], '2025-10-12': [busIds] }
+        vendorsByDay: {}, // { '2025-10-11': vendorId, '2025-10-12': vendorId }
+        timeByDay: {}, // { '2025-10-11': { startTime: '08:00', endTime: '18:00' } }
+        accommodations: [],
+        accommodationsByDay: {}, // { '2025-10-11': [accommodations], '2025-10-12': [accommodations] }
+        selectedAccommodationVendor: '',
+        selectedAccommodationStartTime: '',
+        selectedAccommodationEndTime: '',
+        selectedFoodVendors: [], // Array of selected food vendor IDs for All Days
+        foodVendorsByDay: {}, // { '2025-10-11': [vendorIds], '2025-10-12': [vendorIds] }
+        selectedFoodSchedules: [], // Selected food schedules for All Days (multi-select)
+        selectedFoodCategories: [], // Selected food categories for All Days
+        selectedFoodItems: [], // Selected food items for All Days
+        foodSchedulesByDay: {}, // { '2025-10-11': [scheduleIds], '2025-10-12': [scheduleIds] }
+        foodCategoriesByDay: {}, // { '2025-10-11': [categoryIds], '2025-10-12': [categoryIds] }
+        foodItemsByDay: {}, // { '2025-10-11': [itemIds], '2025-10-12': [itemIds] }
+        allDaysFoodEntries: [], // Array of food entries for all days
+        events: [],
+        eventsByDay: {}, // { '2025-10-11': [events], '2025-10-12': [events] }
+        allDaysEvents: [], // Events applied to all days
+        selectedEventTitle: '',
+        selectedEventDescription: '',
+        selectedEventStartTime: '',
+        selectedEventEndTime: '',
+        finance: {
+          vendors: [],
+          totalAmount: 0
+        }
+      };
     }
   });
   
@@ -136,13 +198,27 @@ const CreateTrip = () => {
   const [dayWiseExpanded, setDayWiseExpanded] = useState(false);
   const [foodAllDaysExpanded, setFoodAllDaysExpanded] = useState(false);
   const [foodDayWiseExpanded, setFoodDayWiseExpanded] = useState(false);
-  const [appliedToAllDays, setAppliedToAllDays] = useState({
-    drivers: false,
-    conductors: false,
-    buses: false,
-    accommodations: false,
-    food: false,
-    events: false
+  const [appliedToAllDays, setAppliedToAllDays] = useState(() => {
+    if (editingTrip) {
+      // Check if all days data exists for each section
+      return {
+        drivers: !!(editingTrip.selected_drivers && editingTrip.selected_drivers !== '[]'),
+        conductors: !!(editingTrip.selected_conductors && editingTrip.selected_conductors !== '[]'),
+        buses: !!(editingTrip.selected_buses && editingTrip.selected_buses !== '[]'),
+        accommodations: !!(editingTrip.selected_accommodation_vendor),
+        food: !!(editingTrip.all_days_food_entries && editingTrip.all_days_food_entries !== '[]'),
+        events: !!(editingTrip.all_days_events && editingTrip.all_days_events !== '[]')
+      };
+    } else {
+      return {
+        drivers: false,
+        conductors: false,
+        buses: false,
+        accommodations: false,
+        food: false,
+        events: false
+      };
+    }
   });
   
   // Apply button states
@@ -415,6 +491,14 @@ const CreateTrip = () => {
   useEffect(() => {
     fetchDropdownData();
   }, []);
+
+  // Debug useEffect for edit mode
+  useEffect(() => {
+    if (isEditMode && editingTrip) {
+      console.log('Edit mode - formData after initialization:', formData);
+      console.log('Edit mode - appliedToAllDays after initialization:', appliedToAllDays);
+    }
+  }, [isEditMode, editingTrip, formData, appliedToAllDays]);
 
   const fetchDropdownData = async () => {
     try {
@@ -1537,45 +1621,54 @@ const CreateTrip = () => {
       
       let tripData;
       
-      if (isAllDaysApplied) {
-        // If all days applied, use all days selection data
-        tripData = {
-          ...formData,
-          start_date: formData.startDate?.toISOString(),
-          end_date: formData.endDate?.toISOString(),
-          // Use all days selection data
-          drivers: formData.selectedDrivers,
-          conductors: formData.selectedConductors,
-          buses: formData.selectedBuses,
-          // Clear day-wise data as it's not needed
-          driversByDay: {},
-          conductorsByDay: {},
-          busesByDay: {},
-          timeByDay: {},
-          useAllDaysSelection: true
-        };
-      } else {
-        // If not all days applied, use day-wise selection data
-        tripData = {
-          ...formData,
-          start_date: formData.startDate?.toISOString(),
-          end_date: formData.endDate?.toISOString(),
-          // Use day-wise selection data
-          driversByDay: formData.driversByDay,
-          conductorsByDay: formData.conductorsByDay,
-          busesByDay: formData.busesByDay,
-          timeByDay: formData.timeByDay,
-          // Clear all days selection data as it's not needed
-          selectedDrivers: [],
-          selectedConductors: [],
-          selectedBuses: [],
-          useAllDaysSelection: false
-        };
-      }
+      // Prepare trip data for database
+      tripData = {
+        title: formData.title,
+        destination: formData.destination,
+        start_date: formData.startDate?.toISOString(),
+        end_date: formData.endDate?.toISOString(),
+        // Convert complex data to JSON strings for database storage
+        selected_drivers: JSON.stringify(formData.selectedDrivers),
+        selected_conductors: JSON.stringify(formData.selectedConductors),
+        selected_buses: JSON.stringify(formData.selectedBuses),
+        drivers_by_day: JSON.stringify(formData.driversByDay),
+        conductors_by_day: JSON.stringify(formData.conductorsByDay),
+        buses_by_day: JSON.stringify(formData.busesByDay),
+        vendors_by_day: JSON.stringify(formData.vendorsByDay),
+        time_by_day: JSON.stringify(formData.timeByDay),
+        accommodations_by_day: JSON.stringify(formData.accommodationsByDay),
+        selected_accommodation_vendor: formData.selectedAccommodationVendor,
+        selected_accommodation_start_time: formData.selectedAccommodationStartTime,
+        selected_accommodation_end_time: formData.selectedAccommodationEndTime,
+        selected_food_vendors: JSON.stringify(formData.selectedFoodVendors),
+        food_vendors_by_day: JSON.stringify(formData.foodVendorsByDay),
+        selected_food_schedules: JSON.stringify(formData.selectedFoodSchedules),
+        selected_food_categories: JSON.stringify(formData.selectedFoodCategories),
+        selected_food_items: JSON.stringify(formData.selectedFoodItems),
+        food_schedules_by_day: JSON.stringify(formData.foodSchedulesByDay),
+        food_categories_by_day: JSON.stringify(formData.foodCategoriesByDay),
+        food_items_by_day: JSON.stringify(formData.foodItemsByDay),
+        all_days_food_entries: JSON.stringify(formData.allDaysFoodEntries),
+        events_by_day: JSON.stringify(formData.eventsByDay),
+        all_days_events: JSON.stringify(formData.allDaysEvents),
+        selected_event_title: formData.selectedEventTitle,
+        selected_event_description: formData.selectedEventDescription,
+        selected_event_start_time: formData.selectedEventStartTime,
+        selected_event_end_time: formData.selectedEventEndTime,
+        finance_data: JSON.stringify(formData.finance),
+        use_all_days_selection: isAllDaysApplied
+      };
       
-      const response = await axios.post('/api/trips', tripData);
-      console.log('Trip created successfully:', response.data);
+      let response;
+      if (isEditMode && editingTrip) {
+        response = await axios.put(`/api/trips/${editingTrip.id}`, tripData);
+        console.log('Trip updated successfully:', response.data);
+        setSnackbar({ open: true, message: 'Trip updated successfully!', severity: 'success' });
+      } else {
+        response = await axios.post('/api/trips', tripData);
+        console.log('Trip created successfully:', response.data);
       setSnackbar({ open: true, message: 'Trip created successfully!', severity: 'success' });
+      }
       
       // Reset form
       setFormData({
@@ -1641,6 +1734,7 @@ const CreateTrip = () => {
                 value={formData.title}
                 onChange={handleChange}
                 required
+                disabled={isViewMode}
               />
             </Grid>
             <Grid item xs={12} md={6} width={250}>
@@ -1651,6 +1745,7 @@ const CreateTrip = () => {
                 value={formData.destination}
                 onChange={handleChange}
                   label="Destination"
+                  disabled={isViewMode}
                 >
                   {destinations.map((dest) => (
                     <MenuItem key={dest.id} value={dest.id}>
@@ -1665,7 +1760,8 @@ const CreateTrip = () => {
                 label="Start Date & Time"
                 value={formData.startDate}
                 onChange={(newValue) => setFormData(prev => ({ ...prev, startDate: newValue }))}
-                renderInput={(params) => <TextField {...params} fullWidth />}
+                renderInput={(params) => <TextField {...params} fullWidth disabled={isViewMode} />}
+                disabled={isViewMode}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -1673,7 +1769,8 @@ const CreateTrip = () => {
                 label="End Date & Time"
                 value={formData.endDate}
                 onChange={(newValue) => setFormData(prev => ({ ...prev, endDate: newValue }))}
-                renderInput={(params) => <TextField {...params} fullWidth />}
+                renderInput={(params) => <TextField {...params} fullWidth disabled={isViewMode} />}
+                disabled={isViewMode}
               />
             </Grid>
           </Grid>
@@ -3357,10 +3454,10 @@ const CreateTrip = () => {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
-            Trip Management
+            {isViewMode ? 'View Trip' : isEditMode ? 'Edit Trip' : 'Trip Management'}
         </Typography>
         <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-          Create a new pilgrimage trip with all necessary details
+          {isViewMode ? 'View trip details and configurations (Read-only)' : isEditMode ? 'Update trip details and configurations' : 'Create a new pilgrimage trip with all necessary details'}
         </Typography>
         <Box sx={{ 
           width: 100, 
@@ -3470,7 +3567,7 @@ const CreateTrip = () => {
             Back
           </Button>
           <Box sx={{ flex: '1 1 auto' }} />
-          {activeStep === steps.length - 1 ? (
+          {activeStep === steps.length - 1 && !isViewMode ? (
             <Button
               onClick={handleSubmit}
               variant="contained"
@@ -3490,14 +3587,14 @@ const CreateTrip = () => {
               }}
               startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
             >
-              {loading ? 'Creating...' : 'Create Trip'}
+              {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Trip' : 'Create Trip')}
             </Button>
           ) : (
             <Button 
               onClick={handleNext} 
               variant="contained" 
               disabled={
-                activeStep === 0 && (
+                !isViewMode && activeStep === 0 && (
                   !formData.title.trim() || 
                   !formData.destination || 
                   !formData.startDate || 

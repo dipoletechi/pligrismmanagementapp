@@ -144,3 +144,4 @@ router.delete('/:id', protect, authorize('superadmin', 'admin', 'trip_manager'),
 });
 
 module.exports = router;
+

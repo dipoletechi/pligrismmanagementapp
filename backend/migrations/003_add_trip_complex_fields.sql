@@ -29,3 +29,4 @@ ADD COLUMN selected_event_start_time VARCHAR(50),
 ADD COLUMN selected_event_end_time VARCHAR(50),
 ADD COLUMN finance_data TEXT,
 ADD COLUMN use_all_days_selection BOOLEAN DEFAULT FALSE;
+

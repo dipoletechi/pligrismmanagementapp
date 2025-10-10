@@ -4,7 +4,6 @@ import {
   Paper,
   Typography,
   Box,
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -12,52 +11,34 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Grid,
   Card,
   CardContent,
   Alert,
   Snackbar,
   CircularProgress,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  Chip
 } from '@mui/material';
 import {
-  Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as ViewIcon,
   DirectionsBus as TripIcon,
   CalendarToday as CalendarIcon,
   AttachMoney as MoneyIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // Ensure axios base URL is set
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const TripList = () => {
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [editingTrip, setEditingTrip] = useState(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    destination: '',
-    start_date: '',
-    end_date: '',
-    budget: '',
-    status: 'planned'
-  });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const statusColors = {
@@ -123,71 +104,29 @@ const TripList = () => {
     initializeTrips();
   }, []); // Run only once on mount
 
-  const handleOpen = (trip = null) => {
-    if (trip) {
-      setEditingTrip(trip);
-      setFormData({
-        title: trip.title,
-        description: trip.description || '',
-        destination: trip.destination || '',
-        start_date: trip.start_date ? trip.start_date.split('T')[0] : '',
-        end_date: trip.end_date ? trip.end_date.split('T')[0] : '',
-        budget: trip.budget || '',
-        status: trip.status
-      });
-    } else {
-      setEditingTrip(null);
-      setFormData({
-        title: '',
-        description: '',
-        destination: '',
-        start_date: '',
-        end_date: '',
-        budget: '',
-        status: 'planned'
-      });
-    }
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setEditingTrip(null);
-    setFormData({
-      title: '',
-      description: '',
-      destination: '',
-      start_date: '',
-      end_date: '',
-      budget: '',
-      status: 'planned'
+  const handleEditTrip = (trip) => {
+    console.log('Edit button clicked for trip:', trip);
+    // Navigate to CreateTrip page with trip data for editing
+    navigate('/trips/create', { 
+      state: { 
+        editingTrip: trip,
+        isEditMode: true 
+      } 
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleViewTrip = (trip) => {
+    console.log('View button clicked for trip:', trip);
+    // Navigate to CreateTrip page with trip data for viewing (read-only)
+    navigate('/trips/create', { 
+      state: { 
+        editingTrip: trip,
+        isEditMode: false,
+        isViewMode: true 
+      } 
+    });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingTrip) {
-        await axios.put(`/api/trips/${editingTrip.id}`, formData);
-      } else {
-        await axios.post('/api/trips', formData);
-      }
-      await fetchTrips();
-      setSnackbar({ open: true, message: 'Trip saved successfully', severity: 'success' });
-      handleClose();
-    } catch (error) {
-      console.error('Error saving trip:', error);
-      setSnackbar({ open: true, message: error.response?.data?.message || 'Error saving trip', severity: 'error' });
-    }
-  };
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this trip?')) {
@@ -256,30 +195,6 @@ const TripList = () => {
                 Manage pilgrimage trips and their details
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-              size="large"
-              sx={{
-                borderRadius: 3,
-                px: 4,
-                py: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
-                  boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
-                  transform: 'translateY(-2px)'
-                },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Create Trip
-            </Button>
           </Box>
         </Box>
 
@@ -480,7 +395,22 @@ const TripList = () => {
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                         <IconButton
-                          onClick={() => handleOpen(trip)}
+                          onClick={() => handleViewTrip(trip)}
+                          sx={{
+                            color: '#4caf50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                          title="View Trip"
+                        >
+                          <ViewIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleEditTrip(trip)}
                           sx={{
                             color: '#1976d2',
                             backgroundColor: 'rgba(25, 118, 210, 0.1)',
@@ -490,6 +420,7 @@ const TripList = () => {
                             },
                             transition: 'all 0.2s ease'
                           }}
+                          title="Edit Trip"
                         >
                           <EditIcon />
                         </IconButton>
@@ -504,6 +435,7 @@ const TripList = () => {
                             },
                             transition: 'all 0.2s ease'
                           }}
+                          title="Delete Trip"
                         >
                           <DeleteIcon />
                         </IconButton>
@@ -516,111 +448,6 @@ const TripList = () => {
           </TableContainer>
         </Paper>
 
-      {/* Trip Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingTrip ? 'Edit Trip' : 'Create New Trip'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  autoFocus
-                  name="title"
-                  label="Trip Title"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="description"
-                  label="Description"
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="destination"
-                  label="Destination"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.destination}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="start_date"
-                  label="Start Date"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.start_date}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="end_date"
-                  label="End Date"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.end_date}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  name="budget"
-                  label="Budget (₹)"
-                  type="number"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.budget}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    label="Status"
-                  >
-                    <MenuItem value="planned">Planned</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="completed">Completed</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {editingTrip ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
 
       {/* Snackbar */}
       <Snackbar
