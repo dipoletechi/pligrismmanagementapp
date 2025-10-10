@@ -63,8 +63,7 @@ const MasterDataSubMenu = [
 
 const TripSubMenu = [
   { text: 'Create Trip', path: '/trips/create', permissions: { module: 'trips', action: 'create' } },
-  { text: 'List Trips', path: '/trips/list', permissions: { module: 'trips', action: 'read' } },
-  { text: 'Trip Tracking', path: '/trips/tracking', permissions: { module: 'trips', action: 'read' } }
+  { text: 'List Trips', path: '/trips/list', permissions: { module: 'trips', action: 'read' } }
 ];
 
 const FinanceSubMenu = [

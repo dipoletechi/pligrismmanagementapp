@@ -23,7 +23,7 @@ router.get('/', protect, async (req, res) => {
 router.post('/', protect, authorize('superadmin', 'admin'), [
   body('first_name').trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
   body('last_name').trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
-  body('phone_number').optional().isMobilePhone().withMessage('Please provide a valid phone number')
+  body('phone_number').optional().isLength({ min: 10, max: 15 }).withMessage('Phone number must be between 10-15 characters')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -89,7 +89,7 @@ router.get('/:id', protect, async (req, res) => {
 router.put('/:id', protect, authorize('superadmin', 'admin'), [
   body('first_name').optional().trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
   body('last_name').optional().trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
-  body('phone_number').optional().isMobilePhone().withMessage('Please provide a valid phone number')
+  body('phone_number').optional().isLength({ min: 10, max: 15 }).withMessage('Phone number must be between 10-15 characters')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

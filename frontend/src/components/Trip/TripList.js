@@ -17,7 +17,12 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -25,7 +30,8 @@ import {
   Visibility as ViewIcon,
   DirectionsBus as TripIcon,
   CalendarToday as CalendarIcon,
-  AttachMoney as MoneyIcon
+  AttachMoney as MoneyIcon,
+  GpsFixed as TrackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -40,6 +46,8 @@ const TripList = () => {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [tripModal, setTripModal] = useState({ open: false, trip: null });
+  const [trackingModal, setTrackingModal] = useState({ open: false, trip: null });
 
   const statusColors = {
     planned: 'default',
@@ -125,6 +133,24 @@ const TripList = () => {
         isViewMode: true 
       } 
     });
+  };
+
+  const handleTrackTrip = (trip) => {
+    console.log('Track button clicked for trip:', trip);
+    setTrackingModal({ open: true, trip: trip });
+  };
+
+  const handleCloseTrackingModal = () => {
+    setTrackingModal({ open: false, trip: null });
+  };
+
+  const handleTripIconClick = (trip) => {
+    console.log('Trip icon clicked for trip:', trip);
+    setTripModal({ open: true, trip: trip });
+  };
+
+  const handleCloseTripModal = () => {
+    setTripModal({ open: false, trip: null });
   };
 
 
@@ -348,7 +374,21 @@ const TripList = () => {
                   >
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <TripIcon sx={{ color: '#1976d2', mr: 2, fontSize: 24 }} />
+                        <IconButton
+                          onClick={() => handleTripIconClick(trip)}
+                          sx={{
+                            color: '#1976d2',
+                            mr: 2,
+                            '&:hover': {
+                              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                          title="View Trip Details"
+                        >
+                          <TripIcon sx={{ fontSize: 24 }} />
+                        </IconButton>
                         <Box>
                           <Typography variant="subtitle1" fontWeight="600" color="text.primary">
                             {trip.title}
@@ -425,6 +465,21 @@ const TripList = () => {
                           <EditIcon />
                         </IconButton>
                         <IconButton
+                          onClick={() => handleTrackTrip(trip)}
+                          sx={{
+                            color: '#ff9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                          title="Track Trip"
+                        >
+                          <TrackIcon />
+                        </IconButton>
+                        <IconButton
                           onClick={() => handleDelete(trip.id)}
                           sx={{
                             color: '#d32f2f',
@@ -448,6 +503,352 @@ const TripList = () => {
           </TableContainer>
         </Paper>
 
+        {/* Trip Details Modal */}
+        <Dialog
+          open={tripModal.open}
+          onClose={handleCloseTripModal}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <TripIcon sx={{ mr: 2, fontSize: 32 }} />
+              Trip Details
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ p: 4 }}>
+            {tripModal.trip && (
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Typography variant="h5" fontWeight="600" color="text.primary" gutterBottom>
+                    {tripModal.trip.title}
+                  </Typography>
+                  {tripModal.trip.description && (
+                    <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                      {tripModal.trip.description}
+                    </Typography>
+                  )}
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, backgroundColor: 'rgba(25, 118, 210, 0.05)' }}>
+                    <Typography variant="h6" fontWeight="600" color="primary" gutterBottom>
+                      Trip Information
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Destination:</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {tripModal.trip.destination || 'No destination'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Start Date:</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {new Date(tripModal.trip.start_date).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">End Date:</Typography>
+                        <Typography variant="body1" fontWeight="500">
+                          {new Date(tripModal.trip.end_date).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ p: 2, backgroundColor: 'rgba(76, 175, 80, 0.05)' }}>
+                    <Typography variant="h6" fontWeight="600" color="success.main" gutterBottom>
+                      Financial Information
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Budget:</Typography>
+                        <Typography variant="h6" fontWeight="600" color="success.main">
+                          {tripModal.trip.budget ? `₹${parseFloat(tripModal.trip.budget).toLocaleString()}` : 'No budget'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Status:</Typography>
+                        <Chip 
+                          label={tripModal.trip.status} 
+                          color={statusColors[tripModal.trip.status]} 
+                          sx={{
+                            fontWeight: 600,
+                            borderRadius: 2,
+                            mt: 0.5
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+
+                {tripModal.trip.created_at && (
+                  <Grid item xs={12}>
+                    <Card sx={{ p: 2, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                      <Typography variant="h6" fontWeight="600" color="text.secondary" gutterBottom>
+                        Additional Information
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Created:</Typography>
+                          <Typography variant="body1" fontWeight="500">
+                            {new Date(tripModal.trip.created_at).toLocaleString()}
+                          </Typography>
+                        </Box>
+                        {tripModal.trip.updated_at && (
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Last Updated:</Typography>
+                            <Typography variant="body1" fontWeight="500">
+                              {new Date(tripModal.trip.updated_at).toLocaleString()}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Card>
+                  </Grid>
+                )}
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleCloseTripModal}
+              variant="outlined"
+              sx={{ minWidth: 100 }}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                handleCloseTripModal();
+                handleViewTrip(tripModal.trip);
+              }}
+              variant="contained"
+              sx={{ minWidth: 100 }}
+            >
+              View Full Details
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Trip Tracking Modal */}
+        <Dialog
+          open={trackingModal.open}
+          onClose={handleCloseTrackingModal}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle sx={{
+            background: 'linear-gradient(45deg, #ff9800 30%, #ffc107 90%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            textAlign: 'center',
+            py: 3
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <TrackIcon sx={{ mr: 2, fontSize: 32 }} />
+              Trip Tracking
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ p: 4 }}>
+            {trackingModal.trip && (
+              <Box>
+                {/* Trip Header */}
+                <Box sx={{ mb: 4, textAlign: 'center' }}>
+                  <Typography variant="h4" fontWeight="600" color="text.primary" gutterBottom>
+                    {trackingModal.trip.title}
+                  </Typography>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    {trackingModal.trip.destination || 'No destination'}
+                  </Typography>
+                  <Chip 
+                    label={trackingModal.trip.status} 
+                    color={statusColors[trackingModal.trip.status]} 
+                    sx={{
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      fontSize: '1rem',
+                      px: 2,
+                      py: 1
+                    }}
+                  />
+                </Box>
+
+                {/* Tracking Content */}
+                <Grid container spacing={3}>
+                  {/* Real-time Status */}
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ p: 3, backgroundColor: 'rgba(255, 152, 0, 0.05)', border: '2px solid rgba(255, 152, 0, 0.2)' }}>
+                      <Typography variant="h6" fontWeight="600" color="warning.main" gutterBottom>
+                        <TrackIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Real-time Status
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Current Status:</Typography>
+                          <Typography variant="h6" fontWeight="600" color="warning.main">
+                            {trackingModal.trip.status === 'active' ? 'In Progress' : 
+                             trackingModal.trip.status === 'planned' ? 'Scheduled' :
+                             trackingModal.trip.status === 'completed' ? 'Completed' : 'Cancelled'}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Progress:</Typography>
+                          <Box sx={{ width: '100%', backgroundColor: 'rgba(255, 152, 0, 0.2)', borderRadius: 2, height: 8, mt: 1 }}>
+                            <Box sx={{ 
+                              width: trackingModal.trip.status === 'completed' ? '100%' : 
+                                    trackingModal.trip.status === 'active' ? '60%' : '20%',
+                              backgroundColor: 'warning.main', 
+                              height: '100%', 
+                              borderRadius: 2,
+                              transition: 'width 0.3s ease'
+                            }} />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Card>
+                  </Grid>
+
+                  {/* Trip Timeline */}
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ p: 3, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '2px solid rgba(25, 118, 210, 0.2)' }}>
+                      <Typography variant="h6" fontWeight="600" color="primary.main" gutterBottom>
+                        <CalendarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Trip Timeline
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Start Date:</Typography>
+                          <Typography variant="body1" fontWeight="500">
+                            {new Date(trackingModal.trip.start_date).toLocaleDateString('en-IN', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">End Date:</Typography>
+                          <Typography variant="body1" fontWeight="500">
+                            {new Date(trackingModal.trip.end_date).toLocaleDateString('en-IN', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Duration:</Typography>
+                          <Typography variant="body1" fontWeight="500">
+                            {Math.ceil((new Date(trackingModal.trip.end_date) - new Date(trackingModal.trip.start_date)) / (1000 * 60 * 60 * 24))} days
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Card>
+                  </Grid>
+
+                  {/* Financial Overview */}
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ p: 3, backgroundColor: 'rgba(76, 175, 80, 0.05)', border: '2px solid rgba(76, 175, 80, 0.2)' }}>
+                      <Typography variant="h6" fontWeight="600" color="success.main" gutterBottom>
+                        <MoneyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Financial Overview
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Total Budget:</Typography>
+                          <Typography variant="h5" fontWeight="600" color="success.main">
+                            {trackingModal.trip.budget ? `₹${parseFloat(trackingModal.trip.budget).toLocaleString()}` : 'No budget set'}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Status:</Typography>
+                          <Typography variant="body1" fontWeight="500" color="success.main">
+                            {trackingModal.trip.budget ? 'Budget Allocated' : 'Pending Budget'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Card>
+                  </Grid>
+
+                  {/* Tracking Details */}
+                  <Grid item xs={12} md={6}>
+                    <Card sx={{ p: 3, backgroundColor: 'rgba(156, 39, 176, 0.05)', border: '2px solid rgba(156, 39, 176, 0.2)' }}>
+                      <Typography variant="h6" fontWeight="600" color="purple" gutterBottom>
+                        <TrackIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Tracking Details
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Last Updated:</Typography>
+                          <Typography variant="body1" fontWeight="500">
+                            {trackingModal.trip.updated_at ? 
+                              new Date(trackingModal.trip.updated_at).toLocaleString('en-IN') : 
+                              'Never updated'
+                            }
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">Tracking ID:</Typography>
+                          <Typography variant="body1" fontWeight="500" sx={{ fontFamily: 'monospace' }}>
+                            TRK-{trackingModal.trip.id.toString().padStart(6, '0')}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Card>
+                  </Grid>
+
+                  {/* Additional Information */}
+                  {trackingModal.trip.description && (
+                    <Grid item xs={12}>
+                      <Card sx={{ p: 3, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                        <Typography variant="h6" fontWeight="600" color="text.secondary" gutterBottom>
+                          Trip Description
+                        </Typography>
+                        <Typography variant="body1" color="text.primary">
+                          {trackingModal.trip.description}
+                        </Typography>
+                      </Card>
+                    </Grid>
+                  )}
+                </Grid>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
+            <Button
+              onClick={handleCloseTrackingModal}
+              variant="outlined"
+              sx={{ minWidth: 100 }}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                handleCloseTrackingModal();
+                handleViewTrip(trackingModal.trip);
+              }}
+              variant="contained"
+              sx={{ minWidth: 100 }}
+            >
+              View Full Details
+            </Button>
+          </DialogActions>
+        </Dialog>
 
       {/* Snackbar */}
       <Snackbar

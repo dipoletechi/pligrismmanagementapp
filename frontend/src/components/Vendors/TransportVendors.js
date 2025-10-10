@@ -64,11 +64,11 @@ const TransportVendors = () => {
   
   // View states
   const [viewBusDialog, setViewBusDialog] = useState(false);
-  const [viewDriverDialog, setViewDriverDialog] = useState(false);
-  const [viewConductorDialog, setViewConductorDialog] = useState(false);
+  // const [viewDriverDialog, setViewDriverDialog] = useState(false);
+  // const [viewConductorDialog, setViewConductorDialog] = useState(false);
   const [viewingBus, setViewingBus] = useState(null);
-  const [viewingDriver, setViewingDriver] = useState(null);
-  const [viewingConductor, setViewingConductor] = useState(null);
+  // const [viewingDriver, setViewingDriver] = useState(null);
+  // const [viewingConductor, setViewingConductor] = useState(null);
   
   // Edit states
   const [editingBus, setEditingBus] = useState(null);
@@ -102,10 +102,10 @@ const TransportVendors = () => {
       setLoading(true);
       const [vendorsRes, conductorRes] = await Promise.all([
         axios.get('/api/transport-vendors'),
-        axios.get('/api/transport-vendors/conductors/count')
+        axios.get('/api/conductors')
       ]);
       setVendors(vendorsRes.data.data.items);
-      setConductorCount(conductorRes.data.data.count);
+      setConductorCount(conductorRes.data.data.items.length);
     } catch (error) {
       console.error('Error fetching transport vendors:', error);
       setSnackbar({ open: true, message: 'Error fetching vendors', severity: 'error' });
@@ -201,6 +201,19 @@ const TransportVendors = () => {
     }
   };
 
+  const refreshVendorDetails = async (vendor) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/transport-vendors/${vendor.id}/details`);
+      setViewDialog({ open: true, vendor, details: response.data.data });
+    } catch (error) {
+      console.error('Error fetching vendor details:', error);
+      setSnackbar({ open: true, message: 'Error fetching vendor details', severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCloseViewDialog = () => {
     setViewDialog({ open: false, vendor: null, details: null });
   };
@@ -271,7 +284,7 @@ const TransportVendors = () => {
       setEditingBus(null);
       // Refresh vendor details if view dialog is open
       if (viewDialog.open) {
-        handleViewVendor(viewDialog.vendor);
+        refreshVendorDetails(viewDialog.vendor);
       }
     } catch (error) {
       setSnackbar({ open: true, message: editingBus ? 'Error updating bus' : 'Error adding bus', severity: 'error' });
@@ -292,7 +305,7 @@ const TransportVendors = () => {
       setEditingDriver(null);
       // Refresh vendor details if view dialog is open
       if (viewDialog.open) {
-        handleViewVendor(viewDialog.vendor);
+        refreshVendorDetails(viewDialog.vendor);
       }
     } catch (error) {
       setSnackbar({ open: true, message: editingDriver ? 'Error updating driver' : 'Error adding driver', severity: 'error' });
@@ -302,22 +315,30 @@ const TransportVendors = () => {
   const handleConductorSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Conductor form data:', conductorFormData);
       if (editingConductor) {
-        await axios.put(`/api/drivers/${editingConductor.id}`, conductorFormData);
+        const response = await axios.put(`/api/conductors/${editingConductor.id}`, conductorFormData);
+        console.log('Conductor update response:', response.data);
         setSnackbar({ open: true, message: 'Conductor updated successfully', severity: 'success' });
       } else {
-        // For now, we'll use the driver endpoint since conductor model might not exist
-        await axios.post('/api/drivers', conductorFormData);
+        const response = await axios.post('/api/conductors', conductorFormData);
+        console.log('Conductor create response:', response.data);
         setSnackbar({ open: true, message: 'Conductor added successfully', severity: 'success' });
       }
       setConductorDialog(false);
       setEditingConductor(null);
       // Refresh vendor details if view dialog is open
       if (viewDialog.open) {
-        handleViewVendor(viewDialog.vendor);
+        refreshVendorDetails(viewDialog.vendor);
       }
     } catch (error) {
-      setSnackbar({ open: true, message: editingConductor ? 'Error updating conductor' : 'Error adding conductor', severity: 'error' });
+      console.error('Conductor submit error:', error);
+      console.error('Error response:', error.response?.data);
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || (editingConductor ? 'Error updating conductor' : 'Error adding conductor'), 
+        severity: 'error' 
+      });
     }
   };
 
@@ -367,7 +388,7 @@ const TransportVendors = () => {
         setSnackbar({ open: true, message: 'Bus deleted successfully', severity: 'success' });
         // Refresh vendor details if view dialog is open
         if (viewDialog.open) {
-          handleViewVendor(viewDialog.vendor);
+          refreshVendorDetails(viewDialog.vendor);
         }
       } catch (error) {
         setSnackbar({ open: true, message: 'Error deleting bus', severity: 'error' });
@@ -382,7 +403,7 @@ const TransportVendors = () => {
         setSnackbar({ open: true, message: 'Driver deleted successfully', severity: 'success' });
         // Refresh vendor details if view dialog is open
         if (viewDialog.open) {
-          handleViewVendor(viewDialog.vendor);
+          refreshVendorDetails(viewDialog.vendor);
         }
       } catch (error) {
         setSnackbar({ open: true, message: 'Error deleting driver', severity: 'error' });
@@ -393,11 +414,11 @@ const TransportVendors = () => {
   const handleDeleteConductor = async (conductorId) => {
     if (window.confirm('Are you sure you want to delete this conductor?')) {
       try {
-        await axios.delete(`/api/drivers/${conductorId}`);
+        await axios.delete(`/api/conductors/${conductorId}`);
         setSnackbar({ open: true, message: 'Conductor deleted successfully', severity: 'success' });
         // Refresh vendor details if view dialog is open
         if (viewDialog.open) {
-          handleViewVendor(viewDialog.vendor);
+          refreshVendorDetails(viewDialog.vendor);
         }
       } catch (error) {
         setSnackbar({ open: true, message: 'Error deleting conductor', severity: 'error' });
@@ -411,15 +432,15 @@ const TransportVendors = () => {
     setViewBusDialog(true);
   };
 
-  const handleViewDriver = (driver) => {
-    setViewingDriver(driver);
-    setViewDriverDialog(true);
-  };
+  // const handleViewDriver = (driver) => {
+  //   setViewingDriver(driver);
+  //   setViewDriverDialog(true);
+  // };
 
-  const handleViewConductor = (conductor) => {
-    setViewingConductor(conductor);
-    setViewConductorDialog(true);
-  };
+  // const handleViewConductor = (conductor) => {
+  //   setViewingConductor(conductor);
+  //   setViewConductorDialog(true);
+  // };
 
   if (loading) {
     return (
@@ -1145,7 +1166,7 @@ const TransportVendors = () => {
                     sx={{ gap: 1 }}
                   />
                   <Tab 
-                    label={`Conductors (${viewDialog.details.drivers?.length || 0})`} 
+                    label={`Conductors (${viewDialog.details.conductors?.length || 0})`} 
                     icon={<ConductorIcon />} 
                     iconPosition="start"
                     sx={{ gap: 1 }}
@@ -1368,6 +1389,7 @@ const TransportVendors = () => {
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <IconButton 
                                       size="small" 
+                                      onClick={() => {}}
                                       sx={{ 
                                         color: '#1976d2',
                                         '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
@@ -1377,6 +1399,17 @@ const TransportVendors = () => {
                                     </IconButton>
                                     <IconButton 
                                       size="small" 
+                                      onClick={() => handleEditDriver(driver)}
+                                      sx={{ 
+                                        color: '#ff9800',
+                                        '&:hover': { backgroundColor: 'rgba(255, 152, 0, 0.1)' }
+                                      }}
+                                    >
+                                      <EditIcon />
+                                    </IconButton>
+                                    <IconButton 
+                                      size="small" 
+                                      onClick={() => handleDeleteDriver(driver.id)}
                                       sx={{ 
                                         color: '#d32f2f',
                                         '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' }
@@ -1438,7 +1471,7 @@ const TransportVendors = () => {
                       </Button>
                     </Box>
 
-                    {viewDialog.details.drivers && viewDialog.details.drivers.length > 0 ? (
+                    {viewDialog.details.conductors && viewDialog.details.conductors.length > 0 ? (
                       <TableContainer 
                         sx={{ 
                           borderRadius: 2,
@@ -1457,9 +1490,9 @@ const TransportVendors = () => {
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {viewDialog.details.drivers.map((driver) => (
+                            {viewDialog.details.conductors.map((conductor) => (
                               <TableRow 
-                                key={driver.id}
+                                key={conductor.id}
                                 sx={{ 
                                   '&:hover': { 
                                     backgroundColor: 'rgba(25, 118, 210, 0.04)' 
@@ -1467,9 +1500,9 @@ const TransportVendors = () => {
                                 }}
                               >
                                 <TableCell sx={{ fontWeight: 500 }}>
-                                  {driver.first_name} {driver.last_name}
+                                  {conductor.first_name} {conductor.last_name}
                                 </TableCell>
-                                <TableCell>{driver.phone_number}</TableCell>
+                                <TableCell>{conductor.phone_number}</TableCell>
                                 <TableCell>
                                   <Box sx={{ 
                                     display: 'inline-block',
@@ -1481,14 +1514,15 @@ const TransportVendors = () => {
                                     fontSize: '0.875rem',
                                     fontWeight: 500
                                   }}>
-                                    {driver.driving_license_no}
+                                    {conductor.employee_id || 'N/A'}
                                   </Box>
                                 </TableCell>
-                                <TableCell>{driver.aadhar_no}</TableCell>
+                                <TableCell>{conductor.aadhar_no || 'N/A'}</TableCell>
                                 <TableCell>
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <IconButton 
                                       size="small" 
+                                      onClick={() => {}}
                                       sx={{ 
                                         color: '#1976d2',
                                         '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
@@ -1498,6 +1532,17 @@ const TransportVendors = () => {
                                     </IconButton>
                                     <IconButton 
                                       size="small" 
+                                      onClick={() => handleEditConductor(conductor)}
+                                      sx={{ 
+                                        color: '#ff9800',
+                                        '&:hover': { backgroundColor: 'rgba(255, 152, 0, 0.1)' }
+                                      }}
+                                    >
+                                      <EditIcon />
+                                    </IconButton>
+                                    <IconButton 
+                                      size="small" 
+                                      onClick={() => handleDeleteConductor(conductor.id)}
                                       sx={{ 
                                         color: '#d32f2f',
                                         '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' }
@@ -1743,7 +1788,6 @@ const TransportVendors = () => {
                   variant="outlined"
                   value={driverFormData.phone_number}
                   onChange={handleDriverFormChange}
-                  required
                 />
               </Grid>
               <Grid item xs={12}>
@@ -1754,7 +1798,6 @@ const TransportVendors = () => {
                   variant="outlined"
                   value={driverFormData.driving_license_no}
                   onChange={handleDriverFormChange}
-                  required
                 />
               </Grid>
             </Grid>
@@ -1848,7 +1891,6 @@ const TransportVendors = () => {
                   variant="outlined"
                   value={conductorFormData.phone_number}
                   onChange={handleConductorFormChange}
-                  required
                 />
               </Grid>
             </Grid>

@@ -68,10 +68,10 @@ router.get('/conductors/count', protect, async (req, res) => {
   }
 });
 
-// Get transport vendor details with buses and drivers
+// Get transport vendor details with buses, drivers and conductors
 router.get('/:id/details', protect, async (req, res) => {
   try {
-    const { Bus, Driver } = require('../models');
+    const { Bus, Driver, Conductor } = require('../models');
     const vendor = await TransportVendor.findByPk(req.params.id, {
       include: [
         {
@@ -81,6 +81,10 @@ router.get('/:id/details', protect, async (req, res) => {
         {
           model: Driver,
           as: 'drivers'
+        },
+        {
+          model: Conductor,
+          as: 'conductors'
         }
       ]
     });
