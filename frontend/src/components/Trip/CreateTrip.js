@@ -3123,25 +3123,19 @@ const CreateTrip = () => {
 
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                       <Box sx={{ flex: 1, minWidth: 200 }}>
-              <TextField
+                        <TimePicker
                           label="Start Time"
-                          type="time"
                           value={formData.selectedAccommodationStartTime || ''}
-                          onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationStartTime: e.target.value }))}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                disabled={isViewMode}
+                          onChange={(time) => setFormData(prev => ({ ...prev, selectedAccommodationStartTime: time }))}
+                          disabled={isViewMode}
                         />
                       </Box>
                       
                       <Box sx={{ flex: 1, minWidth: 200 }}>
-              <TextField
+                        <TimePicker
                           label="End Time"
-                          type="time"
                           value={formData.selectedAccommodationEndTime || ''}
-                          onChange={(e) => setFormData(prev => ({ ...prev, selectedAccommodationEndTime: e.target.value }))}
-                fullWidth
-                          InputLabelProps={{ shrink: true }}
+                          onChange={(time) => setFormData(prev => ({ ...prev, selectedAccommodationEndTime: time }))}
                           disabled={isViewMode}
                         />
                       </Box>
@@ -3287,28 +3281,20 @@ const CreateTrip = () => {
               
                             {/* Time Fields */}
                             <Box sx={{ display: 'flex', gap: 1 }}>
-              <TextField
+                              <TimePicker
                                 label="Start Time"
-                                type="time"
-                                size="small"
                                 value={formData.accommodationsByDay?.[day]?.[0]?.startTime ? 
                                   new Date(formData.accommodationsByDay[day][0].startTime).toTimeString().slice(0, 5) : ''}
-                                onChange={(e) => handleAccommodationTimeChange(day, 'startTime', e.target.value)}
+                                onChange={(time) => handleAccommodationTimeChange(day, 'startTime', time)}
                                 disabled={appliedToAllDays.accommodations || isViewMode}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ flex: 1 }}
                               />
                               
-                              <TextField
+                              <TimePicker
                                 label="End Time"
-                                type="time"
-                                size="small"
                                 value={formData.accommodationsByDay?.[day]?.[0]?.endTime ? 
                                   new Date(formData.accommodationsByDay[day][0].endTime).toTimeString().slice(0, 5) : ''}
-                                onChange={(e) => handleAccommodationTimeChange(day, 'endTime', e.target.value)}
+                                onChange={(time) => handleAccommodationTimeChange(day, 'endTime', time)}
                                 disabled={appliedToAllDays.accommodations || isViewMode}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ flex: 1 }}
                               />
                             </Box>
                             
@@ -3936,11 +3922,12 @@ const CreateTrip = () => {
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                     {/* Add Event Button */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2, position: 'relative' }}>
+                      <Box sx={{ position: 'relative', display: 'inline-block' }}>
                       <IconButton
                         size="large"
                         onClick={() => setAllDaysEventDialog(true)}
-                        disabled={isViewMode}
+                          disabled={isViewMode}
                         sx={{
                           backgroundColor: 'primary.main',
                           color: 'white',
@@ -3952,6 +3939,25 @@ const CreateTrip = () => {
                       >
                         <AddIcon />
                       </IconButton>
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -8,
+                            left: -8,
+                            backgroundColor: '#ff9800',
+                            borderRadius: '50%',
+                            width: 24,
+                            height: 24,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid white',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          <EventIcon sx={{ fontSize: 14, color: 'white' }} />
+                        </Box>
+                      </Box>
                       <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
                         Add Event for All Days
                       </Typography>
@@ -3991,8 +3997,22 @@ const CreateTrip = () => {
                             CLEAR ALL
                           </Button>
                         </Box>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                         {formData.allDaysEvents.map((event, index) => (
-                          <Card key={event.id} variant="outlined" sx={{ p: 1.5, mb: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                            <Card key={event.id} variant="outlined" sx={{ 
+                              p: 1.5, 
+                              mb: 1, 
+                              backgroundColor: 'white',
+                              minWidth: '280px',
+                              maxWidth: '320px',
+                              flex: '1 1 280px',
+                              border: '2px dashed #1976d2',
+                              borderRadius: 2,
+                              '&:hover': {
+                                borderColor: '#1565c0',
+                                boxShadow: '0 2px 8px rgba(25, 118, 211, 0.2)'
+                              }
+                            }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
                               {event.title}
                             </Typography>
@@ -4003,7 +4023,7 @@ const CreateTrip = () => {
                             )}
                             {(event.startTime || event.endTime) && (
                               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 1 }}>
-                                ⏰ {event.startTime || '--:--'} - {event.endTime || '--:--'}
+                                  ⏰ {formatTime12Hour(event.startTime) || '--:-- AM'} - {formatTime12Hour(event.endTime) || '--:-- AM'}
                               </Typography>
                             )}
                             <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -4018,7 +4038,7 @@ const CreateTrip = () => {
                                 size="small"
                                 onClick={() => handleDeleteAllDaysEvent(index)}
                                 color="error"
-                                disabled={isViewMode}
+                                  disabled={isViewMode}
                                 sx={{ p: 0.5 }}
                               >
                                 <DeleteIcon fontSize="small" />
@@ -4026,6 +4046,7 @@ const CreateTrip = () => {
                             </Box>
                           </Card>
                         ))}
+                        </Box>
                       </Box>
                     )}
                   </Box>
@@ -4111,9 +4132,21 @@ const CreateTrip = () => {
                               </Typography>
                             ) : formData.eventsByDay?.[day] && (formData.eventsByDay[day]?.length || 0) > 0 ? (
                               // Show multiple events if exist
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                                 {formData.eventsByDay[day].map((event, eventIndex) => (
-                                  <Card key={event.id} variant="outlined" sx={{ p: 1.5, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                                  <Card key={event.id} variant="outlined" sx={{ 
+                                    p: 1.5, 
+                                    backgroundColor: 'white',
+                                    minWidth: '280px',
+                                    maxWidth: '320px',
+                                    flex: '1 1 280px',
+                                    border: '2px dashed #1976d2',
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      borderColor: '#1565c0',
+                                      boxShadow: '0 2px 8px rgba(25, 118, 211, 0.2)'
+                                    }
+                                  }}>
                                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
                                       {event.title}
                                     </Typography>
@@ -4124,7 +4157,7 @@ const CreateTrip = () => {
                                     )}
                                     {(event.startTime || event.endTime) && (
                                       <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mb: 1 }}>
-                                        ⏰ {event.startTime || '--:--'} - {event.endTime || '--:--'}
+                                        ⏰ {formatTime12Hour(event.startTime) || '--:-- AM'} - {formatTime12Hour(event.endTime) || '--:-- AM'}
                                       </Typography>
                                     )}
                                     <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -4211,10 +4244,6 @@ const CreateTrip = () => {
             {/* Finance Section - Table Format */}
             <Card sx={{ mb: 4 }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-                  Finance Management
-                </Typography>
-                
                 {/* Finance Table */}
                 <Box sx={{ border: '2px solid #000', borderRadius: 2, overflow: 'hidden' }}>
                   {/* Transport Section */}
@@ -4231,7 +4260,7 @@ const CreateTrip = () => {
                     }}>
                       <Typography variant="h6" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
                         Transport
-                      </Typography>
+                </Typography>
                     </Box>
                     <Box sx={{ p: 2 }}>
                 {(() => {
@@ -5034,7 +5063,7 @@ const CreateTrip = () => {
         <Dialog 
           open={dayEventDialog} 
           onClose={() => setDayEventDialog(false)} 
-          maxWidth="sm" 
+          maxWidth="md" 
           fullWidth
           PaperProps={{
             sx: {
@@ -5080,9 +5109,6 @@ const CreateTrip = () => {
               day: 'numeric' 
             })}
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.85rem' }}>
-                  Create an event for this specific day
-                </Typography>
               </Box>
             </Box>
           </DialogTitle>
@@ -5095,41 +5121,61 @@ const CreateTrip = () => {
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               border: '1px solid #e8e8e8'
             }}>
-              <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Event Title"
-                  fullWidth
-                  value={dayEvent.title}
-                  onChange={(e) => setDayEvent(prev => ({ ...prev, title: e.target.value }))}
-                  required
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* First Row: Title, Start Time, End Time */}
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                    <TextField
+                      label="Event Title"
+                      fullWidth
+                      value={dayEvent.title}
+                      onChange={(e) => setDayEvent(prev => ({ ...prev, title: e.target.value }))}
+                      required
+                      variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#667eea',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#667eea',
+                            borderWidth: 2,
+                          },
                         },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: 2,
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#667eea',
                         },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea',
-                      },
-                    }}
-                />
-              </Grid>
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box sx={{ flex: '1 1 150px', minWidth: '150px' }}>
+                    <TimePicker
+                      label="Start Time"
+                      value={dayEvent.startTime}
+                      onChange={(time) => setDayEvent(prev => ({ ...prev, startTime: time }))}
+                    />
+                  </Box>
+                  
+                  <Box sx={{ flex: '1 1 150px', minWidth: '150px' }}>
+                    <TimePicker
+                      label="End Time"
+                      value={dayEvent.endTime}
+                      onChange={(time) => setDayEvent(prev => ({ ...prev, endTime: time }))}
+                    />
+                  </Box>
+                </Box>
                 
-              <Grid item xs={12}>
-                <TextField
-                  label="Description (Optional)"
-                  fullWidth
-                  multiline
+                {/* Description spanning from Title to End Time */}
+                <Box sx={{ width: '100%' }}>
+                  <TextField
+                    label="Description"
+                    fullWidth
+                    multiline
                     rows={4}
-                  value={dayEvent.description}
-                  onChange={(e) => setDayEvent(prev => ({ ...prev, description: e.target.value }))}
+                    value={dayEvent.description}
+                    onChange={(e) => setDayEvent(prev => ({ ...prev, description: e.target.value }))}
                     variant="outlined"
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -5146,63 +5192,9 @@ const CreateTrip = () => {
                         color: '#667eea',
                       },
                     }}
-                />
-              </Grid>
-                
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Start Time (Optional)"
-                  type="time"
-                  fullWidth
-                  value={dayEvent.startTime}
-                  onChange={(e) => setDayEvent(prev => ({ ...prev, startTime: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea',
-                      },
-                    }}
-                />
-              </Grid>
-                
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="End Time (Optional)"
-                  type="time"
-                  fullWidth
-                  value={dayEvent.endTime}
-                  onChange={(e) => setDayEvent(prev => ({ ...prev, endTime: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea',
-                      },
-                    }}
-                />
-              </Grid>
-            </Grid>
+                  />
+                </Box>
+              </Box>
             </Box>
           </DialogContent>
           
@@ -5248,7 +5240,7 @@ const CreateTrip = () => {
                 }
               }}
             >
-              {editingEvent ? 'Update Event' : 'Save Event'}
+              {editingEvent ? 'Update Event' : 'Save'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -5257,7 +5249,7 @@ const CreateTrip = () => {
         <Dialog 
           open={allDaysEventDialog} 
           onClose={() => setAllDaysEventDialog(false)} 
-          maxWidth="sm" 
+          maxWidth="md" 
           fullWidth
           PaperProps={{
             sx: {
@@ -5298,9 +5290,6 @@ const CreateTrip = () => {
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
             {editingAllDaysEvent ? 'Edit Event' : 'Add Event'} - All Days
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.85rem' }}>
-                  Create an event that applies to all days of your trip
-                </Typography>
               </Box>
             </Box>
           </DialogTitle>
@@ -5313,41 +5302,61 @@ const CreateTrip = () => {
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               border: '1px solid #e8e8e8'
             }}>
-              <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Event Title"
-                  fullWidth
-                  value={allDaysEvent.title}
-                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, title: e.target.value }))}
-                  required
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* First Row: Title, Start Time, End Time */}
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                    <TextField
+                      label="Event Title"
+                      fullWidth
+                      value={allDaysEvent.title}
+                      onChange={(e) => setAllDaysEvent(prev => ({ ...prev, title: e.target.value }))}
+                      required
+                      variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#667eea',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#667eea',
+                            borderWidth: 2,
+                          },
                         },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: 2,
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#667eea',
                         },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea',
-                      },
-                    }}
-                />
-              </Grid>
+                      }}
+                    />
+                  </Box>
+                  
+                  <Box sx={{ flex: '1 1 150px', minWidth: '150px' }}>
+                    <TimePicker
+                      label="Start Time"
+                      value={allDaysEvent.startTime}
+                      onChange={(time) => setAllDaysEvent(prev => ({ ...prev, startTime: time }))}
+                    />
+                  </Box>
+                  
+                  <Box sx={{ flex: '1 1 150px', minWidth: '150px' }}>
+                    <TimePicker
+                      label="End Time"
+                      value={allDaysEvent.endTime}
+                      onChange={(time) => setAllDaysEvent(prev => ({ ...prev, endTime: time }))}
+                    />
+                  </Box>
+                </Box>
                 
-              <Grid item xs={12}>
-                <TextField
-                  label="Description (Optional)"
-                  fullWidth
-                  multiline
+                {/* Description spanning from Title to End Time */}
+                <Box sx={{ width: '100%' }}>
+                  <TextField
+                    label="Description"
+                    fullWidth
+                    multiline
                     rows={4}
-                  value={allDaysEvent.description}
-                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, description: e.target.value }))}
+                    value={allDaysEvent.description}
+                    onChange={(e) => setAllDaysEvent(prev => ({ ...prev, description: e.target.value }))}
                     variant="outlined"
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -5364,63 +5373,9 @@ const CreateTrip = () => {
                         color: '#667eea',
                       },
                     }}
-                />
-              </Grid>
-                
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Start Time (Optional)"
-                  type="time"
-                  fullWidth
-                  value={allDaysEvent.startTime}
-                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, startTime: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea',
-                      },
-                    }}
-                />
-              </Grid>
-                
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="End Time (Optional)"
-                  type="time"
-                  fullWidth
-                  value={allDaysEvent.endTime}
-                  onChange={(e) => setAllDaysEvent(prev => ({ ...prev, endTime: e.target.value }))}
-                  InputLabelProps={{ shrink: true }}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#667eea',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#667eea',
-                      },
-                    }}
-                />
-              </Grid>
-            </Grid>
+                  />
+                </Box>
+              </Box>
             </Box>
           </DialogContent>
           
@@ -5466,7 +5421,7 @@ const CreateTrip = () => {
                 }
               }}
             >
-              {editingAllDaysEvent ? 'Update Event' : 'Save Event'}
+              {editingAllDaysEvent ? 'Update Event' : 'Save'}
             </Button>
           </DialogActions>
         </Dialog>
