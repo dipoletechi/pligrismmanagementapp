@@ -12,5 +12,4 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 -- Create index for better performance
-CREATE INDEX idx_events_trip_id ON events(trip_id);
-CREATE INDEX idx_events_start_time ON events(start_time);
+-- Note: These will be created only if they don't exist due to the table creation above

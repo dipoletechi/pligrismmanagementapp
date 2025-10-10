@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const Trip = require('../models/Trip');
+const { Trip, TripStatus } = require('../models');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -8,7 +8,14 @@ const router = express.Router();
 // List trips
 router.get('/', protect, async (req, res) => {
   try {
-    const trips = await Trip.findAll({ order: [['created_at', 'DESC']] });
+    const trips = await Trip.findAll({ 
+      include: [{
+        model: TripStatus,
+        as: 'tripStatus',
+        attributes: ['id', 'name', 'description']
+      }],
+      order: [['created_at', 'DESC']] 
+    });
     res.json({ success: true, data: { items: trips } });
   } catch (e) {
     console.error('List trips error:', e);
@@ -19,7 +26,13 @@ router.get('/', protect, async (req, res) => {
 // Get single trip
 router.get('/:id', protect, async (req, res) => {
   try {
-    const trip = await Trip.findByPk(req.params.id);
+    const trip = await Trip.findByPk(req.params.id, {
+      include: [{
+        model: TripStatus,
+        as: 'tripStatus',
+        attributes: ['id', 'name', 'description']
+      }]
+    });
     if (!trip) {
       return res.status(404).json({ success: false, message: 'Trip not found' });
     }
@@ -70,6 +83,58 @@ router.put('/:id', protect, authorize('superadmin', 'admin', 'trip_manager'), as
     res.json({ success: true, data: updatedTrip });
   } catch (e) {
     console.error('Update trip error:', e);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Update trip status
+router.patch('/:id/status', protect, authorize('superadmin', 'admin'), [
+  body('trip_status_id').isInt().withMessage('Valid status ID is required')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Validation failed',
+      errors: errors.array() 
+    });
+  }
+
+  try {
+    const { trip_status_id } = req.body;
+    
+    // Verify the status exists
+    const status = await TripStatus.findByPk(trip_status_id);
+    if (!status) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid status ID' 
+      });
+    }
+
+    const trip = await Trip.findByPk(req.params.id);
+    if (!trip) {
+      return res.status(404).json({ success: false, message: 'Trip not found' });
+    }
+    
+    await trip.update({ trip_status_id });
+    
+    // Return updated trip with status
+    const updatedTrip = await Trip.findByPk(req.params.id, {
+      include: [{
+        model: TripStatus,
+        as: 'tripStatus',
+        attributes: ['id', 'name', 'description']
+      }]
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Trip status updated successfully',
+      data: updatedTrip 
+    });
+  } catch (e) {
+    console.error('Update trip status error:', e);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

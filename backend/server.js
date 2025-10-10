@@ -36,6 +36,7 @@ const foodCategoryRoutes = require('./routes/foodCategories');
 const foodItemRoutes = require('./routes/foodItems');
 const tripRoutes = require('./routes/trips');
 const eventRoutes = require('./routes/events');
+const tripStatusRoutes = require('./routes/tripStatus');
 
 const app = express();
 
@@ -66,7 +67,7 @@ app.use(limiter);
 app.use(cors({
   origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
 }));
@@ -74,7 +75,7 @@ app.use(cors({
 // Handle preflight requests
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.sendStatus(200);
@@ -101,6 +102,7 @@ app.use('/api/food-categories', foodCategoryRoutes);
 app.use('/api/food-items', foodItemRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/trip-status', tripStatusRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

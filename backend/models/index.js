@@ -15,6 +15,8 @@ const FoodSchedule = require('./FoodSchedule');
 const FoodCategory = require('./FoodCategory');
 const FoodItem = require('./FoodItem');
 const Event = require('./Event');
+const Trip = require('./Trip');
+const TripStatus = require('./TripStatus');
 
 // Associations
 FoodCategory.hasMany(FoodItem, {
@@ -70,6 +72,20 @@ Conductor.belongsTo(TransportVendor, {
   onUpdate: 'CASCADE'
 });
 
+// Trip Status Associations
+TripStatus.hasMany(Trip, {
+  foreignKey: 'trip_status_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(TripStatus, {
+  foreignKey: 'trip_status_id',
+  as: 'tripStatus',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,
@@ -85,7 +101,9 @@ module.exports = {
   FoodSchedule,
   FoodCategory,
   FoodItem,
-  Event
+  Event,
+  Trip,
+  TripStatus
 };
 
 

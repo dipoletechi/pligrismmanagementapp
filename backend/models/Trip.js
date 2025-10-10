@@ -9,11 +9,6 @@ const Trip = sequelize.define('Trip', {
   start_date: { type: DataTypes.DATE, allowNull: false },
   end_date: { type: DataTypes.DATE, allowNull: false },
   budget: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
-  status: { 
-    type: DataTypes.ENUM('planned', 'active', 'completed', 'cancelled'), 
-    allowNull: false, 
-    defaultValue: 'planned' 
-  },
   created_by: { type: DataTypes.INTEGER, allowNull: false },
   destination_id: { type: DataTypes.INTEGER, allowNull: true },
   bus_id: { type: DataTypes.INTEGER, allowNull: true },
