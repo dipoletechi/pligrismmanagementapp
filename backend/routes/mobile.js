@@ -280,6 +280,25 @@ router.get('/trips/:id', async (req, res) => {
       attributes: ['id', 'title', 'description']
     });
     
+    // Get all drivers and conductors for reference
+    const allDrivers = await Driver.findAll({
+      attributes: ['id', 'name', 'phone', 'license'],
+      include: [{
+        model: TransportVendor,
+        as: 'vendor',
+        attributes: ['title']
+      }]
+    });
+    
+    const allConductors = await Conductor.findAll({
+      attributes: ['id', 'name', 'phone'],
+      include: [{
+        model: TransportVendor,
+        as: 'vendor',
+        attributes: ['title']
+      }]
+    });
+    
     // Helper function to get vendor name by ID
     const getVendorName = (vendorId, vendors) => {
       const vendor = vendors.find(v => v.id === vendorId);
