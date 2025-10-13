@@ -86,6 +86,59 @@ Trip.belongsTo(TripStatus, {
   onUpdate: 'CASCADE'
 });
 
+// Trip Associations
+Destination.hasMany(Trip, {
+  foreignKey: 'destination_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(Destination, {
+  foreignKey: 'destination_id',
+  as: 'destinationInfo',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
+Bus.hasMany(Trip, {
+  foreignKey: 'bus_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(Bus, {
+  foreignKey: 'bus_id',
+  as: 'bus',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
+Driver.hasMany(Trip, {
+  foreignKey: 'driver_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(Driver, {
+  foreignKey: 'driver_id',
+  as: 'driver',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
+TransportVendor.hasMany(Trip, {
+  foreignKey: 'transport_vendor_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(TransportVendor, {
+  foreignKey: 'transport_vendor_id',
+  as: 'transportVendor',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,

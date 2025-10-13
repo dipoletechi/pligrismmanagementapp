@@ -37,6 +37,7 @@ const foodItemRoutes = require('./routes/foodItems');
 const tripRoutes = require('./routes/trips');
 const eventRoutes = require('./routes/events');
 const tripStatusRoutes = require('./routes/tripStatus');
+const mobileRoutes = require('./routes/mobile');
 
 const app = express();
 
@@ -103,6 +104,7 @@ app.use('/api/food-items', foodItemRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/trip-status', tripStatusRoutes);
+app.use('/api/mobile', mobileRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
