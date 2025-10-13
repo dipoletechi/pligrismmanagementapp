@@ -94,7 +94,8 @@ router.get('/:id', protect, authorize('superadmin'), async (req, res) => {
 // @route   POST /api/users
 // @access  Private (Superadmin)
 router.post('/', protect, authorize('superadmin'), [
-  body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('firstName').trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
+  body('lastName').trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').isIn(['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'])
@@ -110,7 +111,7 @@ router.post('/', protect, authorize('superadmin'), [
       });
     }
 
-    const { name, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
 
     // Check if user exists
     const userExists = await User.findOne({ where: { email } });
@@ -123,7 +124,8 @@ router.post('/', protect, authorize('superadmin'), [
 
     // Create user
     const user = await User.create({
-      name,
+      firstName,
+      lastName,
       email,
       password,
       role,
@@ -135,7 +137,8 @@ router.post('/', protect, authorize('superadmin'), [
       message: 'User created successfully',
       data: {
         id: user.id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
         isActive: user.isActive,
@@ -155,7 +158,8 @@ router.post('/', protect, authorize('superadmin'), [
 // @route   PUT /api/users/:id
 // @access  Private (Superadmin)
 router.put('/:id', protect, authorize('superadmin'), [
-  body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('firstName').optional().trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
+  body('lastName').optional().trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').optional().isIn(['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'])
@@ -172,7 +176,7 @@ router.put('/:id', protect, authorize('superadmin'), [
       });
     }
 
-    const { name, email, password, role, isActive } = req.body;
+    const { firstName, lastName, email, password, role, isActive } = req.body;
 
     // Check if email is already taken by another user
     if (email) {
@@ -197,7 +201,8 @@ router.put('/:id', protect, authorize('superadmin'), [
     }
 
     // Update user fields
-    if (name) userToUpdate.name = name;
+    if (firstName) userToUpdate.firstName = firstName;
+    if (lastName) userToUpdate.lastName = lastName;
     if (email) userToUpdate.email = email;
     if (role) userToUpdate.role = role;
     if (typeof isActive === 'boolean') userToUpdate.isActive = isActive;

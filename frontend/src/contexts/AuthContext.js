@@ -49,6 +49,11 @@ const authReducer = (state, action) => {
         ...state,
         loading: action.payload
       };
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: { ...state.user, ...action.payload }
+      };
     default:
       return state;
   }
@@ -159,6 +164,11 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  // Update user function
+  const updateUser = (userData) => {
+    dispatch({ type: 'UPDATE_USER', payload: userData });
+  };
+
   // Check if user has specific role
   const hasRole = (role) => {
     return state.user?.role === role;
@@ -189,6 +199,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     clearError,
+    updateUser,
     hasRole,
     hasAnyRole,
     hasPermission,

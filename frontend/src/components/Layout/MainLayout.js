@@ -382,7 +382,10 @@ function MainLayout({ children }) {
               color="inherit"
             >
               <Avatar sx={{ width: 32, height: 32 }}>
-                {user?.name?.charAt(0)?.toUpperCase()}
+                {(user?.firstName && user?.lastName) 
+                  ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+                  : (user?.name?.charAt(0)?.toUpperCase() || 'U')
+                }
               </Avatar>
             </IconButton>
           </Box>

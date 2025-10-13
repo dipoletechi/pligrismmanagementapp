@@ -53,7 +53,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,8 @@ const Settings = () => {
 
   // Profile state
   const [profileData, setProfileData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     address: ''
@@ -86,7 +87,8 @@ const Settings = () => {
   useEffect(() => {
     if (user) {
       setProfileData({
-        name: user.name || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
         address: user.address || ''
@@ -149,6 +151,16 @@ const Settings = () => {
     
     try {
       const response = await axios.put('/api/auth/profile', profileData);
+      
+      // Update user data in context
+      updateUser({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phone: profileData.phone,
+        address: profileData.address
+      });
+      
       setSnackbar({ open: true, message: 'Profile updated successfully', severity: 'success' });
     } catch (error) {
       console.error('Profile update error:', error);
@@ -261,7 +273,10 @@ const Settings = () => {
                     fontWeight: 'bold'
                   }}
                 >
-                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  {(user?.firstName && user?.lastName) 
+                    ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+                    : (user?.name?.charAt(0)?.toUpperCase() || 'U')
+                  }
                 </Avatar>
                 <Box
                   sx={{
@@ -278,7 +293,7 @@ const Settings = () => {
               </Box>
               
               <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-                {user?.name || 'User'}
+                {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.name || 'User')}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                 {user?.email || 'user@example.com'}
@@ -292,16 +307,28 @@ const Settings = () => {
             <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 400 } }}>
               <form onSubmit={handleProfileSubmit}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Full Name *"
-                    name="name"
-                    value={profileData.name}
-                    onChange={handleProfileChange}
-                    required
-                    variant="outlined"
-                    sx={{ mb: 2 }}
-                  />
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="First Name *"
+                      name="firstName"
+                      value={profileData.firstName}
+                      onChange={handleProfileChange}
+                      required
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Last Name *"
+                      name="lastName"
+                      value={profileData.lastName}
+                      onChange={handleProfileChange}
+                      required
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  </Box>
                   
                   <TextField
                     fullWidth

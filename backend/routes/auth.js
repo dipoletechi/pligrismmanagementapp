@@ -176,6 +176,8 @@ router.put('/profile', protect, [
   body('firstName').optional().trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
   body('lastName').optional().trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('phone').optional().trim(),
+  body('address').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -187,11 +189,13 @@ router.put('/profile', protect, [
       });
     }
 
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, phone, address } = req.body;
     const updateData = {};
 
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
     if (email) {
       // Check if email is already taken by another user
       const existingUser = await User.findOne({ where: { email, id: { [require('sequelize').Op.ne]: req.user.id } } });

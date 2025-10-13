@@ -47,7 +47,8 @@ const UserManagement = () => {
   const [open, setOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     role: 'user',
@@ -100,7 +101,8 @@ const UserManagement = () => {
     if (userToEdit) {
       setEditingUser(userToEdit);
       setFormData({
-        name: userToEdit.name,
+        firstName: userToEdit.firstName || '',
+        lastName: userToEdit.lastName || '',
         email: userToEdit.email,
         password: '',
         role: userToEdit.role,
@@ -109,7 +111,8 @@ const UserManagement = () => {
     } else {
       setEditingUser(null);
       setFormData({
-        name: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: '',
         role: 'user',
@@ -546,11 +549,21 @@ const UserManagement = () => {
             <TextField
               autoFocus
               margin="dense"
-              name="name"
-              label="Full Name"
+              name="firstName"
+              label="First Name"
               fullWidth
               variant="outlined"
-              value={formData.name}
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
+            <TextField
+              margin="dense"
+              name="lastName"
+              label="Last Name"
+              fullWidth
+              variant="outlined"
+              value={formData.lastName}
               onChange={handleChange}
               required
             />
