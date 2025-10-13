@@ -139,6 +139,34 @@ Trip.belongsTo(TransportVendor, {
   onUpdate: 'CASCADE'
 });
 
+// Accommodation Vendor Associations
+AccommodationVendor.hasMany(Trip, {
+  foreignKey: 'accommodation_vendor_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(AccommodationVendor, {
+  foreignKey: 'accommodation_vendor_id',
+  as: 'accommodationVendor',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
+// Food Vendor Associations
+FoodVendor.hasMany(Trip, {
+  foreignKey: 'food_vendor_id',
+  as: 'trips',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+Trip.belongsTo(FoodVendor, {
+  foreignKey: 'food_vendor_id',
+  as: 'foodVendor',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,

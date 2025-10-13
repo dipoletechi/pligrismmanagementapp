@@ -25,7 +25,7 @@ const User = require('../models/User');
 router.get('/destinations', async (req, res) => {
   try {
     const destinations = await Destination.findAll({
-      attributes: ['id', 'title', 'description', 'latitude', 'longitude', 'address', 'created_at']
+      attributes: ['title', 'description', 'latitude', 'longitude', 'address', 'created_at']
     });
     
     res.json({
@@ -59,16 +59,16 @@ router.get('/trips', async (req, res) => {
         {
           model: Destination,
           as: 'destinationInfo',
-          attributes: ['id', 'title']
+          attributes: ['title']
         },
         {
           model: TripStatus,
           as: 'tripStatus',
-          attributes: ['id', 'name']
+          attributes: ['name']
         }
       ],
       attributes: [
-        'id', 'title', 'start_date', 'end_date', 'trip_status_id', 'created_at', 'updated_at'
+        'title', 'start_date', 'end_date', 'trip_status_id', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
     });
@@ -131,26 +131,26 @@ router.get('/trips/published', async (req, res) => {
         {
           model: Destination,
           as: 'destinationInfo',
-          attributes: ['id', 'title', 'latitude', 'longitude', 'address']
+          attributes: ['title', 'latitude', 'longitude', 'address']
         },
         {
           model: Bus,
           as: 'bus',
-          attributes: ['id', 'title', 'model', 'make', 'no_of_sittings']
+          attributes: ['title', 'model', 'make', 'no_of_sittings']
         },
         {
           model: Driver,
           as: 'driver',
-          attributes: ['id', 'first_name', 'last_name', 'phone_number']
+          attributes: ['first_name', 'last_name', 'phone_number']
         },
         {
           model: TripStatus,
           as: 'tripStatus',
-          attributes: ['id', 'name', 'description']
+          attributes: ['name', 'description']
         }
       ],
       attributes: [
-        'id', 'title', 'start_date', 'end_date', 'trip_status_id', 'budget', 
+        'title', 'start_date', 'end_date', 'trip_status_id', 'budget', 
         'description', 'boarding_details', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
@@ -211,22 +211,37 @@ router.get('/trips/:id', async (req, res) => {
         {
           model: Destination,
           as: 'destinationInfo',
-          attributes: ['id', 'title', 'description', 'latitude', 'longitude', 'address']
+          attributes: ['title', 'description', 'latitude', 'longitude', 'address']
         },
         {
           model: Bus,
           as: 'bus',
-          attributes: ['id', 'title', 'model', 'make', 'no_of_sittings', 'rc_no']
+          attributes: ['title', 'model', 'make', 'no_of_sittings', 'rc_no']
         },
         {
           model: Driver,
           as: 'driver',
-          attributes: ['id', 'first_name', 'last_name', 'phone_number', 'driving_license_no']
+          attributes: ['first_name', 'last_name', 'phone_number', 'driving_license_no']
         },
         {
           model: TripStatus,
           as: 'tripStatus',
-          attributes: ['id', 'name', 'description']
+          attributes: ['name', 'description']
+        },
+        {
+          model: TransportVendor,
+          as: 'transportVendor',
+          attributes: ['title', 'address', 'phone', 'email', 'description']
+        },
+        {
+          model: AccommodationVendor,
+          as: 'accommodationVendor',
+          attributes: ['title', 'address', 'phone', 'email', 'description']
+        },
+        {
+          model: FoodVendor,
+          as: 'foodVendor',
+          attributes: ['title', 'address', 'phone', 'email', 'description']
         }
       ]
     });
@@ -238,9 +253,147 @@ router.get('/trips/:id', async (req, res) => {
       });
     }
     
+    // Get all vendors for reference
+    const allTransportVendors = await TransportVendor.findAll({
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+    });
+    
+    const allAccommodationVendors = await AccommodationVendor.findAll({
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+    });
+    
+    const allFoodVendors = await FoodVendor.findAll({
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+    });
+    
+    // Helper function to get vendor name by ID
+    const getVendorName = (vendorId, vendors) => {
+      const vendor = vendors.find(v => v.id === vendorId);
+      return vendor ? vendor.title : 'Unknown Vendor';
+    };
+    
+    // Parse and enhance JSON data with vendor names
+    let enhancedAccommodationsByDay = {};
+    if (trip.accommodations_by_day) {
+      try {
+        const accommodationsData = JSON.parse(trip.accommodations_by_day);
+        Object.keys(accommodationsData).forEach(day => {
+          enhancedAccommodationsByDay[day] = accommodationsData[day].map(item => ({
+            ...item,
+            vendor: getVendorName(item.vendor, allAccommodationVendors), // Replace ID with name
+            vendorName: getVendorName(item.vendor, allAccommodationVendors)
+          }));
+        });
+      } catch (e) {
+        enhancedAccommodationsByDay = trip.accommodations_by_day;
+      }
+    }
+    
+    let enhancedFoodVendorsByDay = {};
+    if (trip.food_vendors_by_day) {
+      try {
+        const foodData = JSON.parse(trip.food_vendors_by_day);
+        Object.keys(foodData).forEach(day => {
+          enhancedFoodVendorsByDay[day] = foodData[day].map(item => ({
+            ...item,
+            vendors: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)), // Replace IDs with names
+            vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors))
+          }));
+        });
+      } catch (e) {
+        enhancedFoodVendorsByDay = trip.food_vendors_by_day;
+      }
+    }
+    
+    let enhancedFinanceData = {};
+    if (trip.finance_data) {
+      try {
+        const financeData = JSON.parse(trip.finance_data);
+        enhancedFinanceData = {
+          ...financeData,
+          vendors: financeData.vendors.map(vendor => ({
+            ...vendor,
+            vendorId: getVendorName(vendor.vendorId, 
+              vendor.type === 'transport' ? allTransportVendors :
+              vendor.type === 'accommodation' ? allAccommodationVendors :
+              allFoodVendors
+            ), // Replace ID with name
+            vendorName: getVendorName(vendor.vendorId, 
+              vendor.type === 'transport' ? allTransportVendors :
+              vendor.type === 'accommodation' ? allAccommodationVendors :
+              allFoodVendors
+            )
+          }))
+        };
+      } catch (e) {
+        enhancedFinanceData = trip.finance_data;
+      }
+    }
+    
+    // Create filtered trip object without id
+    const filteredTrip = {
+      title: trip.title,
+      description: trip.description,
+      destination: trip.destination,
+      start_date: trip.start_date,
+      end_date: trip.end_date,
+      budget: trip.budget,
+      created_by: trip.created_by,
+      destination_id: trip.destination_id,
+      bus_id: trip.bus_id,
+      driver_id: trip.driver_id,
+      boarding_details: trip.boarding_details,
+      checklist_items: trip.checklist_items,
+      accommodation_vendor_id: trip.accommodation_vendor_id,
+      food_vendor_id: trip.food_vendor_id,
+      transport_vendor_id: trip.transport_vendor_id,
+      accommodation_vendor_name: trip.accommodation_vendor_id ? getVendorName(trip.accommodation_vendor_id, allAccommodationVendors) : null,
+      food_vendor_name: trip.food_vendor_id ? getVendorName(trip.food_vendor_id, allFoodVendors) : null,
+      transport_vendor_name: trip.transport_vendor_id ? getVendorName(trip.transport_vendor_id, allTransportVendors) : null,
+      selected_drivers: trip.selected_drivers,
+      selected_conductors: trip.selected_conductors,
+      selected_buses: trip.selected_buses,
+      drivers_by_day: trip.drivers_by_day,
+      conductors_by_day: trip.conductors_by_day,
+      buses_by_day: trip.buses_by_day,
+      vendors_by_day: trip.vendors_by_day,
+      time_by_day: trip.time_by_day,
+      accommodations_by_day: enhancedAccommodationsByDay,
+      selected_accommodation_vendor: trip.selected_accommodation_vendor,
+      selected_accommodation_start_time: trip.selected_accommodation_start_time,
+      selected_accommodation_end_time: trip.selected_accommodation_end_time,
+      selected_food_vendors: trip.selected_food_vendors,
+      food_vendors_by_day: enhancedFoodVendorsByDay,
+      selected_food_schedules: trip.selected_food_schedules,
+      selected_food_categories: trip.selected_food_categories,
+      selected_food_items: trip.selected_food_items,
+      food_schedules_by_day: trip.food_schedules_by_day,
+      food_categories_by_day: trip.food_categories_by_day,
+      food_items_by_day: trip.food_items_by_day,
+      all_days_food_entries: trip.all_days_food_entries,
+      events_by_day: trip.events_by_day,
+      all_days_events: trip.all_days_events,
+      selected_event_title: trip.selected_event_title,
+      selected_event_description: trip.selected_event_description,
+      selected_event_start_time: trip.selected_event_start_time,
+      selected_event_end_time: trip.selected_event_end_time,
+      finance_data: enhancedFinanceData,
+      use_all_days_selection: trip.use_all_days_selection,
+      createdAt: trip.createdAt,
+      updatedAt: trip.updatedAt,
+      trip_status_id: trip.trip_status_id,
+      destinationInfo: trip.destinationInfo,
+      bus: trip.bus,
+      driver: trip.driver,
+      tripStatus: trip.tripStatus,
+      transportVendor: trip.transportVendor,
+      accommodationVendor: trip.accommodationVendor,
+      foodVendor: trip.foodVendor
+    };
+    
     res.json({
       success: true,
-      data: trip
+      data: filteredTrip
     });
   } catch (error) {
     res.status(500).json({
@@ -259,22 +412,37 @@ router.get('/trips/:id/details', async (req, res) => {
         {
           model: Destination,
           as: 'destinationInfo',
-          attributes: ['id', 'title', 'description', 'latitude', 'longitude', 'address']
+          attributes: ['title', 'description', 'latitude', 'longitude', 'address']
         },
         {
           model: Bus,
           as: 'bus',
-          attributes: ['id', 'title', 'model', 'make', 'no_of_sittings', 'rc_no']
+          attributes: ['title', 'model', 'make', 'no_of_sittings', 'rc_no']
         },
         {
           model: Driver,
           as: 'driver',
-          attributes: ['id', 'first_name', 'last_name', 'phone_number', 'driving_license_no']
+          attributes: ['first_name', 'last_name', 'phone_number', 'driving_license_no']
         },
         {
           model: TripStatus,
           as: 'tripStatus',
-          attributes: ['id', 'name', 'description']
+          attributes: ['name', 'description']
+        },
+        {
+          model: TransportVendor,
+          as: 'transportVendor',
+          attributes: ['title', 'address', 'phone', 'email', 'description']
+        },
+        {
+          model: AccommodationVendor,
+          as: 'accommodationVendor',
+          attributes: ['title', 'address', 'phone', 'email', 'description']
+        },
+        {
+          model: FoodVendor,
+          as: 'foodVendor',
+          attributes: ['title', 'address', 'phone', 'email', 'description']
         }
       ]
     });
@@ -288,7 +456,7 @@ router.get('/trips/:id/details', async (req, res) => {
     
     // Get accommodation data
     const accommodationVendors = await AccommodationVendor.findAll({
-      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+      attributes: ['title', 'address', 'phone', 'email', 'description']
     });
     
     // Get food management data
@@ -296,17 +464,17 @@ router.get('/trips/:id/details', async (req, res) => {
       include: [{
         model: FoodItem,
         as: 'items',
-        attributes: ['id', 'title', 'description']
+        attributes: ['title', 'description']
       }],
-      attributes: ['id', 'title', 'description']
+      attributes: ['title', 'description']
     });
     
     const foodSchedules = await FoodSchedule.findAll({
-      attributes: ['id', 'title', 'start_time', 'end_time']
+      attributes: ['title', 'start_time', 'end_time']
     });
     
     const foodVendors = await FoodVendor.findAll({
-      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+      attributes: ['title', 'address', 'phone', 'email', 'description']
     });
     
     // Get transport data
@@ -314,44 +482,247 @@ router.get('/trips/:id/details', async (req, res) => {
       include: [{
         model: TransportVendor,
         as: 'vendor',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
-      attributes: ['id', 'title', 'model', 'make', 'no_of_sittings', 'rc_no']
+      attributes: ['title', 'model', 'make', 'no_of_sittings', 'rc_no']
     });
     
     const drivers = await Driver.findAll({
       include: [{
         model: TransportVendor,
         as: 'vendor',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
-      attributes: ['id', 'first_name', 'last_name', 'phone_number', 'driving_license_no']
+      attributes: ['first_name', 'last_name', 'phone_number', 'driving_license_no']
     });
     
     const conductors = await Conductor.findAll({
       include: [{
         model: TransportVendor,
         as: 'vendor',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
-      attributes: ['id', 'first_name', 'last_name', 'phone_number']
+      attributes: ['first_name', 'last_name', 'phone_number']
     });
     
     const transportVendors = await TransportVendor.findAll({
-      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+      attributes: ['title', 'address', 'phone', 'email', 'description']
     });
     
     // Get amenities
     const amenities = await Amenity.findAll({
-      attributes: ['id', 'title', 'description']
+      attributes: ['title', 'description']
     });
     
+    // Get all vendors for reference
+    const allTransportVendors = await TransportVendor.findAll({
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+    });
+    
+    const allAccommodationVendors = await AccommodationVendor.findAll({
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+    });
+    
+    const allFoodVendors = await FoodVendor.findAll({
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
+    });
+    
+    // Get all drivers and conductors for reference
+    const allDrivers = await Driver.findAll({
+      attributes: ['id', 'first_name', 'last_name', 'phone_number', 'driving_license_no'],
+      include: [{
+        model: TransportVendor,
+        as: 'vendor',
+        attributes: ['title']
+      }]
+    });
+    
+    const allConductors = await Conductor.findAll({
+      attributes: ['id', 'first_name', 'last_name', 'phone_number'],
+      include: [{
+        model: TransportVendor,
+        as: 'vendor',
+        attributes: ['title']
+      }]
+    });
+    
+    // Helper function to get vendor name by ID
+    const getVendorName = (vendorId, vendors) => {
+      const vendor = vendors.find(v => v.id === vendorId);
+      return vendor ? vendor.title : 'Unknown Vendor';
+    };
+    
+    // Helper function to get driver details by ID
+    const getDriverDetails = (driverId) => {
+      const driver = allDrivers.find(d => d.id === driverId);
+      return driver ? {
+        id: driver.id,
+        name: `${driver.first_name} ${driver.last_name}`,
+        phone: driver.phone_number,
+        license: driver.driving_license_no,
+        vendor: driver.vendor ? driver.vendor.title : 'Unknown Vendor'
+      } : null;
+    };
+    
+    // Helper function to get conductor details by ID
+    const getConductorDetails = (conductorId) => {
+      const conductor = allConductors.find(c => c.id === conductorId);
+      return conductor ? {
+        id: conductor.id,
+        name: `${conductor.first_name} ${conductor.last_name}`,
+        phone: conductor.phone_number,
+        vendor: conductor.vendor ? conductor.vendor.title : 'Unknown Vendor'
+      } : null;
+    };
+    
+    // Parse and enhance JSON data with vendor names
+    let enhancedAccommodationsByDay = {};
+    if (trip.accommodations_by_day) {
+      try {
+        const accommodationsData = JSON.parse(trip.accommodations_by_day);
+        Object.keys(accommodationsData).forEach(day => {
+          enhancedAccommodationsByDay[day] = accommodationsData[day].map(item => ({
+            ...item,
+            vendor: getVendorName(item.vendor, allAccommodationVendors), // Replace ID with name
+            vendorName: getVendorName(item.vendor, allAccommodationVendors)
+          }));
+        });
+      } catch (e) {
+        enhancedAccommodationsByDay = trip.accommodations_by_day;
+      }
+    }
+    
+    let enhancedFoodVendorsByDay = {};
+    if (trip.food_vendors_by_day) {
+      try {
+        const foodData = JSON.parse(trip.food_vendors_by_day);
+        Object.keys(foodData).forEach(day => {
+          enhancedFoodVendorsByDay[day] = foodData[day].map(item => ({
+            ...item,
+            vendors: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)), // Replace IDs with names
+            vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors))
+          }));
+        });
+      } catch (e) {
+        enhancedFoodVendorsByDay = trip.food_vendors_by_day;
+      }
+    }
+    
+    let enhancedFinanceData = {};
+    if (trip.finance_data) {
+      try {
+        const financeData = JSON.parse(trip.finance_data);
+        enhancedFinanceData = {
+          ...financeData,
+          vendors: financeData.vendors.map(vendor => ({
+            ...vendor,
+            vendorId: getVendorName(vendor.vendorId, 
+              vendor.type === 'transport' ? allTransportVendors :
+              vendor.type === 'accommodation' ? allAccommodationVendors :
+              allFoodVendors
+            ), // Replace ID with name
+            vendorName: getVendorName(vendor.vendorId, 
+              vendor.type === 'transport' ? allTransportVendors :
+              vendor.type === 'accommodation' ? allAccommodationVendors :
+              allFoodVendors
+            )
+          }))
+        };
+      } catch (e) {
+        enhancedFinanceData = trip.finance_data;
+      }
+    }
+    
+    // Parse and enhance selected drivers and conductors
+    let enhancedSelectedDrivers = [];
+    if (trip.selected_drivers) {
+      try {
+        const driverIds = JSON.parse(trip.selected_drivers);
+        enhancedSelectedDrivers = driverIds.map(driverId => getDriverDetails(driverId)).filter(Boolean);
+      } catch (e) {
+        enhancedSelectedDrivers = [];
+      }
+    }
+    
+    let enhancedSelectedConductors = [];
+    if (trip.selected_conductors) {
+      try {
+        const conductorIds = JSON.parse(trip.selected_conductors);
+        enhancedSelectedConductors = conductorIds.map(conductorId => getConductorDetails(conductorId)).filter(Boolean);
+      } catch (e) {
+        enhancedSelectedConductors = [];
+      }
+    }
+    
+    // Create filtered trip object without id
+    const filteredTrip = {
+      title: trip.title,
+      description: trip.description,
+      destination: trip.destination,
+      start_date: trip.start_date,
+      end_date: trip.end_date,
+      budget: trip.budget,
+      created_by: trip.created_by,
+      destination_id: trip.destination_id,
+      bus_id: trip.bus_id,
+      driver_id: trip.driver_id,
+      boarding_details: trip.boarding_details,
+      checklist_items: trip.checklist_items,
+      accommodation_vendor_id: trip.accommodation_vendor_id,
+      food_vendor_id: trip.food_vendor_id,
+      transport_vendor_id: trip.transport_vendor_id,
+      accommodation_vendor_name: trip.accommodation_vendor_id ? getVendorName(trip.accommodation_vendor_id, allAccommodationVendors) : null,
+      food_vendor_name: trip.food_vendor_id ? getVendorName(trip.food_vendor_id, allFoodVendors) : null,
+      transport_vendor_name: trip.transport_vendor_id ? getVendorName(trip.transport_vendor_id, allTransportVendors) : null,
+      selected_drivers: trip.selected_drivers,
+      selected_conductors: trip.selected_conductors,
+      selected_drivers_details: enhancedSelectedDrivers,
+      selected_conductors_details: enhancedSelectedConductors,
+      selected_buses: trip.selected_buses,
+      drivers_by_day: trip.drivers_by_day,
+      conductors_by_day: trip.conductors_by_day,
+      buses_by_day: trip.buses_by_day,
+      vendors_by_day: trip.vendors_by_day,
+      time_by_day: trip.time_by_day,
+      accommodations_by_day: enhancedAccommodationsByDay,
+      selected_accommodation_vendor: trip.selected_accommodation_vendor,
+      selected_accommodation_start_time: trip.selected_accommodation_start_time,
+      selected_accommodation_end_time: trip.selected_accommodation_end_time,
+      selected_food_vendors: trip.selected_food_vendors,
+      food_vendors_by_day: enhancedFoodVendorsByDay,
+      selected_food_schedules: trip.selected_food_schedules,
+      selected_food_categories: trip.selected_food_categories,
+      selected_food_items: trip.selected_food_items,
+      food_schedules_by_day: trip.food_schedules_by_day,
+      food_categories_by_day: trip.food_categories_by_day,
+      food_items_by_day: trip.food_items_by_day,
+      all_days_food_entries: trip.all_days_food_entries,
+      events_by_day: trip.events_by_day,
+      all_days_events: trip.all_days_events,
+      selected_event_title: trip.selected_event_title,
+      selected_event_description: trip.selected_event_description,
+      selected_event_start_time: trip.selected_event_start_time,
+      selected_event_end_time: trip.selected_event_end_time,
+      finance_data: enhancedFinanceData,
+      use_all_days_selection: trip.use_all_days_selection,
+      createdAt: trip.createdAt,
+      updatedAt: trip.updatedAt,
+      trip_status_id: trip.trip_status_id,
+      destinationInfo: trip.destinationInfo,
+      bus: trip.bus,
+      driver: trip.driver,
+      tripStatus: trip.tripStatus,
+      transportVendor: trip.transportVendor,
+      accommodationVendor: trip.accommodationVendor,
+      foodVendor: trip.foodVendor
+    };
+
     res.json({
       success: true,
       data: {
         // Basic Details Tab
         basic_details: {
-          trip: trip,
+          trip: filteredTrip,
           amenities: amenities
         },
         // Accommodation Tab
@@ -386,7 +757,7 @@ router.get('/trips/:id/details', async (req, res) => {
 router.get('/amenities', async (req, res) => {
   try {
     const amenities = await Amenity.findAll({
-      attributes: ['id', 'title', 'description', 'created_at']
+      attributes: ['title', 'description', 'created_at']
     });
     
     res.json({
@@ -410,9 +781,9 @@ router.get('/food-categories', async (req, res) => {
       include: [{
         model: FoodItem,
         as: 'items',
-        attributes: ['id', 'title', 'description']
+        attributes: ['title', 'description']
       }],
-      attributes: ['id', 'title', 'description', 'created_at']
+      attributes: ['title', 'description', 'created_at']
     });
     
     res.json({
@@ -436,9 +807,9 @@ router.get('/food-items', async (req, res) => {
       include: [{
         model: FoodCategory,
         as: 'category',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
-      attributes: ['id', 'title', 'description', 'created_at']
+      attributes: ['title', 'description', 'created_at']
     });
     
     res.json({
@@ -459,7 +830,7 @@ router.get('/food-items', async (req, res) => {
 router.get('/food-schedules', async (req, res) => {
   try {
     const schedules = await FoodSchedule.findAll({
-      attributes: ['id', 'title', 'start_time', 'end_time', 'created_at']
+      attributes: ['title', 'start_time', 'end_time', 'created_at']
     });
     
     res.json({
@@ -483,10 +854,10 @@ router.get('/buses', async (req, res) => {
       include: [{
         model: TransportVendor,
         as: 'vendor',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
       attributes: [
-        'id', 'title', 'model', 'make', 'make_year', 'type', 
+        'title', 'model', 'make', 'make_year', 'type', 
         'no_of_sittings', 'rc_no', 'created_at'
       ]
     });
@@ -512,10 +883,10 @@ router.get('/drivers', async (req, res) => {
       include: [{
         model: TransportVendor,
         as: 'vendor',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
       attributes: [
-        'id', 'first_name', 'last_name', 'phone_number', 
+        'first_name', 'last_name', 'phone_number', 
         'driving_license_no', 'created_at'
       ]
     });
@@ -611,7 +982,7 @@ router.get('/trip-statuses', async (req, res) => {
   try {
     const statuses = await TripStatus.findAll({
       where: { is_active: true },
-      attributes: ['id', 'name', 'description']
+      attributes: ['name', 'description']
     });
     
     res.json({
@@ -635,10 +1006,10 @@ router.get('/conductors', async (req, res) => {
       include: [{
         model: TransportVendor,
         as: 'vendor',
-        attributes: ['id', 'title']
+        attributes: ['title']
       }],
       attributes: [
-        'id', 'first_name', 'last_name', 'phone_number', 'created_at'
+        'first_name', 'last_name', 'phone_number', 'created_at'
       ]
     });
     
@@ -661,7 +1032,7 @@ router.get('/events', async (req, res) => {
   try {
     const events = await Event.findAll({
       attributes: [
-        'id', 'title', 'description', 'start_time', 'end_time', 
+        'title', 'description', 'start_time', 'end_time', 
         'trip_id', 'created_at'
       ],
       order: [['start_time', 'ASC']]
@@ -687,7 +1058,7 @@ router.get('/events/trip/:tripId', async (req, res) => {
     const events = await Event.findAll({
       where: { trip_id: req.params.tripId },
       attributes: [
-        'id', 'title', 'description', 'start_time', 'end_time', 
+        'title', 'description', 'start_time', 'end_time', 
         'trip_id', 'created_at'
       ],
       order: [['start_time', 'ASC']]
@@ -714,10 +1085,10 @@ router.get('/support-tickets', async (req, res) => {
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'first_name', 'last_name', 'email']
+        attributes: ['first_name', 'last_name', 'email']
       }],
       attributes: [
-        'id', 'title', 'description', 'status', 'priority', 
+        'title', 'description', 'status', 'priority', 
         'user_id', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
