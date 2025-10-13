@@ -282,7 +282,7 @@ router.get('/trips/:id', async (req, res) => {
     
     // Get all drivers and conductors for reference
     const allDrivers = await Driver.findAll({
-      attributes: ['id', 'name', 'phone', 'license'],
+      attributes: ['id', 'first_name', 'last_name', 'phone_number', 'driving_license_no'],
       include: [{
         model: TransportVendor,
         as: 'vendor',
@@ -291,7 +291,7 @@ router.get('/trips/:id', async (req, res) => {
     });
     
     const allConductors = await Conductor.findAll({
-      attributes: ['id', 'name', 'phone'],
+      attributes: ['id', 'first_name', 'last_name', 'phone_number'],
       include: [{
         model: TransportVendor,
         as: 'vendor',
@@ -384,6 +384,28 @@ router.get('/trips/:id', async (req, res) => {
         };
       } catch (e) {
         enhancedFinanceData = trip.finance_data;
+      }
+    }
+    
+    // Process selected drivers and conductors
+    let enhancedSelectedDrivers = [];
+    let enhancedSelectedConductors = [];
+    
+    if (trip.selected_drivers) {
+      try {
+        const selectedDriverIds = JSON.parse(trip.selected_drivers);
+        enhancedSelectedDrivers = selectedDriverIds.map(driverId => getDriverDetails(driverId)).filter(driver => driver !== null);
+      } catch (e) {
+        enhancedSelectedDrivers = [];
+      }
+    }
+    
+    if (trip.selected_conductors) {
+      try {
+        const selectedConductorIds = JSON.parse(trip.selected_conductors);
+        enhancedSelectedConductors = selectedConductorIds.map(conductorId => getConductorDetails(conductorId)).filter(conductor => conductor !== null);
+      } catch (e) {
+        enhancedSelectedConductors = [];
       }
     }
     
