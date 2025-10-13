@@ -40,12 +40,11 @@ router.post('/register', [
 
     // Create user
     const user = await User.create({
-      first_name,
-      last_name,
+      firstName: first_name,
+      lastName: last_name,
       email,
       password,
       role,
-      createdBy: req.user?.id
     });
 
     res.status(201).json({
@@ -53,7 +52,8 @@ router.post('/register', [
       message: 'User registered successfully',
       data: {
         id: user.id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
         isActive: user.isActive
@@ -113,9 +113,7 @@ router.post('/login', [
       });
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    // Note: lastLogin field removed from model
 
     // Generate token
     const token = generateToken(user.id);
@@ -127,13 +125,11 @@ router.post('/login', [
         token,
         user: {
           id: user.id,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
           isActive: user.isActive,
-          lastLogin: user.lastLogin,
-          phone: user.phone,
-          address: user.address
         }
       }
     });
@@ -156,13 +152,11 @@ router.get('/me', protect, async (req, res) => {
       success: true,
       data: {
         id: user.id,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
         isActive: user.isActive,
-        lastLogin: user.lastLogin,
-        phone: user.phone,
-        address: user.address,
         createdAt: user.createdAt
       }
     });
@@ -179,10 +173,9 @@ router.get('/me', protect, async (req, res) => {
 // @route   PUT /api/auth/profile
 // @access  Private
 router.put('/profile', protect, [
-  body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('firstName').optional().trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
+  body('lastName').optional().trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
-  body('phone').optional().trim(),
-  body('address').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -194,10 +187,11 @@ router.put('/profile', protect, [
       });
     }
 
-    const { name, email, phone, address } = req.body;
+    const { firstName, lastName, email } = req.body;
     const updateData = {};
 
-    if (name) updateData.name = name;
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
     if (email) {
       // Check if email is already taken by another user
       const existingUser = await User.findOne({ where: { email, id: { [require('sequelize').Op.ne]: req.user.id } } });
@@ -209,8 +203,6 @@ router.put('/profile', protect, [
       }
       updateData.email = email;
     }
-    if (phone !== undefined) updateData.phone = phone;
-    if (address !== undefined) updateData.address = address;
 
     await User.update(updateData, {
       where: { id: req.user.id }
@@ -223,12 +215,11 @@ router.put('/profile', protect, [
       message: 'Profile updated successfully',
       data: {
         id: updatedUser.id,
-        name: updatedUser.name,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
         email: updatedUser.email,
         role: updatedUser.role,
         isActive: updatedUser.isActive,
-        phone: updatedUser.phone,
-        address: updatedUser.address
       }
     });
   } catch (error) {

@@ -23,12 +23,12 @@ async function ensureDefaultUsers() {
       }
 
       const user = await User.create({
-        first_name: userData.first_name,
-        last_name: userData.last_name,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
         email: userData.email,
         password: userData.password,
         role: userData.role,
-        is_active: true
+        isActive: true
       });
 
       console.log(`Created user: ${userData.email} (${userData.role})`);

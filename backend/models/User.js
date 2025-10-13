@@ -8,16 +8,31 @@ const User = sequelize.define('User', {
     primaryKey: true,
     autoIncrement: true
   },
-  name: {
+  firstName: {
     type: DataTypes.STRING(50),
     allowNull: false,
+    field: 'first_name',
     validate: {
       notEmpty: {
-        msg: 'Please provide a name'
+        msg: 'Please provide a first name'
       },
       len: {
         args: [2, 50],
-        msg: 'Name must be between 2 and 50 characters'
+        msg: 'First name must be between 2 and 50 characters'
+      }
+    }
+  },
+  lastName: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    field: 'last_name',
+    validate: {
+      notEmpty: {
+        msg: 'Please provide a last name'
+      },
+      len: {
+        args: [2, 50],
+        msg: 'Last name must be between 2 and 50 characters'
       }
     }
   },
@@ -42,34 +57,15 @@ const User = sequelize.define('User', {
     }
   },
   role: {
-    type: DataTypes.ENUM('superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'),
+    type: DataTypes.ENUM('superadmin', 'admin', 'tripmanager', 'finance', 'user'),
     defaultValue: 'user',
     allowNull: false
   },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
-    allowNull: false
-  },
-  lastLogin: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  phone: {
-    type: DataTypes.STRING(20),
-    allowNull: true
-  },
-  address: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  createdBy: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'Users',
-      key: 'id'
-    }
+    allowNull: false,
+    field: 'is_active'
   },
   // Explicit timestamp fields to ensure valid defaults in MySQL
   createdAt: {

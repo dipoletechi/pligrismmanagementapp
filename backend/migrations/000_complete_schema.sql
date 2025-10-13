@@ -165,8 +165,8 @@ CREATE TABLE IF NOT EXISTS trip_status (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Insert default trip status values
-INSERT INTO trip_status (name, description) VALUES
+-- Insert default trip status values (ignore duplicates)
+INSERT IGNORE INTO trip_status (name, description) VALUES
 ('Draft', 'Trip is in draft state and not yet published'),
 ('Published', 'Trip is published and visible to users'),
 ('Cancelled', 'Trip has been cancelled'),
@@ -240,14 +240,15 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_trips_trip_status_id ON trips(trip_status_id);
-CREATE INDEX IF NOT EXISTS idx_trips_destination_id ON trips(destination_id);
-CREATE INDEX IF NOT EXISTS idx_trips_bus_id ON trips(bus_id);
-CREATE INDEX IF NOT EXISTS idx_trips_driver_id ON trips(driver_id);
-CREATE INDEX IF NOT EXISTS idx_trips_transport_vendor_id ON trips(transport_vendor_id);
-CREATE INDEX IF NOT EXISTS idx_events_trip_id ON events(trip_id);
-CREATE INDEX IF NOT EXISTS idx_buses_transport_vendor_id ON buses(transport_vendor_id);
-CREATE INDEX IF NOT EXISTS idx_drivers_transport_vendor_id ON drivers(transport_vendor_id);
-CREATE INDEX IF NOT EXISTS idx_conductors_transport_vendor_id ON conductors(transport_vendor_id);
-CREATE INDEX IF NOT EXISTS idx_food_items_food_category_id ON food_items(food_category_id);
-CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON support_tickets(user_id);
+-- Note: Using separate statements for better MySQL compatibility
+CREATE INDEX idx_trips_trip_status_id ON trips(trip_status_id);
+CREATE INDEX idx_trips_destination_id ON trips(destination_id);
+CREATE INDEX idx_trips_bus_id ON trips(bus_id);
+CREATE INDEX idx_trips_driver_id ON trips(driver_id);
+CREATE INDEX idx_trips_transport_vendor_id ON trips(transport_vendor_id);
+CREATE INDEX idx_events_trip_id ON events(trip_id);
+CREATE INDEX idx_buses_transport_vendor_id ON buses(transport_vendor_id);
+CREATE INDEX idx_drivers_transport_vendor_id ON drivers(transport_vendor_id);
+CREATE INDEX idx_conductors_transport_vendor_id ON conductors(transport_vendor_id);
+CREATE INDEX idx_food_items_food_category_id ON food_items(food_category_id);
+CREATE INDEX idx_support_tickets_user_id ON support_tickets(user_id);
