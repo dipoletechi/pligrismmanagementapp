@@ -57,7 +57,7 @@ class NewSystemSetup {
     try {
       console.log('🚀 Running complete schema migration...');
       
-      const migrationPath = path.join(__dirname, '..', 'migrations', '000_complete_schema.sql');
+      const migrationPath = path.join(__dirname, '..', 'migrations', '000_complete_schema_v2.sql');
       const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
       
       // Split by semicolon and execute each statement
