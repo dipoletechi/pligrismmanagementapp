@@ -249,7 +249,8 @@ router.get('/trips/:id', async (req, res) => {
     if (!trip) {
       return res.status(404).json({
         success: false,
-        message: 'Trip not found'
+        message: 'Trip not found',
+        error: 'Trip with the specified ID does not exist'
       });
     }
     
@@ -266,10 +267,41 @@ router.get('/trips/:id', async (req, res) => {
       attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
+    // Get all food-related data for reference
+    const allFoodSchedules = await FoodSchedule.findAll({
+      attributes: ['id', 'title', 'start_time', 'end_time']
+    });
+    
+    const allFoodCategories = await FoodCategory.findAll({
+      attributes: ['id', 'title', 'description']
+    });
+    
+    const allFoodItems = await FoodItem.findAll({
+      attributes: ['id', 'title', 'description']
+    });
+    
     // Helper function to get vendor name by ID
     const getVendorName = (vendorId, vendors) => {
       const vendor = vendors.find(v => v.id === vendorId);
       return vendor ? vendor.title : 'Unknown Vendor';
+    };
+    
+    // Helper function to get schedule name by ID
+    const getScheduleName = (scheduleId) => {
+      const schedule = allFoodSchedules.find(s => s.id === scheduleId);
+      return schedule ? schedule.title : 'Unknown Schedule';
+    };
+    
+    // Helper function to get category name by ID
+    const getCategoryName = (categoryId) => {
+      const category = allFoodCategories.find(c => c.id === categoryId);
+      return category ? category.title : 'Unknown Category';
+    };
+    
+    // Helper function to get item name by ID
+    const getItemName = (itemId) => {
+      const item = allFoodItems.find(i => i.id === itemId);
+      return item ? item.title : 'Unknown Item';
     };
     
     // Parse and enhance JSON data with vendor names
@@ -297,7 +329,13 @@ router.get('/trips/:id', async (req, res) => {
           enhancedFoodVendorsByDay[day] = foodData[day].map(item => ({
             ...item,
             vendors: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)), // Replace IDs with names
-            vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors))
+            vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)),
+            schedules: item.schedules.map(scheduleId => getScheduleName(scheduleId)), // Replace IDs with names
+            scheduleNames: item.schedules.map(scheduleId => getScheduleName(scheduleId)),
+            categories: item.categories.map(categoryId => getCategoryName(categoryId)), // Replace IDs with names
+            categoryNames: item.categories.map(categoryId => getCategoryName(categoryId)),
+            items: item.items.map(itemId => getItemName(itemId)), // Replace IDs with names
+            itemNames: item.items.map(itemId => getItemName(itemId))
           }));
         });
       } catch (e) {
@@ -350,8 +388,8 @@ router.get('/trips/:id', async (req, res) => {
       accommodation_vendor_name: trip.accommodation_vendor_id ? getVendorName(trip.accommodation_vendor_id, allAccommodationVendors) : null,
       food_vendor_name: trip.food_vendor_id ? getVendorName(trip.food_vendor_id, allFoodVendors) : null,
       transport_vendor_name: trip.transport_vendor_id ? getVendorName(trip.transport_vendor_id, allTransportVendors) : null,
-      selected_drivers: trip.selected_drivers,
-      selected_conductors: trip.selected_conductors,
+      selected_drivers_details: enhancedSelectedDrivers,
+      selected_conductors_details: enhancedSelectedConductors,
       selected_buses: trip.selected_buses,
       drivers_by_day: trip.drivers_by_day,
       conductors_by_day: trip.conductors_by_day,
@@ -450,7 +488,8 @@ router.get('/trips/:id/details', async (req, res) => {
     if (!trip) {
       return res.status(404).json({
         success: false,
-        message: 'Trip not found'
+        message: 'Trip not found',
+        error: 'Trip with the specified ID does not exist'
       });
     }
     
@@ -527,6 +566,19 @@ router.get('/trips/:id/details', async (req, res) => {
       attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
+    // Get all food-related data for reference
+    const allFoodSchedules = await FoodSchedule.findAll({
+      attributes: ['id', 'title', 'start_time', 'end_time']
+    });
+    
+    const allFoodCategories = await FoodCategory.findAll({
+      attributes: ['id', 'title', 'description']
+    });
+    
+    const allFoodItems = await FoodItem.findAll({
+      attributes: ['id', 'title', 'description']
+    });
+    
     // Get all drivers and conductors for reference
     const allDrivers = await Driver.findAll({
       attributes: ['id', 'first_name', 'last_name', 'phone_number', 'driving_license_no'],
@@ -575,6 +627,24 @@ router.get('/trips/:id/details', async (req, res) => {
       } : null;
     };
     
+    // Helper function to get schedule name by ID
+    const getScheduleName = (scheduleId) => {
+      const schedule = allFoodSchedules.find(s => s.id === scheduleId);
+      return schedule ? schedule.title : 'Unknown Schedule';
+    };
+    
+    // Helper function to get category name by ID
+    const getCategoryName = (categoryId) => {
+      const category = allFoodCategories.find(c => c.id === categoryId);
+      return category ? category.title : 'Unknown Category';
+    };
+    
+    // Helper function to get item name by ID
+    const getItemName = (itemId) => {
+      const item = allFoodItems.find(i => i.id === itemId);
+      return item ? item.title : 'Unknown Item';
+    };
+    
     // Parse and enhance JSON data with vendor names
     let enhancedAccommodationsByDay = {};
     if (trip.accommodations_by_day) {
@@ -600,7 +670,13 @@ router.get('/trips/:id/details', async (req, res) => {
           enhancedFoodVendorsByDay[day] = foodData[day].map(item => ({
             ...item,
             vendors: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)), // Replace IDs with names
-            vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors))
+            vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)),
+            schedules: item.schedules.map(scheduleId => getScheduleName(scheduleId)), // Replace IDs with names
+            scheduleNames: item.schedules.map(scheduleId => getScheduleName(scheduleId)),
+            categories: item.categories.map(categoryId => getCategoryName(categoryId)), // Replace IDs with names
+            categoryNames: item.categories.map(categoryId => getCategoryName(categoryId)),
+            items: item.items.map(itemId => getItemName(itemId)), // Replace IDs with names
+            itemNames: item.items.map(itemId => getItemName(itemId))
           }));
         });
       } catch (e) {
@@ -674,8 +750,6 @@ router.get('/trips/:id/details', async (req, res) => {
       accommodation_vendor_name: trip.accommodation_vendor_id ? getVendorName(trip.accommodation_vendor_id, allAccommodationVendors) : null,
       food_vendor_name: trip.food_vendor_id ? getVendorName(trip.food_vendor_id, allFoodVendors) : null,
       transport_vendor_name: trip.transport_vendor_id ? getVendorName(trip.transport_vendor_id, allTransportVendors) : null,
-      selected_drivers: trip.selected_drivers,
-      selected_conductors: trip.selected_conductors,
       selected_drivers_details: enhancedSelectedDrivers,
       selected_conductors_details: enhancedSelectedConductors,
       selected_buses: trip.selected_buses,
@@ -719,30 +793,7 @@ router.get('/trips/:id/details', async (req, res) => {
 
     res.json({
       success: true,
-      data: {
-        // Basic Details Tab
-        basic_details: {
-          trip: filteredTrip,
-          amenities: amenities
-        },
-        // Accommodation Tab
-        accommodation: {
-          vendors: accommodationVendors
-        },
-        // Food Management Tab
-        food_management: {
-          categories: foodCategories,
-          schedules: foodSchedules,
-          vendors: foodVendors
-        },
-        // Transport Tab
-        transport: {
-          buses: buses,
-          drivers: drivers,
-          conductors: conductors,
-          vendors: transportVendors
-        }
-      }
+      data: filteredTrip
     });
   } catch (error) {
     res.status(500).json({
