@@ -7,9 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  ScrollView,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
@@ -18,170 +19,252 @@ import LanguageDropdown from '@/components/LanguageDropdown';
 
 export default function LoginScreen() {
   const { t } = useLanguage();
+  
+  // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
+  
+  // Form validation states
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [touched, setTouched] = useState<{[key: string]: boolean}>({});
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
+  // Validate email
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
-    setLoading(true);
+  // Validate password
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
+
+  // Validate field
+  const validateField = (field: string, value: string) => {
+    let error = '';
     
+    switch (field) {
+      case 'email':
+        if (!value.trim()) error = 'Email is required';
+        else if (!validateEmail(value)) error = 'Please enter a valid email';
+        break;
+      case 'password':
+        if (!value.trim()) error = 'Password is required';
+        else if (!validatePassword(value)) error = 'Password must be at least 6 characters';
+        break;
+    }
+    
+    return error;
+  };
+
+  // Handle field blur
+  const handleFieldBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    
+    const error = validateField(field, field === 'email' ? email : password);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  // Login API call
+  const callLoginAPI = async () => {
     try {
-      // TODO: Implement actual login API call
-      console.log('Login attempt:', { email, password });
+      setLoading(true);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For now, just show success and go back
-      Alert.alert('Success', 'Login successful!', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-      
+      const requestData = {
+        email: email,
+        password: password
+      };
+
+      console.log('Login API call with data:', requestData);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      console.log('Login API response:', data);
+
+      if (response.ok && data.success) {
+        // Login successful
+        Alert.alert('Success', data.message || 'Login successful!', [
+          { text: 'OK', onPress: () => router.push('/dashboard' as any) }
+        ]);
+      } else {
+        // Login failed
+        Alert.alert('Login Failed', data.message || 'Invalid credentials. Please try again.');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      console.error('Login API error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = () => {
-    if (!email.trim()) {
-      Alert.alert('Email Required', 'Please enter your email address first');
-      return;
+  // Handle login
+  const handleLogin = () => {
+    // Validate all fields
+    const emailError = validateField('email', email);
+    const passwordError = validateField('password', password);
+    
+    setErrors({
+      email: emailError,
+      password: passwordError
+    });
+    
+    setTouched({
+      email: true,
+      password: true
+    });
+
+    // If no errors, proceed with login
+    if (!emailError && !passwordError) {
+      callLoginAPI();
+    } else {
+      Alert.alert('Validation Error', 'Please fix the errors before proceeding');
     }
-
-    Alert.alert(
-      'Forgot Password',
-      `Password reset link will be sent to ${email}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Send Link', 
-          onPress: () => {
-            // TODO: Implement forgot password API call
-            console.log('Forgot password for:', email);
-            Alert.alert('Success', 'Password reset link sent to your email');
-          }
-        }
-      ]
-    );
-  };
-
-  const handleRegisterNow = () => {
-    router.push('/register');
   };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.container}>
-      {/* Fixed Header */}
-      <View style={styles.mainHeader}>
-        <Text style={styles.headerTitle}>Tirth Yatra</Text>
-        <TouchableOpacity 
-          style={styles.headerMenuButton}
-          onPress={() => setHeaderMenuVisible(!headerMenuVisible)}
+        {/* Header */}
+        <View style={styles.mainHeader}>
+          <Text style={styles.headerTitle}>Tirth Yatra</Text>
+          <TouchableOpacity 
+            style={styles.headerMenuButton}
+            onPress={() => setHeaderMenuVisible(!headerMenuVisible)}
+          >
+            <Ionicons name="ellipsis-vertical" size={24} color="#333" />
+          </TouchableOpacity>
+          
+          {headerMenuVisible && (
+            <View style={styles.headerDropdown}>
+              <LanguageDropdown />
+            </View>
+          )}
+        </View>
+
+        {/* Main Content */}
+        <KeyboardAvoidingView 
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          <Ionicons name="ellipsis-horizontal" size={24} color="#000" />
-        </TouchableOpacity>
-        
-        {/* Header Dropdown Menu - Only Language */}
-        {headerMenuVisible && (
-          <View style={styles.headerDropdown}>
-            <View style={styles.dropdownItem}>
-              <Ionicons name="language-outline" size={20} color="#000" />
-              <View style={styles.languageDropdownContainer}>
-                <LanguageDropdown />
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.formContainer}>
+              <Text style={styles.formTitle}>Welcome Back</Text>
+              <Text style={styles.formSubtitle}>Sign in to your account</Text>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Login Form */}
-        <View style={styles.formContainer}>
-
-            {/* Email/Phone Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email/Phone</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter your email or phone"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-
-            {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Email *</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  errors.email && touched.email && styles.inputError
+                ]}>
                   <Ionicons 
-                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                    name="mail-outline" 
                     size={20} 
-                    color="#666" 
+                    color={errors.email && touched.email ? "#ff4444" : "#666"} 
+                    style={styles.inputIcon} 
                   />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#999"
+                    value={email}
+                    onChangeText={setEmail}
+                    onBlur={() => handleFieldBlur('email')}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                {errors.email && touched.email && (
+                  <Text style={styles.errorText}>{errors.email}</Text>
+                )}
+              </View>
+
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Password *</Text>
+                <View style={[
+                  styles.inputWrapper,
+                  errors.password && touched.password && styles.inputError
+                ]}>
+                  <Ionicons 
+                    name="lock-closed-outline" 
+                    size={20} 
+                    color={errors.password && touched.password ? "#ff4444" : "#666"} 
+                    style={styles.inputIcon} 
+                  />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#999"
+                    value={password}
+                    onChangeText={setPassword}
+                    onBlur={() => handleFieldBlur('password')}
+                    secureTextEntry={!showPassword}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Ionicons 
+                      name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                      size={20} 
+                      color="#666" 
+                    />
+                  </TouchableOpacity>
+                </View>
+                {errors.password && touched.password && (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                )}
+              </View>
+
+              {/* Forgot Password */}
+              <TouchableOpacity style={styles.forgotPasswordButton}>
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              {/* Login Button */}
+              <TouchableOpacity 
+                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Sign In</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Register Link */}
+              <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => router.push('/register')}>
+                  <Text style={styles.registerLink}>Register Now</Text>
                 </TouchableOpacity>
               </View>
             </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
 
-            {/* Forgot Password */}
-            <TouchableOpacity 
-              style={styles.forgotPasswordButton}
-              onPress={handleForgotPassword}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            {/* Login Button */}
-            <TouchableOpacity 
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.loginButtonText}>
-                {loading ? 'Signing In...' : 'Sign In'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Register Now */}
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={handleRegisterNow}>
-                <Text style={styles.registerLink}>Register Now</Text>
-              </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-
-        {/* Fixed Footer */}
+        {/* Footer */}
         <View style={styles.mainFooter}>
           <Text style={styles.footerText}></Text>
           <Ionicons name="help-circle-outline" size={24} color="#666" />
@@ -191,131 +274,126 @@ export default function LoginScreen() {
   );
 }
 
+// 💅 Styles
 const styles = StyleSheet.create({
-  container: {
+  container: { 
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
   mainHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingTop: 30,
+    paddingVertical: 15,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e1e5e9',
+    borderBottomColor: '#e0e0e0',
+    paddingTop: 50,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
   },
   headerMenuButton: {
     padding: 5,
   },
   headerDropdown: {
     position: 'absolute',
-    top: 60,
+    top: 80,
     right: 20,
     backgroundColor: '#fff',
     borderRadius: 8,
-    padding: 8,
+    padding: 10,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
     zIndex: 1000,
   },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  languageDropdownContainer: {
-    marginLeft: 8,
-  },
-  mainFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#f8f8f8',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  scrollContent: {
+  keyboardAvoidingView: { 
+    flex: 1,
     flexGrow: 1,
-    justifyContent: 'center',
+  },
+  scrollContent: { 
+    flexGrow: 1, 
     padding: 20,
+    paddingBottom: 40,
+    minHeight: '100%',
   },
   formContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    flex: 1,
+    justifyContent: 'center',
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  formTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  formSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 40,
   },
   inputContainer: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#000',
+    color: '#333',
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e1e5e9',
+    borderColor: '#e0e0e0',
     borderRadius: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#f8f9fa',
+    paddingVertical: 12,
+  },
+  inputError: {
+    borderColor: '#ff4444',
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
-    color: '#000',
-    paddingVertical: 12,
+    color: '#333',
   },
   eyeButton: {
     padding: 5,
   },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 14,
+    marginTop: 5,
+  },
   forgotPasswordButton: {
     alignSelf: 'flex-end',
-    marginBottom: 24,
+    marginBottom: 30,
   },
   forgotPasswordText: {
-    fontSize: 14,
     color: '#007AFF',
+    fontSize: 16,
     fontWeight: '500',
   },
   loginButton: {
     backgroundColor: '#007AFF',
+    paddingVertical: 15,
     borderRadius: 8,
-    paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 20,
   },
@@ -323,9 +401,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   loginButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
   registerContainer: {
     flexDirection: 'row',
@@ -333,12 +411,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
   },
   registerLink: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#007AFF',
     fontWeight: '500',
+  },
+  mainFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    opacity: 1,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#666',
   },
 });
