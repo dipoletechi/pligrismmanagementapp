@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // Import models
 const Destination = require('../models/Destination');
@@ -2045,6 +2047,119 @@ router.post('/submit-aadhaar-data', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error submitting Aadhaar data',
+      error: error.message
+    });
+  }
+});
+
+
+// Login API
+router.post('/login', async (req, res) => {
+  try {
+    const { email, phone, password } = req.body;
+
+    // Validate input
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is required'
+      });
+    }
+
+    if (!email && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Either email or phone is required'
+      });
+    }
+
+    // Find user by email or phone
+    let user;
+    if (email) {
+      user = await User.findOne({ where: { email: email } });
+      console.log('Login attempt for email:', email);
+    } else {
+      user = await User.findOne({ where: { phone: phone } });
+      console.log('Login attempt for phone:', phone);
+    }
+
+    console.log('User found:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('User details:', {
+        id: user.id,
+        email: user.email,
+        is_active: user.is_active,
+        password_hash: user.password.substring(0, 20) + '...'
+      });
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Check if user is active
+    if (!user.is_active) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.'
+      });
+    }
+
+    // Verify password
+    console.log('Password verification:', {
+      provided_password: password,
+      stored_hash: user.password.substring(0, 20) + '...'
+    });
+    
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log('Password valid:', isPasswordValid);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email,
+        role: user.role 
+      },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-change-this-in-production',
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    );
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        token: token,
+        user: {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          isActive: user.is_active,
+          isEmailVerified: user.is_email_verified,
+          isPhoneVerified: user.is_phone
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
       error: error.message
     });
   }
