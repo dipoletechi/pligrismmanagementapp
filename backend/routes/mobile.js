@@ -68,7 +68,7 @@ router.get('/trips', async (req, res) => {
         }
       ],
       attributes: [
-        'title', 'start_date', 'end_date', 'trip_status_id', 'created_at', 'updated_at'
+        'id', 'title', 'start_date', 'end_date', 'trip_status_id', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
     });
@@ -150,7 +150,7 @@ router.get('/trips/published', async (req, res) => {
         }
       ],
       attributes: [
-        'title', 'start_date', 'end_date', 'trip_status_id', 'budget', 
+        'id', 'title', 'start_date', 'end_date', 'trip_status_id', 'budget', 
         'description', 'boarding_details', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
@@ -386,6 +386,29 @@ router.get('/trips/:id', async (req, res) => {
         enhancedFinanceData = trip.finance_data;
       }
     }
+    
+    // Helper function to get driver details by ID
+    const getDriverDetails = (driverId) => {
+      const driver = allDrivers.find(d => d.id === driverId);
+      return driver ? {
+        id: driver.id,
+        name: `${driver.first_name} ${driver.last_name}`,
+        phone: driver.phone_number,
+        license: driver.driving_license_no,
+        vendor: driver.vendor ? driver.vendor.title : 'Unknown Vendor'
+      } : null;
+    };
+    
+    // Helper function to get conductor details by ID
+    const getConductorDetails = (conductorId) => {
+      const conductor = allConductors.find(c => c.id === conductorId);
+      return conductor ? {
+        id: conductor.id,
+        name: `${conductor.first_name} ${conductor.last_name}`,
+        phone: conductor.phone_number,
+        vendor: conductor.vendor ? conductor.vendor.title : 'Unknown Vendor'
+      } : null;
+    };
     
     // Process selected drivers and conductors
     let enhancedSelectedDrivers = [];
@@ -1249,6 +1272,570 @@ router.get('/summary', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching summary data',
+      error: error.message
+    });
+  }
+});
+
+// Get comprehensive dashboard statistics
+router.get('/dashboard-stats', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get all trips for detailed analysis
+    const allTrips = await Trip.findAll({
+      attributes: ['id', 'start_date', 'end_date', 'trip_status_id', 'budget'],
+      include: [{
+        model: TripStatus,
+        as: 'tripStatus',
+        attributes: ['name']
+      }]
+    });
+    
+    // Calculate trip statistics
+    const tripStats = {
+      total: allTrips.length,
+      upcoming: 0,
+      past: 0,
+      completed: 0,
+      cancelled: 0
+    };
+    
+    allTrips.forEach(trip => {
+      const startDate = new Date(trip.start_date);
+      const endDate = new Date(trip.end_date);
+      
+      // Set time to start of day for comparison
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      
+      if (trip.tripStatus && trip.tripStatus.name) {
+        const status = trip.tripStatus.name.toLowerCase();
+        if (status.includes('completed')) {
+          tripStats.completed++;
+        } else if (status.includes('cancelled')) {
+          tripStats.cancelled++;
+        } else if (today < startDate) {
+          tripStats.upcoming++;
+        } else if (today > endDate) {
+          tripStats.past++;
+        }
+      } else {
+        // Fallback to date-based logic
+        if (today < startDate) {
+          tripStats.upcoming++;
+        } else if (today > endDate) {
+          tripStats.past++;
+        }
+      }
+    });
+    
+    // Get user statistics
+    const allUsers = await User.findAll({
+      attributes: ['id', 'isActive', 'createdAt']
+    });
+    
+    const userStats = {
+      total: allUsers.length,
+      pending: allUsers.filter(u => !u.isActive).length,
+      verified: allUsers.filter(u => u.isActive).length,
+      inProgress: 0 // This would need business logic
+    };
+    
+    // Get support ticket statistics
+    const allTickets = await SupportTicket.findAll({
+      attributes: ['id', 'status']
+    });
+    
+    const supportStats = {
+      total: allTickets.length,
+      byStatus: allTickets.reduce((acc, ticket) => {
+        acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+        return acc;
+      }, {})
+    };
+    
+    // Calculate financial statistics (placeholder - would need actual finance data)
+    const totalBudget = allTrips.reduce((sum, trip) => sum + (parseFloat(trip.budget) || 0), 0);
+    
+    const financialStats = {
+      total: totalBudget,
+      published: totalBudget * 0.7, // Placeholder calculation
+      draft: totalBudget * 0.2,
+      pastPublished: totalBudget * 0.4,
+      futurePublished: totalBudget * 0.3
+    };
+    
+    res.json({
+      success: true,
+      data: {
+        trips: tripStats,
+        users: userStats,
+        supportTickets: supportStats,
+        funds: financialStats
+      }
+    });
+  } catch (error) {
+    console.error('Dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching dashboard statistics',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Registration API
+router.post('/register', async (req, res) => {
+  try {
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      phone, 
+      password, 
+      registrationMethod, // 'email', 'phone', 'digilocker'
+      digilockerData // optional, for digilocker registration
+    } = req.body;
+
+    // Validation - firstName and lastName are optional for mobile registration
+    // They can be provided later during Aadhaar verification
+
+    if (registrationMethod === 'email' && !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required for email registration'
+      });
+    }
+
+    if (registrationMethod === 'phone' && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required for phone registration'
+      });
+    }
+
+    if (registrationMethod === 'digilocker' && !digilockerData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Digilocker data is required for digilocker registration'
+      });
+    }
+
+    // Check if user already exists
+    let existingUser = null;
+    if (email) {
+      existingUser = await User.findOne({ where: { email } });
+    }
+    if (phone && !existingUser) {
+      existingUser = await User.findOne({ where: { phone } });
+    }
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email or phone number'
+      });
+    }
+
+    // Generate OTP for verification (hardcoded as 1111 for demo)
+    const otp = '1111';
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Create user data
+    const userData = {
+      firstName: firstName || null, // Optional for mobile registration
+      lastName: lastName || null,   // Optional for mobile registration
+      email: email || null,
+      phone: phone || null,
+      password: password || null, // null for digilocker registration
+      role: 'user',
+      isActive: false, // pending verification
+      registrationMethod,
+      otp,
+      otpExpiry,
+      isEmailVerified: false,
+      isPhoneVerified: false,
+      age: null, // will be set after verification
+      digilockerData: digilockerData || null,
+      accountStatus: 'pending'
+    };
+
+    // For digilocker registration, extract age from digilocker data
+    if (registrationMethod === 'digilocker' && digilockerData && digilockerData.age) {
+      userData.age = digilockerData.age;
+      userData.isEmailVerified = true; // Age automatically verified
+    }
+
+    // Create user
+    const user = await User.create(userData);
+
+    // Send OTP (for demo, just return it)
+    let otpSent = false;
+    if (registrationMethod === 'email' && email) {
+      // In real implementation, send email with OTP
+      console.log(`OTP for ${email}: ${otp}`);
+      otpSent = true;
+    }
+    if (registrationMethod === 'phone' && phone) {
+      // In real implementation, send SMS with OTP
+      console.log(`OTP for ${phone}: ${otp}`);
+      otpSent = true;
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful. Please verify your account.',
+      data: {
+        userId: user.id,
+        registrationMethod,
+        otpSent,
+        otp: otp, // For demo purposes only
+        requiresVerification: true,
+        nextStep: 'verification'
+      }
+    });
+
+  } catch (error) {
+    console.error('Mobile registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during registration',
+      error: error.message
+    });
+  }
+});
+
+// Mobile OTP Verification API
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { userId, otp, verificationType } = req.body; // verificationType: 'email' or 'phone'
+
+    if (!userId || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and OTP are required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if OTP is correct
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // Check if OTP is expired
+    if (new Date() > user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // Update verification status
+    const updateData = {
+      otp: null,
+      otpExpiry: null
+    };
+
+    if (verificationType === 'email') {
+      updateData.isEmailVerified = true;
+    } else if (verificationType === 'phone') {
+      updateData.isPhoneVerified = true;
+    }
+
+    // If both email and phone are verified, activate user
+    const emailVerified = verificationType === 'email' ? true : user.isEmailVerified;
+    const phoneVerified = verificationType === 'phone' ? true : user.isPhoneVerified;
+    
+    if (emailVerified && phoneVerified) {
+      updateData.isActive = true;
+    }
+
+    await user.update(updateData);
+
+    res.json({
+      success: true,
+      message: 'Verification successful',
+      data: {
+        userId: user.id,
+        isActive: updateData.isActive || false,
+        isEmailVerified: emailVerified,
+        isPhoneVerified: phoneVerified,
+        nextStep: updateData.isActive ? 'dashboard' : 'complete_verification'
+      }
+    });
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during OTP verification',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Resend OTP API
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { userId, verificationType } = req.body; // verificationType: 'email' or 'phone'
+
+    if (!userId || !verificationType) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and verification type are required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Generate new OTP
+    const otp = '1111'; // Hardcoded for demo
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await user.update({ otp, otpExpiry });
+
+    // Send OTP (for demo, just log it)
+    if (verificationType === 'email' && user.email) {
+      console.log(`New OTP for ${user.email}: ${otp}`);
+    }
+    if (verificationType === 'phone' && user.phone) {
+      console.log(`New OTP for ${user.phone}: ${otp}`);
+    }
+
+    res.json({
+      success: true,
+      message: 'OTP sent successfully',
+      data: {
+        userId: user.id,
+        verificationType,
+        otp: otp, // For demo purposes only
+        otpSent: true
+      }
+    });
+
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sending OTP',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Login API
+router.post('/login', async (req, res) => {
+  try {
+    const { email, phone, password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is required'
+      });
+    }
+
+    // Find user by email or phone
+    let user = null;
+    if (email) {
+      user = await User.findOne({ where: { email } });
+    } else if (phone) {
+      user = await User.findOne({ where: { phone } });
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Check password
+    const isPasswordValid = await user.checkPassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Check if account is verified
+    if (!user.isActive) {
+      let message = 'Account not verified. Please verify your account first.';
+      
+      if (user.accountStatus === 'pending' || user.accountStatus === 'in_verification') {
+        message = 'Your account is in review, you will receive notification as soon as your account is approved';
+      }
+      
+      return res.status(401).json({
+        success: false,
+        message: message,
+        data: {
+          userId: user.id,
+          requiresVerification: true,
+          isEmailVerified: user.isEmailVerified,
+          isPhoneVerified: user.isPhoneVerified,
+          accountStatus: user.accountStatus
+        }
+      });
+    }
+
+    // Generate JWT token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        token,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          isActive: user.isActive
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Mobile login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during login',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Aadhaar Verification API
+router.post('/verify-aadhaar', async (req, res) => {
+  try {
+    const { 
+      userId, 
+      aadhaarNumber, 
+      aadhaarFrontImage, 
+      aadhaarBackImage,
+      aadhaarName,
+      aadhaarAddress,
+      age
+    } = req.body;
+
+    if (!userId || !aadhaarNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and Aadhaar number are required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update user with Aadhaar data
+    const updateData = {
+      aadhaarNumber,
+      aadhaarFrontImage: aadhaarFrontImage || null,
+      aadhaarBackImage: aadhaarBackImage || null,
+      aadhaarName: aadhaarName || null,
+      aadhaarAddress: aadhaarAddress || null,
+      accountStatus: 'in_verification',
+      age: age || null
+    };
+
+    await user.update(updateData);
+
+    res.json({
+      success: true,
+      message: 'Aadhaar verification submitted successfully. Your account is under review.',
+      data: {
+        userId: user.id,
+        accountStatus: 'in_verification',
+        nextStep: 'wait_for_approval'
+      }
+    });
+
+  } catch (error) {
+    console.error('Aadhaar verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during Aadhaar verification',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Account Status Check API
+router.get('/account-status/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        userId: user.id,
+        accountStatus: user.accountStatus,
+        isActive: user.isActive,
+        isEmailVerified: user.isEmailVerified,
+        isPhoneVerified: user.isPhoneVerified,
+        requiresVerification: !user.isActive,
+        message: user.accountStatus === 'pending' || user.accountStatus === 'in_verification' 
+          ? 'Your account is in review, you will receive notification as soon as your account is approved'
+          : null
+      }
+    });
+
+  } catch (error) {
+    console.error('Account status check error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking account status',
       error: error.message
     });
   }

@@ -29,7 +29,9 @@ import {
   CircularProgress,
   Grid,
   Card,
-  CardContent
+  CardContent,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -61,11 +63,26 @@ const UserManagement = () => {
     totalPages: 1,
     totalUsers: 0
   });
+  const [activeTab, setActiveTab] = useState(0);
+  const [allUsersData, setAllUsersData] = useState([]);
 
-  const fetchUsers = async (page = 1) => {
+  const fetchAllUsers = async () => {
+    try {
+      const response = await axios.get('/api/users?page=1&limit=1000'); // Get all users for counts
+      setAllUsersData(response.data.data.users);
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+    }
+  };
+
+  const fetchUsers = async (page = 1, role = null) => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/users?page=${page}&limit=10`);
+      let url = `/api/users?page=${page}&limit=10`;
+      if (role) {
+        url += `&role=${role}`;
+      }
+      const response = await axios.get(url);
       setUsers(response.data.data.users);
       setPagination(response.data.data.pagination);
     } catch (error) {
@@ -82,9 +99,17 @@ const UserManagement = () => {
 
   useEffect(() => {
     if (hasPermission('users', 'read')) {
-      fetchUsers();
+      fetchAllUsers(); // Fetch all users for counts
+      fetchUsers(); // Fetch paginated users
     }
   }, [hasPermission]);
+
+  // Update allUsersData when users change
+  useEffect(() => {
+    if (users.length > 0 && allUsersData.length === 0) {
+      setAllUsersData(users);
+    }
+  }, [users, allUsersData.length]);
 
   // Check if user has permission to manage users
   if (!hasPermission('users', 'read')) {
@@ -178,6 +203,7 @@ const UserManagement = () => {
         });
       }
       handleClose();
+      fetchAllUsers(); // Refresh counts
       fetchUsers(pagination.currentPage);
     } catch (error) {
       console.error('Error saving user:', error);
@@ -198,6 +224,7 @@ const UserManagement = () => {
           message: 'User deleted successfully',
           severity: 'success'
         });
+        fetchAllUsers(); // Refresh counts
         fetchUsers(pagination.currentPage);
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -230,6 +257,35 @@ const UserManagement = () => {
       user: 'User'
     };
     return labels[role] || role;
+  };
+
+  // Tab configuration
+  const tabs = [
+    { label: 'All Users', value: 'all', role: null },
+    { label: 'Users', value: 'user', role: 'user' },
+    { label: 'Admins', value: 'admin', role: 'admin' },
+    { label: 'Super Admins', value: 'superadmin', role: 'superadmin' },
+    { label: 'Trip Managers', value: 'trip_manager', role: 'trip_manager' },
+    { label: 'Financial Managers', value: 'financial_manager', role: 'financial_manager' }
+  ];
+
+  // Use users directly since backend filtering is now implemented
+  const filteredUsers = users;
+
+  // Get counts for each role
+  const getRoleCount = (role) => {
+    const dataToUse = allUsersData.length > 0 ? allUsersData : users;
+    if (role === null) {
+      return dataToUse.length;
+    }
+    return dataToUse.filter(user => user.role === role).length;
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    // Fetch users based on selected role
+    const selectedRole = newValue === 0 ? null : tabs[newValue].role;
+    fetchUsers(1, selectedRole);
   };
 
   if (loading) {
@@ -326,9 +382,9 @@ const UserManagement = () => {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <PeopleIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {pagination.totalUsers}
-                  </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                  {allUsersData.length > 0 ? allUsersData.length : users.length}
+                </Typography>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
                   Total Users
@@ -351,9 +407,9 @@ const UserManagement = () => {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <PersonIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {users.filter(u => u.isActive).length}
-                  </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                  {(allUsersData.length > 0 ? allUsersData : users).filter(u => u.isActive).length}
+                </Typography>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
                   Active Users
@@ -376,9 +432,9 @@ const UserManagement = () => {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <PersonIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {users.filter(u => u.role === 'admin').length}
-                  </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                  {(allUsersData.length > 0 ? allUsersData : users).filter(u => u.role === 'admin').length}
+                </Typography>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
                   Admins
@@ -401,9 +457,9 @@ const UserManagement = () => {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <PeopleIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {users.filter(u => u.role === 'superadmin').length}
-                  </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                  {(allUsersData.length > 0 ? allUsersData : users).filter(u => u.role === 'superadmin').length}
+                </Typography>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
                   Super Admins
@@ -412,6 +468,52 @@ const UserManagement = () => {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Role-based Tabs */}
+        <Paper sx={{
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          mb: 3
+        }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+                minHeight: 60,
+                px: 3
+              },
+              '& .Mui-selected': {
+                color: '#1976d2',
+                fontWeight: 700
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: '3px 3px 0 0',
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)'
+              }
+            }}
+          >
+            {tabs.map((tab, index) => (
+              <Tab 
+                key={tab.value} 
+                label={`${tab.label} (${getRoleCount(tab.role)})`}
+                sx={{
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
+              />
+            ))}
+          </Tabs>
+        </Paper>
 
         {/* Users Table */}
         <Paper sx={{
@@ -441,7 +543,7 @@ const UserManagement = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.map((userData, index) => (
+                {filteredUsers.map((userData, index) => (
                   <TableRow 
                     key={userData.id}
                     sx={{
@@ -460,7 +562,7 @@ const UserManagement = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <PersonIcon sx={{ color: '#1976d2', mr: 2, fontSize: 24 }} />
                         <Typography variant="subtitle1" fontWeight="600" color="text.primary">
-                          {userData.name}
+                          {userData.firstName} {userData.lastName}
                         </Typography>
                       </Box>
                     </TableCell>
