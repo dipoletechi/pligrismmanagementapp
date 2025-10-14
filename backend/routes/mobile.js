@@ -387,6 +387,29 @@ router.get('/trips/:id', async (req, res) => {
       }
     }
     
+    // Helper function to get driver details by ID
+    const getDriverDetails = (driverId) => {
+      const driver = allDrivers.find(d => d.id === driverId);
+      return driver ? {
+        id: driver.id,
+        name: `${driver.first_name} ${driver.last_name}`,
+        phone: driver.phone_number,
+        license: driver.driving_license_no,
+        vendor: driver.vendor ? driver.vendor.title : 'Unknown Vendor'
+      } : null;
+    };
+    
+    // Helper function to get conductor details by ID
+    const getConductorDetails = (conductorId) => {
+      const conductor = allConductors.find(c => c.id === conductorId);
+      return conductor ? {
+        id: conductor.id,
+        name: `${conductor.first_name} ${conductor.last_name}`,
+        phone: conductor.phone_number,
+        vendor: conductor.vendor ? conductor.vendor.title : 'Unknown Vendor'
+      } : null;
+    };
+    
     // Process selected drivers and conductors
     let enhancedSelectedDrivers = [];
     let enhancedSelectedConductors = [];
