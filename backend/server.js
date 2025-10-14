@@ -73,6 +73,9 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
+// Static file serving for uploads
+app.use('/uploads', express.static('uploads'));
+
 // Handle preflight requests
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
