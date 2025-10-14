@@ -18,9 +18,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
-import * as FileSystem from 'expo-file-system/legacy';
 // import Tesseract from 'tesseract.js'; // Disabled due to React Native Worker compatibility issues
 
 
@@ -303,7 +303,86 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleNext = () => {
+  // Convert image to base64 with compression
+  const convertImageToBase64 = async (imageUri: string): Promise<string | null> => {
+    try {
+      // First, get image info to check size
+      const imageInfo = await FileSystem.getInfoAsync(imageUri);
+      if (imageInfo.exists && 'size' in imageInfo) {
+        console.log('Image size:', imageInfo.size, 'bytes');
+      }
+      
+      // If image is too large, we might want to compress it
+      // For now, we'll proceed with the original image
+      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: 'base64' as any,
+      });
+      
+      console.log('Base64 length:', base64.length, 'characters');
+      return base64;
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      return null;
+    }
+  };
+
+  // Aadhaar Image Upload API call
+  const callAadhaarImageUploadAPI = async (imageUri: string, imageType: 'front' | 'back') => {
+    try {
+      setLoading(true);
+      
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        return;
+      }
+
+      // Convert image to base64
+      const base64Data = await convertImageToBase64(imageUri);
+      if (!base64Data) {
+        Alert.alert('Error', 'Failed to process image. Please try again.');
+        return;
+      }
+
+      const requestData = {
+        userId: userId,
+        imageType: imageType,
+        imageData: base64Data
+      };
+
+      console.log('Aadhaar Image Upload API call with data:', {
+        ...requestData,
+        imageData: `${base64Data.substring(0, 50)}...` // Log only first 50 chars
+      });
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/upload-aadhaar-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      console.log('Aadhaar Image Upload API response:', data);
+
+      if (response.ok && data.success) {
+        // Image upload successful
+        Alert.alert('Success', data.message || `${imageType} image uploaded successfully!`, [
+          { text: 'OK', onPress: () => nextStep() }
+        ]);
+      } else {
+        // Image upload failed
+        Alert.alert('Upload Failed', data.message || `Failed to upload ${imageType} image. Please try again.`);
+      }
+    } catch (error) {
+      console.error('Aadhaar Image Upload API error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
     if (currentStep === 2) {
       if (validateStep2()) {
         callRegistrationAPI();
@@ -318,17 +397,17 @@ export default function RegisterScreen() {
       }
     } else if (currentStep === 4) {
       if (aadhaarFront) {
-        nextStep();
+        // Call API to upload front image
+        await callAadhaarImageUploadAPI(aadhaarFront, 'front');
       } else {
-        Alert.alert('Missing Document', 'Please upload Aadhaar front side');
+        Alert.alert('Upload Required', 'Please upload Aadhaar front side first');
       }
     } else if (currentStep === 5) {
-      console.log('Step 5 - aadhaarBack:', aadhaarBack);
       if (aadhaarBack) {
-        console.log('Moving to step 6');
-        nextStep();
+        // Call API to upload back image
+        await callAadhaarImageUploadAPI(aadhaarBack, 'back');
       } else {
-        Alert.alert('Missing Document', 'Please upload Aadhaar back side');
+        Alert.alert('Upload Required', 'Please upload Aadhaar back side first');
       }
     } else if (currentStep === 6) {
       if (aadhaarNumber && age && name && address) {
@@ -368,7 +447,7 @@ export default function RegisterScreen() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
-        quality: 1,
+        quality: 0.7, // Reduced quality to compress image
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -393,7 +472,7 @@ export default function RegisterScreen() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
-        quality: 1,
+        quality: 0.7, // Reduced quality to compress image
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -406,7 +485,7 @@ export default function RegisterScreen() {
     }
   };
 
-  // 🟢 Process image (simplified - no OCR)
+  // 🟢 Process image (simplified - no automatic API call)
   const processImage = useCallback(async (imageUri: string, type: 'front' | 'back') => {
     try {
       if (type === 'front') {
