@@ -367,9 +367,15 @@ export default function RegisterScreen() {
 
       if (response.ok && data.success) {
         // Image upload successful
-        Alert.alert('Success', data.message || `${imageType} image uploaded successfully!`, [
-          { text: 'OK', onPress: () => nextStep() }
-        ]);
+        if (imageType === 'back') {
+          // For back image, also call OCR processing API
+          await callOCRProcessingAPI();
+        } else {
+          // For front image, just proceed to next step
+          Alert.alert('Success', data.message || `${imageType} image uploaded successfully!`, [
+            { text: 'OK', onPress: () => nextStep() }
+          ]);
+        }
       } else {
         // Image upload failed
         Alert.alert('Upload Failed', data.message || `Failed to upload ${imageType} image. Please try again.`);
@@ -379,6 +385,71 @@ export default function RegisterScreen() {
       Alert.alert('Error', 'Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // OCR Processing API call
+  const callOCRProcessingAPI = async () => {
+    try {
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        return;
+      }
+
+      const requestData = {
+        userId: userId
+      };
+
+      console.log('OCR Processing API call with data:', requestData);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/process-aadhaar-ocr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      console.log('OCR Processing API response:', data);
+
+      if (response.ok && data.success) {
+        // OCR processing successful - extract data and fill form
+        if (data.data && data.data.ocrData) {
+          const ocrData = data.data.ocrData;
+          
+          // Auto-fill form fields with OCR data
+          if (ocrData.aadhaarNumber) {
+            setAadhaarNumber(ocrData.aadhaarNumber);
+          }
+          if (ocrData.age) {
+            setAge(ocrData.age.toString());
+          }
+          if (ocrData.fullName) {
+            setName(ocrData.fullName);
+          }
+          if (ocrData.address) {
+            setAddress(ocrData.address);
+          }
+          
+          console.log('OCR Data extracted and filled:', {
+            aadhaarNumber: ocrData.aadhaarNumber,
+            age: ocrData.age,
+            name: ocrData.fullName,
+            address: ocrData.address
+          });
+        }
+        
+        Alert.alert('Success', data.message || 'Aadhaar data processed successfully!', [
+          { text: 'OK', onPress: () => nextStep() }
+        ]);
+      } else {
+        // OCR processing failed
+        Alert.alert('Processing Failed', data.message || 'Failed to process Aadhaar data. Please try again.');
+      }
+    } catch (error) {
+      console.error('OCR Processing API error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
     }
   };
 
@@ -410,9 +481,9 @@ export default function RegisterScreen() {
         Alert.alert('Upload Required', 'Please upload Aadhaar back side first');
       }
     } else if (currentStep === 6) {
-      if (aadhaarNumber && age && name && address) {
+      if (aadhaarNumber && age && name) {
         Alert.alert('Success', 'Registration completed! Welcome to Tirth Yatra!', [
-          { text: 'OK', onPress: () => router.back() }
+          { text: 'OK', onPress: () => router.replace('/login') }
         ]);
       } else {
         Alert.alert('Missing Information', 'Please fill all required fields');
@@ -901,7 +972,7 @@ export default function RegisterScreen() {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Address *</Text>
+                    <Text style={styles.inputLabel}>Address</Text>
                     <View style={styles.inputWrapper}>
                       <Ionicons 
                         name="location-outline" 
