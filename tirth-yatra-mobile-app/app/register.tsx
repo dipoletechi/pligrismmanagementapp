@@ -51,6 +51,12 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
   
+  // Registration response data
+  const [userId, setUserId] = useState<number | null>(null);
+  const [nextStepValue, setNextStepValue] = useState<string | null>(null);
+  const [verificationType, setVerificationType] = useState<string | null>(null);
+  const [receivedOTP, setReceivedOTP] = useState<string | null>(null);
+  
   // Enhanced form validation states
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [touched, setTouched] = useState<{[key: string]: boolean}>({});
@@ -115,7 +121,7 @@ export default function RegisterScreen() {
   };
 
   const validateOTP = (otp: string) => {
-    const otpRegex = /^\d{6}$/;
+    const otpRegex = /^\d{4}$/;
     return otpRegex.test(otp);
   };
 
@@ -141,7 +147,7 @@ export default function RegisterScreen() {
         break;
       case 'otp':
         if (!value.trim()) error = 'OTP is required';
-        else if (!validateOTP(value)) error = 'Please enter a valid 6-digit OTP';
+        else if (!validateOTP(value)) error = 'Please enter a valid 4-digit OTP';
         break;
     }
     
@@ -193,16 +199,120 @@ export default function RegisterScreen() {
     return Object.values(newErrors).every(error => error === '');
   };
 
+  // Registration API call
+  const callRegistrationAPI = async () => {
+    try {
+      setLoading(true);
+      
+      const requestData = registrationType === 'email' 
+        ? {
+            email: email,
+            password: password,
+            registrationMethod: 'email'
+          }
+        : {
+            phone: phone,
+            password: password,
+            registrationMethod: 'phone'
+          };
+
+      console.log('Registration API call with data:', requestData);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      console.log('Registration API response:', data);
+
+      if (response.ok && data.success) {
+        // Save registration response data
+        if (data.data) {
+          setUserId(data.data.userId);
+          setNextStepValue(data.data.nextStep);
+          setVerificationType(registrationType || 'email');
+          if (data.data.otp) {
+            setReceivedOTP(data.data.otp);
+            setOtp(data.data.otp); // Auto-fill OTP field
+          }
+        }
+        
+        // Registration successful
+        Alert.alert('Success', data.message || 'Registration successful!', [
+          { text: 'OK', onPress: () => nextStep() }
+        ]);
+      } else {
+        // Registration failed
+        Alert.alert('Registration Failed', data.message || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Registration API error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP Verification API call
+  const callOTPVerificationAPI = async () => {
+    try {
+      setLoading(true);
+      
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        return;
+      }
+
+      const requestData = {
+        userId: userId,
+        otp: otp,
+        verificationType: verificationType
+      };
+
+      console.log('OTP Verification API call with data:', requestData);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      console.log('OTP Verification API response:', data);
+
+      if (response.ok && data.success) {
+        // OTP verification successful
+        Alert.alert('Success', data.message || 'OTP verified successfully!', [
+          { text: 'OK', onPress: () => nextStep() }
+        ]);
+      } else {
+        // OTP verification failed
+        Alert.alert('Verification Failed', data.message || 'Invalid OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error('OTP Verification API error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNext = () => {
     if (currentStep === 2) {
       if (validateStep2()) {
-        nextStep();
+        callRegistrationAPI();
       } else {
         Alert.alert('Validation Error', 'Please fix the errors before proceeding');
       }
     } else if (currentStep === 3) {
       if (validateStep3()) {
-        nextStep();
+        callOTPVerificationAPI();
       } else {
         Alert.alert('Validation Error', 'Please enter a valid OTP');
       }
@@ -539,6 +649,14 @@ export default function RegisterScreen() {
                   <Text style={styles.stepSubtitle}>
                     {t('enterOTP')} {registrationType === 'email' ? email : phone}
                   </Text>
+                  
+                  {receivedOTP && (
+                    <View style={styles.otpDisplayContainer}>
+                      <Text style={styles.otpDisplayText}>
+                        Received OTP: {receivedOTP}
+                      </Text>
+                    </View>
+                  )}
 
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>OTP *</Text>
@@ -554,13 +672,13 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        placeholder="Enter 6-digit OTP"
+                        placeholder={receivedOTP ? `Received OTP: ${receivedOTP}` : "Enter 4-digit OTP"}
                         placeholderTextColor="#999"
                         value={otp}
                         onChangeText={setOtp}
                         onBlur={() => handleFieldBlur('otp')}
                         keyboardType="numeric"
-                        maxLength={6}
+                        maxLength={4}
                       />
                     </View>
                     {errors.otp && touched.otp && (
@@ -742,15 +860,22 @@ export default function RegisterScreen() {
                 <TouchableOpacity 
                   style={[
                     styles.nextButton,
-                    currentStep === 1 && styles.nextButtonDisabled
+                    currentStep === 1 && styles.nextButtonDisabled,
+                    loading && styles.nextButtonDisabled
                   ]}
                   onPress={handleNext}
-                  disabled={currentStep === 1}
+                  disabled={currentStep === 1 || loading}
                 >
-                  <Text style={styles.nextButtonText}>
-                    {currentStep === 6 ? 'Complete' : 'Next'}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color="#fff" />
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Text style={styles.nextButtonText}>
+                        {currentStep === 6 ? 'Complete' : 'Next'}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={20} color="#fff" />
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
           </View>
@@ -1091,6 +1216,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
     fontWeight: '500',
+  },
+  // OTP Display
+  otpDisplayContainer: {
+    backgroundColor: '#e8f5e8',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#28a745',
+  },
+  otpDisplayText: {
+    fontSize: 16,
+    color: '#28a745',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   // Navigation buttons
   navigationContainer: {
