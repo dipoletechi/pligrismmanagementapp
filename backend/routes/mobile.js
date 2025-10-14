@@ -68,7 +68,7 @@ router.get('/trips', async (req, res) => {
         }
       ],
       attributes: [
-        'title', 'start_date', 'end_date', 'trip_status_id', 'created_at', 'updated_at'
+        'id', 'title', 'start_date', 'end_date', 'trip_status_id', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
     });
@@ -150,7 +150,7 @@ router.get('/trips/published', async (req, res) => {
         }
       ],
       attributes: [
-        'title', 'start_date', 'end_date', 'trip_status_id', 'budget', 
+        'id', 'title', 'start_date', 'end_date', 'trip_status_id', 'budget', 
         'description', 'boarding_details', 'created_at', 'updated_at'
       ],
       order: [['created_at', 'DESC']]
