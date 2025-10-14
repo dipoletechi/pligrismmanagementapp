@@ -246,7 +246,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
       <Text style={styles.eventDescription}>
-        {trip.destinationInfo?.description || t('defaultDescription')}
+        {trip.destinationInfo?.description || 'A sacred pilgrimage journey. Experience the spiritual significance and cultural heritage of this holy destination.'}
       </Text>
       <View style={styles.eventFooter}>
         <View style={styles.eventDates}>
@@ -284,7 +284,7 @@ export default function HomeScreen() {
               style={styles.dropdownItem}
               onPress={() => {
                 setHeaderMenuVisible(false);
-                // Handle Sign In
+                router.push('/login')
               }}
             >
               <Ionicons name="log-in-outline" size={20} color="#000" />

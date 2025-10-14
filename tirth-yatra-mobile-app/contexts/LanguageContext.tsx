@@ -33,14 +33,11 @@ const translations = {
     'description': 'Description',
     'startDate': 'Start Date',
     'endDate': 'End Date',
-    'noDescription': 'No description available',
     'lastUpdated': 'Last updated',
     'status': 'Status',
-    'defaultDescription': 'A sacred pilgrimage journey. Experience the spiritual significance and cultural heritage of this holy destination.',
     
     // Accommodation
     'selectAccommodation': 'Select different accommodation vendors for specific days',
-    'accommodation': 'Accommodation',
     'vendor': 'Vendor',
     'noStartTime': 'No start time',
     'noEndTime': 'No end time',
@@ -48,7 +45,6 @@ const translations = {
     
     // Food
     'selectFood': 'Select different food vendors for specific days',
-    'food': 'Food',
     'breakfast': 'Breakfast',
     'lunch': 'Lunch',
     'dinner': 'Dinner',
@@ -59,7 +55,6 @@ const translations = {
     
     // Events
     'selectEvents': 'Select different events for specific days',
-    'events': 'Events',
     'eventTitle': 'Event Title',
     'eventDescription': 'Event Description',
     'startTime': 'Start Time',
@@ -71,10 +66,6 @@ const translations = {
     'hotelCheckin': 'Hotel Checkin',
     'gangaVisit': 'Ganga Visit',
     'templeVisit': 'Temple Visit',
-    'onboardingDescription': 'This will be onboarding bus and you need to scan the code at that time',
-    'hotelCheckinDescription': 'This will be onboarding bus and you need to scan the code at that time',
-    'gangaVisitDescription': 'We will be visiting holy river ganga',
-    'templeVisitDescription': 'Temple visit description',
     
     // Days
     'day': 'Day',
@@ -121,6 +112,42 @@ const translations = {
     
     // Carousel
     'auto': 'Auto',
+    
+    // Registration Form
+    'chooseRegistrationMethod': 'Choose Registration Method',
+    'howWouldYouLikeToRegister': 'How would you like to register?',
+    'emailRegistration': 'Email Registration',
+    'phoneRegistration': 'Phone Registration',
+    'registerWithEmail': 'Register with your email address',
+    'registerWithPhone': 'Register with your phone number',
+    'email': 'Email',
+    'phone': 'Phone',
+    'password': 'Password',
+    'confirmPassword': 'Confirm Password',
+    'verifyOTP': 'Verify OTP',
+    'enterOTP': 'Enter the 6-digit OTP sent to',
+    'uploadAadhaarFront': 'Upload Aadhaar Front',
+    'uploadAadhaarBack': 'Upload Aadhaar Back',
+    'takeClearPhoto': 'Take a clear photo of your Aadhaar card',
+    'tapToUploadFront': 'Tap to Upload Front Side',
+    'tapToUploadBack': 'Tap to Upload Back Side',
+    'makeSureDetailsVisible': 'Make sure all details are visible',
+    'frontSideUploaded': 'Front side uploaded successfully',
+    'backSideUploaded': 'Back side uploaded successfully',
+    'aadhaarDetails': 'Aadhaar Details',
+    'pleaseEnterAadhaarDetails': 'Please enter your Aadhaar card details',
+    'aadhaarNumber': 'Aadhaar Number',
+    'enterAadhaarNumber': 'Enter 12-digit Aadhaar number',
+    'age': 'Age',
+    'enterAge': 'Enter your age',
+    'fullName': 'Full Name',
+    'enterFullName': 'Enter your full name',
+    'address': 'Address',
+    'enterAddress': 'Enter your complete address',
+    'next': 'Next',
+    'complete': 'Complete',
+    'alreadyHaveAccount': 'Already have an account?',
+    'noImageUploadedYet': 'No image uploaded yet',
   },
   pa: {
     // Header
@@ -142,14 +169,11 @@ const translations = {
     'description': 'ਵਰਣਨ',
     'startDate': 'ਸ਼ੁਰੂਆਤੀ ਤਾਰੀਖ',
     'endDate': 'ਅੰਤਿਮ ਤਾਰੀਖ',
-    'noDescription': 'ਕੋਈ ਵਰਣਨ ਉਪਲਬਧ ਨਹੀਂ',
     'lastUpdated': 'ਆਖਰੀ ਅਪਡੇਟ',
     'status': 'ਸਥਿਤੀ',
-    'defaultDescription': 'ਇੱਕ ਪਵਿੱਤਰ ਤੀਰਥ ਯਾਤਰਾ। ਇਸ ਪਵਿੱਤਰ ਗੰਮਭੀਰਤਾ ਅਤੇ ਸੱਭਿਆਚਾਰਕ ਵਿਰਾਸਤ ਦਾ ਅਨੁਭਵ ਕਰੋ।',
     
     // Accommodation
     'selectAccommodation': 'ਵੱਖ-ਵੱਖ ਦਿਨਾਂ ਲਈ ਵੱਖ-ਵੱਖ ਰਿਹਾਇਸ਼ ਵਿਕਰੇਤਾ ਚੁਣੋ',
-    'accommodation': 'ਰਿਹਾਇਸ਼',
     'vendor': 'ਵਿਕਰੇਤਾ',
     'noStartTime': 'ਕੋਈ ਸ਼ੁਰੂਆਤੀ ਸਮਾਂ ਨਹੀਂ',
     'noEndTime': 'ਕੋਈ ਅੰਤਿਮ ਸਮਾਂ ਨਹੀਂ',
@@ -157,7 +181,6 @@ const translations = {
     
     // Food
     'selectFood': 'ਵੱਖ-ਵੱਖ ਦਿਨਾਂ ਲਈ ਵੱਖ-ਵੱਖ ਖਾਣਾ ਵਿਕਰੇਤਾ ਚੁਣੋ',
-    'food': 'ਖਾਣਾ',
     'breakfast': 'ਨਾਸ਼ਤਾ',
     'lunch': 'ਦੁਪਹਿਰ ਦਾ ਖਾਣਾ',
     'dinner': 'ਰਾਤ ਦਾ ਖਾਣਾ',
@@ -168,7 +191,6 @@ const translations = {
     
     // Events
     'selectEvents': 'ਵੱਖ-ਵੱਖ ਦਿਨਾਂ ਲਈ ਵੱਖ-ਵੱਖ ਇਵੈਂਟਸ ਚੁਣੋ',
-    'events': 'ਇਵੈਂਟਸ',
     'eventTitle': 'ਇਵੈਂਟ ਸਿਰਲੇਖ',
     'eventDescription': 'ਇਵੈਂਟ ਵਰਣਨ',
     'startTime': 'ਸ਼ੁਰੂਆਤੀ ਸਮਾਂ',
@@ -180,10 +202,6 @@ const translations = {
     'hotelCheckin': 'ਹੋਟਲ ਚੈਕ-ਇਨ',
     'gangaVisit': 'ਗੰਗਾ ਦਰਸ਼ਨ',
     'templeVisit': 'ਮੰਦਿਰ ਦਰਸ਼ਨ',
-    'onboardingDescription': 'ਇਹ ਬਸ ਚੜ੍ਹਨ ਦਾ ਸਮਾਂ ਹੋਵੇਗਾ ਅਤੇ ਉਸ ਸਮੇਂ ਤੁਹਾਨੂੰ ਕੋਡ ਸਕੈਨ ਕਰਨਾ ਹੋਵੇਗਾ',
-    'hotelCheckinDescription': 'ਇਹ ਬਸ ਚੜ੍ਹਨ ਦਾ ਸਮਾਂ ਹੋਵੇਗਾ ਅਤੇ ਉਸ ਸਮੇਂ ਤੁਹਾਨੂੰ ਕੋਡ ਸਕੈਨ ਕਰਨਾ ਹੋਵੇਗਾ',
-    'gangaVisitDescription': 'ਅਸੀਂ ਪਵਿੱਤਰ ਗੰਗਾ ਨਦੀ ਦਾ ਦਰਸ਼ਨ ਕਰਾਂਗੇ',
-    'templeVisitDescription': 'ਮੰਦਿਰ ਦਰਸ਼ਨ ਦਾ ਵਰਣਨ',
     
     // Days
     'day': 'ਦਿਨ',
@@ -230,6 +248,42 @@ const translations = {
     
     // Carousel
     'auto': 'ਆਟੋ',
+    
+    // Registration Form
+    'chooseRegistrationMethod': 'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਵਿਧੀ ਚੁਣੋ',
+    'howWouldYouLikeToRegister': 'ਤੁਸੀਂ ਕਿਵੇਂ ਰਜਿਸਟਰ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?',
+    'emailRegistration': 'ਈਮੇਲ ਰਜਿਸਟ੍ਰੇਸ਼ਨ',
+    'phoneRegistration': 'ਫੋਨ ਰਜਿਸਟ੍ਰੇਸ਼ਨ',
+    'registerWithEmail': 'ਆਪਣੇ ਈਮੇਲ ਪਤੇ ਨਾਲ ਰਜਿਸਟਰ ਕਰੋ',
+    'registerWithPhone': 'ਆਪਣੇ ਫੋਨ ਨੰਬਰ ਨਾਲ ਰਜਿਸਟਰ ਕਰੋ',
+    'email': 'ਈਮੇਲ',
+    'phone': 'ਫੋਨ',
+    'password': 'ਪਾਸਵਰਡ',
+    'confirmPassword': 'ਪਾਸਵਰਡ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ',
+    'verifyOTP': 'OTP ਦੀ ਜਾਂਚ ਕਰੋ',
+    'enterOTP': 'ਭੇਜੇ ਗਏ 6-ਅੰਕੀ OTP ਦਰਜ ਕਰੋ',
+    'uploadAadhaarFront': 'ਆਧਾਰ ਫਰੰਟ ਅਪਲੋਡ ਕਰੋ',
+    'uploadAadhaarBack': 'ਆਧਾਰ ਬੈਕ ਅਪਲੋਡ ਕਰੋ',
+    'takeClearPhoto': 'ਆਪਣੇ ਆਧਾਰ ਕਾਰਡ ਦੀ ਸਪਸ਼ਟ ਫੋਟੋ ਲਓ',
+    'tapToUploadFront': 'ਫਰੰਟ ਸਾਈਡ ਅਪਲੋਡ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ',
+    'tapToUploadBack': 'ਬੈਕ ਸਾਈਡ ਅਪਲੋਡ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ',
+    'makeSureDetailsVisible': 'ਯਕੀਨੀ ਬਣਾਓ ਕਿ ਸਾਰੇ ਵੇਰਵੇ ਦਿਖਾਈ ਦੇ ਰਹੇ ਹਨ',
+    'frontSideUploaded': 'ਫਰੰਟ ਸਾਈਡ ਸਫਲਤਾਪੂਰਵਕ ਅਪਲੋਡ ਹੋਇਆ',
+    'backSideUploaded': 'ਬੈਕ ਸਾਈਡ ਸਫਲਤਾਪੂਰਵਕ ਅਪਲੋਡ ਹੋਇਆ',
+    'aadhaarDetails': 'ਆਧਾਰ ਵੇਰਵੇ',
+    'pleaseEnterAadhaarDetails': 'ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਆਧਾਰ ਕਾਰਡ ਦੇ ਵੇਰਵੇ ਦਰਜ ਕਰੋ',
+    'aadhaarNumber': 'ਆਧਾਰ ਨੰਬਰ',
+    'enterAadhaarNumber': '12-ਅੰਕੀ ਆਧਾਰ ਨੰਬਰ ਦਰਜ ਕਰੋ',
+    'age': 'ਉਮਰ',
+    'enterAge': 'ਆਪਣੀ ਉਮਰ ਦਰਜ ਕਰੋ',
+    'fullName': 'ਪੂਰਾ ਨਾਮ',
+    'enterFullName': 'ਆਪਣਾ ਪੂਰਾ ਨਾਮ ਦਰਜ ਕਰੋ',
+    'address': 'ਪਤਾ',
+    'enterAddress': 'ਆਪਣਾ ਪੂਰਾ ਪਤਾ ਦਰਜ ਕਰੋ',
+    'next': 'ਅਗਲਾ',
+    'complete': 'ਪੂਰਾ ਕਰੋ',
+    'alreadyHaveAccount': 'ਪਹਿਲਾਂ ਤੋਂ ਖਾਤਾ ਹੈ?',
+    'noImageUploadedYet': 'ਅਜੇ ਤੱਕ ਕੋਈ ਚਿੱਤਰ ਅਪਲੋਡ ਨਹੀਂ ਹੋਇਆ',
   }
 };
 

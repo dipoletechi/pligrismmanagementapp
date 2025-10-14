@@ -93,6 +93,11 @@ export default function TripDetailsScreen() {
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [selectedFoodItem, setSelectedFoodItem] = useState<any>(null);
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({
+    visible: false,
+    message: '',
+    type: 'success'
+  });
 
   // Fetch trip details from API
   const fetchTripDetails = async () => {
@@ -119,11 +124,35 @@ export default function TripDetailsScreen() {
       
       const data = await response.json();
       setTripDetails(data.data);
+      
+      // Show success toast
+      setToast({
+        visible: true,
+        message: data.message || 'Trip details loaded successfully!',
+        type: 'success'
+      });
+      
+      // Hide toast after 3 seconds
+      setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 3000);
     } catch (err) {
       clearTimeout(timeoutId);
       console.error('Error fetching trip details:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch trip details');
-      Alert.alert('Error', 'Failed to load trip details. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trip details';
+      setError(errorMessage);
+      
+      // Show error toast
+      setToast({
+        visible: true,
+        message: errorMessage,
+        type: 'error'
+      });
+      
+      // Hide toast after 5 seconds
+      setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 5000);
     } finally {
       setLoading(false);
     }
@@ -217,15 +246,35 @@ export default function TripDetailsScreen() {
     return titleMap[title] || title;
   };
 
-  const translateEventDescription = (title: string, description: string) => {
-    const descriptionMap: { [key: string]: string } = {
-      'Onboarding Bus': t('onboardingDescription'),
-      'Hotel Checkin': t('hotelCheckinDescription'),
-      'Ganga Visit': t('gangaVisitDescription'),
-      'Temple Visit': t('templeVisitDescription'),
-    };
-    return descriptionMap[title] || description;
+  const formatTime = (timeString: string) => {
+    if (!timeString || timeString === 'N/A') return 'N/A';
+    
+    try {
+      // Check if it's already in 12-hour format (contains AM/PM)
+      if (timeString.includes('AM') || timeString.includes('PM')) {
+        return timeString;
+      }
+      
+      // Parse 24-hour format and convert to 12-hour
+      const [hours, minutes] = timeString.split(':');
+      const hour24 = parseInt(hours, 10);
+      const mins = minutes || '00';
+      
+      if (hour24 === 0) {
+        return `12:${mins} AM`;
+      } else if (hour24 < 12) {
+        return `${hour24}:${mins} AM`;
+      } else if (hour24 === 12) {
+        return `12:${mins} PM`;
+      } else {
+        return `${hour24 - 12}:${mins} PM`;
+      }
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timeString; // Return original if parsing fails
+    }
   };
+
 
   const renderDetailsTab = () => {
     if (!tripDetails) return null;
@@ -241,7 +290,7 @@ export default function TripDetailsScreen() {
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>{t('description')}</Text>
             <Text style={styles.detailValue}>
-              {tripDetails.description || t('noDescription')}
+              {tripDetails.description || 'No description available'}
             </Text>
           </View>
           
@@ -438,18 +487,18 @@ export default function TripDetailsScreen() {
                         
                         {event.description && (
                           <Text style={styles.eventDescription}>
-                            {translateEventDescription(event.title, event.description)}
+                            {event.description}
                           </Text>
                         )}
                         
                         <View style={styles.eventTimes}>
                           <View style={styles.timeItem}>
                             <Text style={styles.timeLabel}>{t('startTime')}</Text>
-                            <Text style={styles.timeValue}>{event.startTime || 'N/A'}</Text>
+                            <Text style={styles.timeValue}>{formatTime(event.startTime || 'N/A')}</Text>
                           </View>
                           <View style={styles.timeItem}>
                             <Text style={styles.timeLabel}>{t('endTime')}</Text>
-                            <Text style={styles.timeValue}>{event.endTime || 'N/A'}</Text>
+                            <Text style={styles.timeValue}>{formatTime(event.endTime || 'N/A')}</Text>
                           </View>
                         </View>
                       </View>
@@ -575,7 +624,7 @@ export default function TripDetailsScreen() {
               style={styles.dropdownItem}
               onPress={() => {
                 setHeaderMenuVisible(false);
-                // Handle Sign In
+                router.push('/login')
               }}
             >
               <Ionicons name="log-in-outline" size={20} color="#000" />
@@ -653,7 +702,10 @@ export default function TripDetailsScreen() {
         >
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.applyButton}>
+        <TouchableOpacity 
+          style={styles.applyButton}
+          onPress={() => router.push('/login')}
+        >
           <Text style={styles.applyButtonText}>{t('apply')}</Text>
         </TouchableOpacity>
       </View>
@@ -666,6 +718,21 @@ export default function TripDetailsScreen() {
 
       {/* Food Modal */}
       {renderFoodModal()}
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <View style={[
+          styles.toast,
+          toast.type === 'success' ? styles.toastSuccess : styles.toastError
+        ]}>
+          <Ionicons 
+            name={toast.type === 'success' ? 'checkmark-circle' : 'alert-circle'} 
+            size={20} 
+            color="#fff" 
+          />
+          <Text style={styles.toastText}>{toast.message}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -750,17 +817,21 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+    minWidth: 0,
   },
   activeTab: {
     borderBottomColor: '#000',
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
+    textAlign: 'center',
+    flexShrink: 1,
   },
   activeTabText: {
     color: '#000',
@@ -1148,5 +1219,36 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     color: '#666',
+  },
+  // Toast styles
+  toast: {
+    position: 'absolute',
+    top: 100,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 9999,
+  },
+  toastSuccess: {
+    backgroundColor: '#28a745',
+  },
+  toastError: {
+    backgroundColor: '#dc3545',
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    flex: 1,
   },
 });
