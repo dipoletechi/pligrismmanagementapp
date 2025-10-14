@@ -1841,4 +1841,213 @@ router.get('/account-status/:userId', async (req, res) => {
   }
 });
 
+// Mobile Aadhaar Image Upload API
+router.post('/upload-aadhaar-image', async (req, res) => {
+  try {
+    const { userId, imageType, imageData } = req.body; // imageType: 'front' or 'back'
+
+    if (!userId || !imageType || !imageData) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID, image type, and image data are required'
+      });
+    }
+
+    if (!['front', 'back'].includes(imageType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image type must be either "front" or "back"'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Create user folder if not exists
+    const fs = require('fs');
+    const path = require('path');
+    const userFolder = path.join(__dirname, '..', 'uploads', 'users', userId.toString());
+    
+    if (!fs.existsSync(userFolder)) {
+      fs.mkdirSync(userFolder, { recursive: true });
+    }
+
+    // Save image
+    const imageExtension = 'jpg'; // Default extension
+    const imageFileName = `aadhaar_${imageType}.${imageExtension}`;
+    const imagePath = path.join(userFolder, imageFileName);
+
+    // Convert base64 to buffer and save
+    const base64Data = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+    fs.writeFileSync(imagePath, imageBuffer);
+
+    // Update user record
+    const updateData = {};
+    if (imageType === 'front') {
+      updateData.aadhaarFrontImage = `/uploads/users/${userId}/${imageFileName}`;
+    } else {
+      updateData.aadhaarBackImage = `/uploads/users/${userId}/${imageFileName}`;
+    }
+
+    await user.update(updateData);
+
+    res.json({
+      success: true,
+      message: `${imageType} image uploaded successfully`,
+      data: {
+        userId: user.id,
+        imageType: imageType,
+        imagePath: updateData[imageType === 'front' ? 'aadhaarFrontImage' : 'aadhaarBackImage'],
+        nextStep: imageType === 'front' ? 'upload_back' : 'process_ocr'
+      }
+    });
+
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading image',
+      error: error.message
+    });
+  }
+});
+
+// Mobile OCR Processing API
+router.post('/process-aadhaar-ocr', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if both images are uploaded
+    if (!user.aadhaarFrontImage || !user.aadhaarBackImage) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both front and back images are required for OCR processing'
+      });
+    }
+
+    // Mock OCR processing (in real implementation, use actual OCR service)
+    const ocrData = {
+      aadhaarNumber: '123456789012',
+      fullName: 'John Doe',
+      address: '123 Main Street, City, State, PIN 123456',
+      age: 25,
+      fatherName: 'Father Name', // From back side
+      dob: '01/01/1998' // From back side
+    };
+
+    // Update user with OCR data
+    await user.update({
+      aadhaarNumber: ocrData.aadhaarNumber,
+      aadhaarName: ocrData.fullName,
+      aadhaarAddress: ocrData.address,
+      age: ocrData.age,
+      accountStatus: 'in_verification'
+    });
+
+    res.json({
+      success: true,
+      message: 'OCR processing completed successfully',
+      data: {
+        userId: user.id,
+        ocrData: ocrData,
+        accountStatus: 'in_verification',
+        nextStep: 'review_data'
+      }
+    });
+
+  } catch (error) {
+    console.error('OCR processing error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing OCR',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Manual Aadhaar Data Entry API (if OCR fails)
+router.post('/submit-aadhaar-data', async (req, res) => {
+  try {
+    const { 
+      userId, 
+      aadhaarNumber, 
+      fullName, 
+      address, 
+      age,
+      fatherName,
+      dob
+    } = req.body;
+
+    if (!userId || !aadhaarNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and Aadhaar number are required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update user with manual data
+    await user.update({
+      aadhaarNumber: aadhaarNumber,
+      aadhaarName: fullName || null,
+      aadhaarAddress: address || null,
+      age: age || null,
+      accountStatus: 'in_verification'
+    });
+
+    res.json({
+      success: true,
+      message: 'Aadhaar data submitted successfully',
+      data: {
+        userId: user.id,
+        aadhaarNumber: aadhaarNumber,
+        fullName: fullName,
+        address: address,
+        age: age,
+        accountStatus: 'in_verification',
+        nextStep: 'wait_for_approval'
+      }
+    });
+
+  } catch (error) {
+    console.error('Aadhaar data submission error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting Aadhaar data',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
