@@ -1277,4 +1277,113 @@ router.get('/summary', async (req, res) => {
   }
 });
 
+// Get comprehensive dashboard statistics
+router.get('/dashboard-stats', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get all trips for detailed analysis
+    const allTrips = await Trip.findAll({
+      attributes: ['id', 'start_date', 'end_date', 'trip_status_id', 'budget'],
+      include: [{
+        model: TripStatus,
+        as: 'tripStatus',
+        attributes: ['name']
+      }]
+    });
+    
+    // Calculate trip statistics
+    const tripStats = {
+      total: allTrips.length,
+      upcoming: 0,
+      past: 0,
+      completed: 0,
+      cancelled: 0
+    };
+    
+    allTrips.forEach(trip => {
+      const startDate = new Date(trip.start_date);
+      const endDate = new Date(trip.end_date);
+      
+      // Set time to start of day for comparison
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      
+      if (trip.tripStatus && trip.tripStatus.name) {
+        const status = trip.tripStatus.name.toLowerCase();
+        if (status.includes('completed')) {
+          tripStats.completed++;
+        } else if (status.includes('cancelled')) {
+          tripStats.cancelled++;
+        } else if (today < startDate) {
+          tripStats.upcoming++;
+        } else if (today > endDate) {
+          tripStats.past++;
+        }
+      } else {
+        // Fallback to date-based logic
+        if (today < startDate) {
+          tripStats.upcoming++;
+        } else if (today > endDate) {
+          tripStats.past++;
+        }
+      }
+    });
+    
+    // Get user statistics
+    const allUsers = await User.findAll({
+      attributes: ['id', 'isActive', 'createdAt']
+    });
+    
+    const userStats = {
+      total: allUsers.length,
+      pending: allUsers.filter(u => !u.isActive).length,
+      verified: allUsers.filter(u => u.isActive).length,
+      inProgress: 0 // This would need business logic
+    };
+    
+    // Get support ticket statistics
+    const allTickets = await SupportTicket.findAll({
+      attributes: ['id', 'status']
+    });
+    
+    const supportStats = {
+      total: allTickets.length,
+      byStatus: allTickets.reduce((acc, ticket) => {
+        acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+        return acc;
+      }, {})
+    };
+    
+    // Calculate financial statistics (placeholder - would need actual finance data)
+    const totalBudget = allTrips.reduce((sum, trip) => sum + (parseFloat(trip.budget) || 0), 0);
+    
+    const financialStats = {
+      total: totalBudget,
+      published: totalBudget * 0.7, // Placeholder calculation
+      draft: totalBudget * 0.2,
+      pastPublished: totalBudget * 0.4,
+      futurePublished: totalBudget * 0.3
+    };
+    
+    res.json({
+      success: true,
+      data: {
+        trips: tripStats,
+        users: userStats,
+        supportTickets: supportStats,
+        funds: financialStats
+      }
+    });
+  } catch (error) {
+    console.error('Dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching dashboard statistics',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
