@@ -139,6 +139,17 @@ const User = sequelize.define('User', {
     allowNull: false,
     field: 'account_status'
   },
+  step6Completed: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false,
+    field: 'step6_completed'
+  },
+  step6CompletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'step6_completed_at'
+  },
   // Explicit timestamp fields to ensure valid defaults in MySQL
   createdAt: {
     type: DataTypes.DATE,
