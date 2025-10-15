@@ -80,7 +80,7 @@ const OSMMap = ({
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [latitude, longitude, zoom, onLocationSelect]);
 
   // Update marker position when coordinates change
   useEffect(() => {

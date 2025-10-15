@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { Trip, TripStatus } = require('../models');
+const { Trip, TripStatus, Destination } = require('../models');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,11 +9,18 @@ const router = express.Router();
 router.get('/', protect, async (req, res) => {
   try {
     const trips = await Trip.findAll({ 
-      include: [{
-        model: TripStatus,
-        as: 'tripStatus',
-        attributes: ['id', 'name', 'description']
-      }],
+      include: [
+        {
+          model: TripStatus,
+          as: 'tripStatus',
+          attributes: ['id', 'name', 'description']
+        },
+        {
+          model: Destination,
+          as: 'destinationInfo',
+          attributes: ['id', 'title', 'latitude', 'longitude', 'address']
+        }
+      ],
       order: [['created_at', 'DESC']] 
     });
     res.json({ success: true, data: { items: trips } });
@@ -27,11 +34,18 @@ router.get('/', protect, async (req, res) => {
 router.get('/:id', protect, async (req, res) => {
   try {
     const trip = await Trip.findByPk(req.params.id, {
-      include: [{
-        model: TripStatus,
-        as: 'tripStatus',
-        attributes: ['id', 'name', 'description']
-      }]
+      include: [
+        {
+          model: TripStatus,
+          as: 'tripStatus',
+          attributes: ['id', 'name', 'description']
+        },
+        {
+          model: Destination,
+          as: 'destinationInfo',
+          attributes: ['id', 'title', 'latitude', 'longitude', 'address']
+        }
+      ]
     });
     if (!trip) {
       return res.status(404).json({ success: false, message: 'Trip not found' });
@@ -121,11 +135,18 @@ router.patch('/:id/status', protect, authorize('superadmin', 'admin'), [
     
     // Return updated trip with status
     const updatedTrip = await Trip.findByPk(req.params.id, {
-      include: [{
-        model: TripStatus,
-        as: 'tripStatus',
-        attributes: ['id', 'name', 'description']
-      }]
+      include: [
+        {
+          model: TripStatus,
+          as: 'tripStatus',
+          attributes: ['id', 'name', 'description']
+        },
+        {
+          model: Destination,
+          as: 'destinationInfo',
+          attributes: ['id', 'title', 'latitude', 'longitude', 'address']
+        }
+      ]
     });
     
     res.json({ 

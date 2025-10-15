@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { keyframes } from '@mui/system';
 import {
   Container,
   Paper,
@@ -40,6 +41,23 @@ import {
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import OSMMap from '../Map/OSMMap';
+
+// Animation keyframes
+const pulse = keyframes`
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
 
 // Ensure axios base URL is set
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -53,6 +71,7 @@ const TripList = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [tripModal, setTripModal] = useState({ open: false, trip: null });
   const [trackingModal, setTrackingModal] = useState({ open: false, trip: null });
+  const [mapCoordinates, setMapCoordinates] = useState({ lat: 28.6139, lng: 77.2090 });
   const [statusChangeModal, setStatusChangeModal] = useState({ open: false, trip: null, newStatus: '' });
 
   const statusColors = {
@@ -152,12 +171,48 @@ const TripList = () => {
 
   const handleTrackTrip = (trip) => {
     console.log('Track button clicked for trip:', trip);
-    setTrackingModal({ open: true, trip: trip });
+    
+    // Only open modal if trip data is available
+    if (trip && trip.title) {
+      setTrackingModal({ open: true, trip: trip });
+      
+      // Get coordinates for the destination
+      if (trip.destinationInfo?.latitude && trip.destinationInfo?.longitude) {
+        // Use coordinates from destinationInfo if available
+        setMapCoordinates({ 
+          lat: parseFloat(trip.destinationInfo.latitude), 
+          lng: parseFloat(trip.destinationInfo.longitude) 
+        });
+      } else if (trip.destination) {
+        // Use geocoding if destinationInfo is not available
+        getDestinationCoordinates(trip.destination);
+      }
+    } else {
+      console.error('Invalid trip data:', trip);
+    }
   };
 
   const handleCloseTrackingModal = () => {
     setTrackingModal({ open: false, trip: null });
   };
+
+  const getDestinationCoordinates = async (destination) => {
+    try {
+      // Use geocoding to get coordinates for the destination
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}&limit=1`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        setMapCoordinates({ lat: parseFloat(lat), lng: parseFloat(lon) });
+        console.log('Geocoded coordinates:', lat, lon);
+      }
+    } catch (error) {
+      console.error('Error getting destination coordinates:', error);
+      // Keep default coordinates if geocoding fails
+    }
+  };
+
 
   const handleStatusChange = (trip) => {
     setStatusChangeModal({ 
@@ -738,173 +793,232 @@ const TripList = () => {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TrackIcon sx={{ mr: 2, fontSize: 32 }} />
-              Trip Tracking
+              Trip Tracking{trackingModal.trip ? ` : ${trackingModal.trip.title}` : ''}
             </Box>
           </DialogTitle>
           <DialogContent sx={{ p: 4 }}>
             {trackingModal.trip && (
               <Box>
+                {/* Debug: Log trip data */}
+                {console.log('Complete Trip Data:', trackingModal.trip)}
+                {console.log('Destination Info:', trackingModal.trip?.destinationInfo)}
                 {/* Trip Header */}
                 <Box sx={{ mb: 4, textAlign: 'center' }}>
-                  <Typography variant="h4" fontWeight="600" color="text.primary" gutterBottom>
-                    {trackingModal.trip.title}
-                  </Typography>
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    {trackingModal.trip.destination || 'No destination'}
-                  </Typography>
-                  <Chip 
-                    label={trackingModal.trip.status} 
-                    color={statusColors[trackingModal.trip.status]} 
-                    sx={{
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      fontSize: '1rem',
-                      px: 2,
-                      py: 1
-                    }}
-                  />
+                  
+                  
                 </Box>
 
-                {/* Tracking Content */}
-                <Grid container spacing={3}>
-                  {/* Real-time Status */}
-                  <Grid item xs={12} md={6}>
-                    <Card sx={{ p: 3, backgroundColor: 'rgba(255, 152, 0, 0.05)', border: '2px solid rgba(255, 152, 0, 0.2)' }}>
-                      <Typography variant="h6" fontWeight="600" color="warning.main" gutterBottom>
-                        <TrackIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Real-time Status
+                {/* Camera Buttons Row */}
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+                  {[1, 2, 3, 4].map((cameraNum) => (
+                    <Box
+                      key={cameraNum}
+                      sx={{
+                        width: 200,
+                        height: 120,
+                        border: '2px solid #2c2c2c',
+                        borderRadius: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'linear-gradient(135deg, #424242 0%, #2c2c2c 50%, #1a1a1a 100%)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
+                          borderColor: '#555'
+                        }
+                      }}
+                    >
+                      {/* Camera Label - Top Left */}
+                      <Typography 
+                        variant="caption" 
+                        fontWeight="600" 
+                        color="#ffffff"
+                        sx={{ 
+                          position: 'absolute',
+                          top: 8,
+                          left: 8,
+                          fontSize: '0.8rem',
+                          letterSpacing: '0.5px',
+                          textShadow: '0 0 4px rgba(0,0,0,0.8)',
+                          zIndex: 2
+                        }}
+                      >
+                        CAM{cameraNum}
                       </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Current Status:</Typography>
-                          <Typography variant="h6" fontWeight="600" color="warning.main">
-                            {trackingModal.trip.status === 'active' ? 'In Progress' : 
-                             trackingModal.trip.status === 'planned' ? 'Scheduled' :
-                             trackingModal.trip.status === 'completed' ? 'Completed' : 'Cancelled'}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Progress:</Typography>
-                          <Box sx={{ width: '100%', backgroundColor: 'rgba(255, 152, 0, 0.2)', borderRadius: 2, height: 8, mt: 1 }}>
-                            <Box sx={{ 
-                              width: trackingModal.trip.status === 'completed' ? '100%' : 
-                                    trackingModal.trip.status === 'active' ? '60%' : '20%',
-                              backgroundColor: 'warning.main', 
-                              height: '100%', 
-                              borderRadius: 2,
-                              transition: 'width 0.3s ease'
-                            }} />
+                      
+                      {/* Play Button - Center */}
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#000',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: '#333',
+                            transform: 'scale(1.1)'
+                          }
+                        }}
+                      >
+                        {/* Play Triangle */}
+                        <Box
+                          sx={{
+                            width: 0,
+                            height: 0,
+                            borderLeft: '12px solid #fff',
+                            borderTop: '8px solid transparent',
+                            borderBottom: '8px solid transparent',
+                            marginLeft: '2px'
+                          }}
+                        />
+                      </Box>
+                      
+                      {/* No Preview Text - Bottom */}
+                      <Typography 
+                        variant="body2" 
+                        fontWeight="500" 
+                        color="#b0b0b0"
+                        sx={{ 
+                          position: 'absolute',
+                          bottom: 8,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          fontSize: '0.7rem',
+                          textAlign: 'center',
+                          textShadow: '0 0 4px rgba(0,0,0,0.8)',
+                          opacity: 0.9
+                        }}
+                      >
+                        No Preview
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Main Content Layout - Left: Details, Right: Map */}
+                <Box sx={{ display: 'flex', gap: 3, width: '100%' }}>
+                  {/* Left Side - Trip Details */}
+                  <Box sx={{ width: '25%', minWidth: '300px' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {/* Trip Timeline */}
+                      <Card sx={{ p: 3, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '1px solid rgba(25, 118, 210, 0.2)' }}>
+                        <Typography variant="h6" fontWeight="600" color="primary.main" gutterBottom>
+                          <CalendarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                          Trip Timeline
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Start Date:</Typography>
+                            <Typography variant="body1" fontWeight="500">
+                              {new Date(trackingModal.trip.start_date).toLocaleDateString('en-IN', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">End Date:</Typography>
+                            <Typography variant="body1" fontWeight="500">
+                              {new Date(trackingModal.trip.end_date).toLocaleDateString('en-IN', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Duration:</Typography>
+                            <Typography variant="body1" fontWeight="500">
+                              {Math.ceil((new Date(trackingModal.trip.end_date) - new Date(trackingModal.trip.start_date)) / (1000 * 60 * 60 * 24))} days
+                            </Typography>
                           </Box>
                         </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-
-                  {/* Trip Timeline */}
-                  <Grid item xs={12} md={6}>
-                    <Card sx={{ p: 3, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '2px solid rgba(25, 118, 210, 0.2)' }}>
-                      <Typography variant="h6" fontWeight="600" color="primary.main" gutterBottom>
-                        <CalendarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Trip Timeline
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Start Date:</Typography>
-                          <Typography variant="body1" fontWeight="500">
-                            {new Date(trackingModal.trip.start_date).toLocaleDateString('en-IN', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">End Date:</Typography>
-                          <Typography variant="body1" fontWeight="500">
-                            {new Date(trackingModal.trip.end_date).toLocaleDateString('en-IN', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Duration:</Typography>
-                          <Typography variant="body1" fontWeight="500">
-                            {Math.ceil((new Date(trackingModal.trip.end_date) - new Date(trackingModal.trip.start_date)) / (1000 * 60 * 60 * 24))} days
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-
-                  {/* Financial Overview */}
-                  <Grid item xs={12} md={6}>
-                    <Card sx={{ p: 3, backgroundColor: 'rgba(76, 175, 80, 0.05)', border: '2px solid rgba(76, 175, 80, 0.2)' }}>
-                      <Typography variant="h6" fontWeight="600" color="success.main" gutterBottom>
-                        <MoneyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Financial Overview
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Total Budget:</Typography>
-                          <Typography variant="h5" fontWeight="600" color="success.main">
-                            {trackingModal.trip.budget ? `₹${parseFloat(trackingModal.trip.budget).toLocaleString()}` : 'No budget set'}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Status:</Typography>
-                          <Typography variant="body1" fontWeight="500" color="success.main">
-                            {trackingModal.trip.budget ? 'Budget Allocated' : 'Pending Budget'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-
-                  {/* Tracking Details */}
-                  <Grid item xs={12} md={6}>
-                    <Card sx={{ p: 3, backgroundColor: 'rgba(156, 39, 176, 0.05)', border: '2px solid rgba(156, 39, 176, 0.2)' }}>
-                      <Typography variant="h6" fontWeight="600" color="purple" gutterBottom>
-                        <TrackIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Tracking Details
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Last Updated:</Typography>
-                          <Typography variant="body1" fontWeight="500">
-                            {trackingModal.trip.updated_at ? 
-                              new Date(trackingModal.trip.updated_at).toLocaleString('en-IN') : 
-                              'Never updated'
-                            }
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">Tracking ID:</Typography>
-                          <Typography variant="body1" fontWeight="500" sx={{ fontFamily: 'monospace' }}>
-                            TRK-{trackingModal.trip.id.toString().padStart(6, '0')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Card>
-                  </Grid>
-
-                  {/* Additional Information */}
-                  {trackingModal.trip.description && (
-                    <Grid item xs={12}>
-                      <Card sx={{ p: 3, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
-                        <Typography variant="h6" fontWeight="600" color="text.secondary" gutterBottom>
-                          Trip Description
-                        </Typography>
-                        <Typography variant="body1" color="text.primary">
-                          {trackingModal.trip.description}
-                        </Typography>
                       </Card>
-                    </Grid>
-                  )}
-                </Grid>
+
+                      {/* Financial Overview */}
+                      <Card sx={{ p: 3, backgroundColor: 'rgba(76, 175, 80, 0.05)', border: '1px solid rgba(76, 175, 80, 0.2)' }}>
+                        <Typography variant="h6" fontWeight="600" color="success.main" gutterBottom>
+                          <MoneyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                          Financial Overview
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Total Budget:</Typography>
+                            <Typography variant="h5" fontWeight="600" color="success.main">
+                              {trackingModal.trip.budget ? `₹${parseFloat(trackingModal.trip.budget).toLocaleString()}` : 'No budget set'}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">Status:</Typography>
+                            <Typography variant="body1" fontWeight="500" color="success.main">
+                              {trackingModal.trip.budget ? 'Budget Allocated' : 'Pending Budget'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Card>
+
+                      {/* Trip Description */}
+                      {trackingModal.trip.description && (
+                        <Card sx={{ p: 3, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                          <Typography variant="h6" fontWeight="600" color="text.secondary" gutterBottom>
+                            Trip Description
+                          </Typography>
+                          <Typography variant="body1" color="text.primary">
+                            {trackingModal.trip.description}
+                          </Typography>
+                        </Card>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* Right Side - Map */}
+                  <Box sx={{ width: '75%', flex: 1 }}>
+                    <Box sx={{ width: '100%' }}>
+                      <Box sx={{ 
+                        height: 500,
+                        width: '100%',
+                        minWidth: '100%',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        border: '1px solid rgba(25, 118, 210, 0.2)',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}>
+                        <OSMMap
+                          latitude={mapCoordinates.lat}
+                          longitude={mapCoordinates.lng}
+                          height="500px"
+                          zoom={12}
+                        />
+                      </Box>
+                      <Box sx={{ mt: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Showing location for: {trackingModal.trip.destinationInfo?.title || trackingModal.trip.destination || 'Default location'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                          Database Coordinates: {trackingModal.trip.destinationInfo?.latitude || 'N/A'}, {trackingModal.trip.destinationInfo?.longitude || 'N/A'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                          Map Using: {mapCoordinates.lat.toFixed(6)}, {mapCoordinates.lng.toFixed(6)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               </Box>
             )}
           </DialogContent>
@@ -916,16 +1030,7 @@ const TripList = () => {
             >
               Close
             </Button>
-            <Button
-              onClick={() => {
-                handleCloseTrackingModal();
-                handleViewTrip(trackingModal.trip);
-              }}
-              variant="contained"
-              sx={{ minWidth: 100 }}
-            >
-              View Full Details
-            </Button>
+            
           </DialogActions>
         </Dialog>
 
