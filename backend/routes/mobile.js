@@ -301,6 +301,10 @@ router.get('/trips/:id', async (req, res) => {
       }]
     });
     
+    const allBuses = await Bus.findAll({
+      attributes: ['id', 'title', 'model', 'make', 'no_of_sittings', 'rc_no']
+    });
+    
     // Helper function to get vendor name by ID
     const getVendorName = (vendorId, vendors) => {
       const vendor = vendors.find(v => v.id === vendorId);
@@ -492,7 +496,13 @@ router.get('/trips/:id', async (req, res) => {
       tripStatus: trip.tripStatus,
       transportVendor: trip.transportVendor,
       accommodationVendor: trip.accommodationVendor,
-      foodVendor: trip.foodVendor
+      foodVendor: trip.foodVendor,
+      allAccommodationVendors: allAccommodationVendors,
+      allTransportVendors: allTransportVendors,
+      allFoodVendors: allFoodVendors,
+      allDrivers: allDrivers,
+      allBuses: allBuses,
+      allConductors: allConductors
     };
     
     res.json({
@@ -662,6 +672,10 @@ router.get('/trips/:id/details', async (req, res) => {
         as: 'vendor',
         attributes: ['title']
       }]
+    });
+    
+    const allBuses = await Bus.findAll({
+      attributes: ['id', 'title', 'model', 'make', 'no_of_sittings', 'rc_no']
     });
     
     // Helper function to get vendor name by ID
@@ -854,7 +868,13 @@ router.get('/trips/:id/details', async (req, res) => {
       tripStatus: trip.tripStatus,
       transportVendor: trip.transportVendor,
       accommodationVendor: trip.accommodationVendor,
-      foodVendor: trip.foodVendor
+      foodVendor: trip.foodVendor,
+      allAccommodationVendors: allAccommodationVendors,
+      allTransportVendors: allTransportVendors,
+      allFoodVendors: allFoodVendors,
+      allDrivers: allDrivers,
+      allBuses: allBuses,
+      allConductors: allConductors
     };
 
     res.json({

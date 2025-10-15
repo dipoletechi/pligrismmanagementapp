@@ -21,6 +21,7 @@ import SupportTickets from './components/Support/SupportTickets';
 import TripList from './components/Trip/TripList';
 import CreateTrip from './components/Trip/CreateTrip';
 import TripTracking from './components/Trip/TripTracking';
+import ScannerPage from './components/Scanner/ScannerPage';
 import Settings from './components/Settings';
 import './App.css';
 
@@ -207,6 +208,18 @@ function App() {
                   >
                     <MainLayout>
                       <TripTracking />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Scanner - Trip Manager only */}
+              <Route 
+                path="/scanner/:tripId" 
+                element={
+                  <ProtectedRoute requiredRoles={['trip_manager']}>
+                    <MainLayout>
+                      <ScannerPage />
                     </MainLayout>
                   </ProtectedRoute>
                 } 

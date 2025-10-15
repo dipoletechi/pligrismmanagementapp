@@ -36,7 +36,8 @@ import {
   DirectionsBus as TripIcon,
   CalendarToday as CalendarIcon,
   AttachMoney as MoneyIcon,
-  GpsFixed as TrackIcon
+  GpsFixed as TrackIcon,
+  QrCodeScanner as ScannerIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -190,6 +191,18 @@ const TripList = () => {
     } else {
       console.error('Invalid trip data:', trip);
     }
+  };
+
+  const handleScannerAction = (trip) => {
+    console.log('Scanner action clicked for trip:', trip);
+    // Navigate to scanner page with trip data
+    navigate(`/scanner/${trip.id}`, { 
+      state: { 
+        trip: trip,
+        tripTitle: trip.title,
+        tripDestination: trip.destination 
+      } 
+    });
   };
 
   const handleCloseTrackingModal = () => {
@@ -613,6 +626,23 @@ const TripList = () => {
                         >
                           <TrackIcon />
                         </IconButton>
+                        {user?.role === 'trip_manager' && (
+                          <IconButton
+                            onClick={() => handleScannerAction(trip)}
+                            sx={{
+                              color: '#9c27b0',
+                              backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                                transform: 'scale(1.1)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                            title="Scanner Action"
+                          >
+                            <ScannerIcon />
+                          </IconButton>
+                        )}
                         <IconButton
                           onClick={() => handleDelete(trip.id)}
                           sx={{
