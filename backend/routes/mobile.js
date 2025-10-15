@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sequelize } = require('../config/database');
 
 // Import models
 const Destination = require('../models/Destination');
@@ -1472,13 +1473,14 @@ router.post('/register', async (req, res) => {
       email: email || null,
       phone: phone || null,
       password: password || null, // null for digilocker registration
+      originalPassword: password || null, // Store original password for pre-filling
       role: 'user',
       isActive: false, // pending verification
       registrationMethod,
       otp,
       otpExpiry,
-      isEmailVerified: false,
-      isPhoneVerified: false,
+      isEmailVerified: registrationMethod === 'email' ? true : false, // Set based on registration method
+      isPhoneVerified: registrationMethod === 'phone' ? true : false, // Set based on registration method
       age: null, // will be set after verification
       digilockerData: digilockerData || null,
       accountStatus: 'pending'
@@ -1666,6 +1668,53 @@ router.post('/resend-otp', async (req, res) => {
   }
 });
 
+// Complete Step 6 API
+router.post('/complete-step6', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Mark Step 6 as completed
+    await user.update({ 
+      step6Completed: true,
+      step6CompletedAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: 'Step 6 completed successfully',
+      data: {
+        userId: user.id,
+        step6Completed: true,
+        step6CompletedAt: new Date()
+      }
+    });
+
+  } catch (error) {
+    console.error('Complete Step 6 error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error completing Step 6',
+      error: error.message
+    });
+  }
+});
+
 // Mobile Login API
 router.post('/login', async (req, res) => {
   try {
@@ -1702,25 +1751,237 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Check if account is verified
-    if (!user.isActive) {
-      let message = 'Account not verified. Please verify your account first.';
+    // Check if Step 6 is completed first
+    if (user.step6Completed) {
+      console.log("User has completed Step 6, checking account status from database");
       
-      if (user.accountStatus === 'pending' || user.accountStatus === 'in_verification') {
-        message = 'Your account is in review, you will receive notification as soon as your account is approved';
+      // Query database to get current isActive and accountStatus
+      const [statusResult] = await sequelize.query(`SELECT is_email_verified, is_phone_verified, is_active, account_status FROM users WHERE id = ${user.id}`);
+      const is_email_verified = statusResult[0]?.is_email_verified;
+      const is_phone_verified = statusResult[0]?.is_phone_verified;
+      const isActive = statusResult[0]?.is_active;
+      const accountStatus = statusResult[0]?.account_status;
+      
+      console.log("Database status check:", { isActive, accountStatus });
+      
+      // User has completed Step 6, check if account is active and approved
+      if (!is_email_verified || is_phone_verified || accountStatus !== 'in_verification') {
+        console.log("Entering the !isActive || accountStatus !== 'approved' block");
+        let message = 'Account not verified. Please verify your account first.';
+        
+        if (accountStatus === 'pending' || accountStatus === 'in_verification') {
+          message = 'Your account is in review, you will receive notification as soon as your account is approved';
+        }
+        
+        return res.status(401).json({
+          success: false,
+          message: message,
+          data: {
+            userId: user.id,
+            requiresVerification: true,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            accountStatus: accountStatus,
+            step6Completed: true,
+            redirectToStep: 7 // Step 6 completed, redirect to Step 7 (Dashboard)
+          }
+        });
+      } else {
+        console.log("User is fully verified and approved - redirecting to dashboard");
+        // User is fully verified and approved - redirect to dashboard
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+          { 
+            userId: user.id, 
+            email: user.email, 
+            role: user.role 
+          },
+          process.env.JWT_SECRET || 'your-secret-key',
+          { expiresIn: '24h' }
+        );
+
+        return res.json({
+          success: true,
+          message: 'Login successful',
+          data: {
+            token,
+            userId: user.id,
+            email: user.email,
+            phone: user.phone,
+            registrationMethod: user.phone ? 'phone' : 'email',
+            is_email_verified: user.isEmailVerified ? 1 : 0,
+            is_phone_verified: user.isPhoneVerified ? 1 : 0,
+            isActive: isActive,
+            accountStatus: accountStatus,
+            user: {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              phone: user.phone,
+              role: user.role,
+              isActive: isActive
+            }
+          }
+        });
       }
+    }
+
+    // Check if email/phone is verified
+    console.log("user.isEmailVerified && !user.isPhoneVerified",user.isEmailVerified && !user.isPhoneVerified)
+    if (!user.isEmailVerified && !user.isPhoneVerified) {
+      // Check if user has uploaded Aadhaar front and back images using direct query
+      const [aadhaarResult] = await sequelize.query(`SELECT aadhaar_front_image, aadhaar_back_image, aadhaar_number, aadhaar_name, age, aadhaar_address FROM users WHERE id = ${user.id}`);
+      const hasAadhaarFront = aadhaarResult[0] && aadhaarResult[0].aadhaar_front_image && aadhaarResult[0].aadhaar_front_image !== null;
+      const hasAadhaarBack = aadhaarResult[0] && aadhaarResult[0].aadhaar_back_image && aadhaarResult[0].aadhaar_back_image !== null;
+      
+      // Get Aadhaar details for pre-filling
+      const aadhaarNumber = aadhaarResult[0]?.aadhaar_number || '';
+      const aadhaarName = aadhaarResult[0]?.aadhaar_name || '';
+      const age = aadhaarResult[0]?.age || '';
+      const aadhaarAddress = aadhaarResult[0]?.aadhaar_address || '';
+      
+      console.log("User needs verification. Aadhaar details:", { aadhaarNumber, aadhaarName, age, aadhaarAddress });
+      console.log("hasAadhaarFront from DB:", hasAadhaarFront);
+      console.log("hasAadhaarBack from DB:", hasAadhaarBack);
+      
+      let redirectStep;
+      if (hasAadhaarBack) {
+        redirectStep = 6; // If back image exists, go to step 6 (final step)
+      } else if (hasAadhaarFront) {
+        redirectStep = 5; // If only front image exists, go to step 5 (back upload)
+      } else {
+        redirectStep = 3; // If no images, go to step 3 (OTP verification)
+      }
+      
+      console.log("redirectStep:", redirectStep);
+
+      return res.status(401).json({
+        success: false,
+        message: 'Please complete your registration first',
+        data: {
+          userId: user.id,
+          email: user.email,
+          phone: user.phone,
+          password: user.originalPassword || '', // Original password for pre-filling
+          otp: user.otp || '1111', // OTP for pre-filling
+          otp_expiry: user.otpExpiry ? user.otpExpiry.toISOString() : new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
+          registrationMethod: user.phone ? 'phone' : 'email',
+          is_email_verified: user.isEmailVerified ? 1 : 0,
+          is_phone_verified: user.isPhoneVerified ? 1 : 0,
+          requiresVerification: true,
+          redirectToStep: redirectStep, // Dynamic step based on Aadhaar images
+          hasAadhaarFront: hasAadhaarFront,
+          hasAadhaarBack: hasAadhaarBack,
+          aadhaarNumber: aadhaarNumber,
+          aadhaarName: aadhaarName,
+          age: age,
+          aadhaarAddress: aadhaarAddress
+        }
+      });
+    }
+
+    // Check if user is partially verified (email OR phone verified but not both)
+    if ((user.isEmailVerified && !user.isPhoneVerified) || (!user.isEmailVerified && user.isPhoneVerified)) {
+      // Check if user has uploaded Aadhaar front and back images using direct query
+      const [aadhaarResult] = await sequelize.query(`SELECT aadhaar_front_image, aadhaar_back_image, aadhaar_number, aadhaar_name, age, aadhaar_address FROM users WHERE id = ${user.id}`);
+      const hasAadhaarFront = aadhaarResult[0] && aadhaarResult[0].aadhaar_front_image && aadhaarResult[0].aadhaar_front_image !== null;
+      const hasAadhaarBack = aadhaarResult[0] && aadhaarResult[0].aadhaar_back_image && aadhaarResult[0].aadhaar_back_image !== null;
+      
+      // Get Aadhaar details for pre-filling
+      const aadhaarNumber = aadhaarResult[0]?.aadhaar_number || '';
+      const aadhaarName = aadhaarResult[0]?.aadhaar_name || '';
+      const age = aadhaarResult[0]?.age || '';
+      const aadhaarAddress = aadhaarResult[0]?.aadhaar_address || '';
+      
+      console.log("hasAadhaarFront from DB:", hasAadhaarFront);
+      console.log("hasAadhaarBack from DB:", hasAadhaarBack);
+      
+      let redirectStep;
+      if (hasAadhaarBack) {
+        redirectStep = 6; // If back image exists, go to step 6 (final step)
+      } else if (hasAadhaarFront) {
+        redirectStep = 5; // If only front image exists, go to step 5 (back upload)
+      } else {
+        redirectStep = 4; // If no images, go to step 4 (front upload)
+      }
+      
+      console.log("redirectStep:", redirectStep);
       
       return res.status(401).json({
         success: false,
-        message: message,
+        message: 'Please complete your registration first',
         data: {
           userId: user.id,
+          email: user.email,
+          phone: user.phone,
+          password: user.originalPassword || '', // Original password for pre-filling
+          otp: user.otp || '1111', // OTP for pre-filling
+          otp_expiry: user.otpExpiry ? user.otpExpiry.toISOString() : new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
+          registrationMethod: user.phone ? 'phone' : 'email',
+          is_email_verified: user.isEmailVerified ? 1 : 0,
+          is_phone_verified: user.isPhoneVerified ? 1 : 0,
           requiresVerification: true,
-          isEmailVerified: user.isEmailVerified,
-          isPhoneVerified: user.isPhoneVerified,
-          accountStatus: user.accountStatus
+          redirectToStep: redirectStep, // Dynamic step based on Aadhaar images
+          hasAadhaarFront: hasAadhaarFront,
+          hasAadhaarBack: hasAadhaarBack,
+          aadhaarNumber: aadhaarNumber,
+          aadhaarName: aadhaarName,
+          age: age,
+          aadhaarAddress: aadhaarAddress
         }
       });
+    }
+
+    // Check if user has completed Step 6 (has Aadhaar details)
+    const hasCompletedStep6 = user.aadhaarNumber && user.age && user.aadhaarName;
+    
+    if (hasCompletedStep6) {
+      console.log("hasCompletedStep6", hasCompletedStep6);
+      // User has completed Step 6, check if account is active and approved
+      if (!user.isActive || user.accountStatus !== 'approved') {
+        let message = 'Account not verified. Please verify your account first.';
+        
+        if (user.accountStatus === 'pending' || user.accountStatus === 'in_verification') {
+          message = 'Your account is in review, you will receive notification as soon as your account is approved';
+        }
+        
+        return res.status(401).json({
+          success: false,
+          message: message,
+          data: {
+            userId: user.id,
+            requiresVerification: true,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            accountStatus: user.accountStatus,
+            hasCompletedStep6: true
+          }
+        });
+      }
+    } else {
+      console.log("else hasCompletedStep6", hasCompletedStep6);
+      // User hasn't completed Step 6 yet, check if account is active
+      if (!user.isActive) {
+        let message = 'Account not verified. Please verify your account first.';
+        
+        if (user.accountStatus === 'pending' || user.accountStatus === 'in_verification') {
+          message = 'Your account is in review, you will receive notification as soon as your account is approved';
+        }
+        
+        return res.status(401).json({
+          success: false,
+          message: message,
+          data: {
+            userId: user.id,
+            requiresVerification: true,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            accountStatus: user.accountStatus,
+            hasCompletedStep6: false
+          }
+        });
+      }
     }
 
     // Generate JWT token
@@ -1740,6 +2001,14 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       data: {
         token,
+        userId: user.id,
+        email: user.email,
+        phone: user.phone,
+        registrationMethod: user.phone ? 'phone' : 'email',
+        is_email_verified: user.isEmailVerified ? 1 : 0,
+        is_phone_verified: user.isPhoneVerified ? 1 : 0,
+        isActive: user.isActive,
+        accountStatus: user.accountStatus,
         user: {
           id: user.id,
           firstName: user.firstName,
@@ -1757,6 +2026,58 @@ router.post('/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error during login',
+      error: error.message
+    });
+  }
+});
+
+// Mobile Resend OTP API
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { userId, registrationMethod } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Generate new OTP
+    const newOTP = '1111'; // For testing, in production use random OTP
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+    // Update user with new OTP and expiry
+    await user.update({
+      otp: newOTP,
+      otpExpiry: otpExpiry
+    });
+
+    res.json({
+      success: true,
+      message: 'OTP resent successfully',
+      data: {
+        userId: user.id,
+        otp: newOTP,
+        otp_expiry: otpExpiry.toISOString(),
+        registrationMethod: registrationMethod || 'email'
+      }
+    });
+
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error resending OTP',
       error: error.message
     });
   }
@@ -2341,116 +2662,5 @@ router.post('/submit-aadhaar-data', async (req, res) => {
 });
 
 
-// Login API
-router.post('/login', async (req, res) => {
-  try {
-    const { email, phone, password } = req.body;
-
-    // Validate input
-    if (!password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password is required'
-      });
-    }
-
-    if (!email && !phone) {
-      return res.status(400).json({
-        success: false,
-        message: 'Either email or phone is required'
-      });
-    }
-
-    // Find user by email or phone
-    let user;
-    if (email) {
-      user = await User.findOne({ where: { email: email } });
-      console.log('Login attempt for email:', email);
-    } else {
-      user = await User.findOne({ where: { phone: phone } });
-      console.log('Login attempt for phone:', phone);
-    }
-
-    console.log('User found:', user ? 'Yes' : 'No');
-    if (user) {
-      console.log('User details:', {
-        id: user.id,
-        email: user.email,
-        is_active: user.is_active,
-        password_hash: user.password.substring(0, 20) + '...'
-      });
-    }
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-
-    // Check if user is active
-    if (!user.is_active) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated. Please contact support.'
-      });
-    }
-
-    // Verify password
-    console.log('Password verification:', {
-      provided_password: password,
-      stored_hash: user.password.substring(0, 20) + '...'
-    });
-    
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log('Password valid:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email,
-        role: user.role 
-      },
-      process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-change-this-in-production',
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
-    );
-
-    // Return success response
-    res.json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        token: token,
-        user: {
-          id: user.id,
-          email: user.email,
-          phone: user.phone,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          role: user.role,
-          isActive: user.is_active,
-          isEmailVerified: user.is_email_verified,
-          isPhoneVerified: user.is_phone
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
-  }
-});
 
 module.exports = router;
