@@ -11,6 +11,7 @@ import {
   Card,
   CardContent,
   Alert,
+  AlertTitle,
   Snackbar,
   CircularProgress,
   FormControl,
@@ -2768,7 +2769,7 @@ const CreateTrip = () => {
                   Day-wise Selection
                   {appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses && (
                     <Chip 
-                      label="View Mode" 
+                      label="Applied from All Days" 
                       size="small" 
                       sx={{ ml: 2, backgroundColor: '#4caf50', color: 'white' }}
                     />
@@ -2781,129 +2782,12 @@ const CreateTrip = () => {
               
               {dayWiseExpanded && (
                 <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 4px 4px', backgroundColor: 'white' }}>
-                  {appliedToAllDays.drivers && appliedToAllDays.conductors && appliedToAllDays.buses ? (
-                    <Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        All days have been configured from "All Days Selection". This is view mode.
-                      </Typography>
-                      <Alert severity="info" sx={{ mb: 3 }}>
-                        To modify individual days, first clear the "All Days Selection" or use the "Apply to All Days" button to update all days.
-                      </Alert>
-                      
-                      {/* View Mode - Show applied data */}
-                      <Grid container spacing={1.5}>
-                        {tripDays.map((day, index) => (
-                          <Grid item xs={12} sm={6} md={4} key={day}>
-                            <Card variant="outlined" sx={{ 
-                              p: 1.5, 
-                              height: '100%', 
-                              minHeight: 150, 
-                              maxWidth: 300,
-                              backgroundColor: '#f8f9fa'
-                            }}>
-                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', mb: 1.5, fontSize: '0.9rem' }}>
-                                Day {index + 1} - {new Date(day).toLocaleDateString('en-IN', { 
-                                  weekday: 'long', 
-                                  year: 'numeric', 
-                                  month: 'long', 
-                                  day: 'numeric' 
-                                })}
-                              </Typography>
-                              
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                                {/* Show applied vendor */}
-                                <Box sx={{ p: 1, backgroundColor: 'rgba(25, 118, 210, 0.1)', borderRadius: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
-                                    Vendor: {transportVendors.find(v => v.id === parseInt(formData.selectedTransportVendor))?.title || 'Not selected'}
-                                  </Typography>
-                                </Box>
-                                
-                                {/* Show applied drivers */}
-                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                    Drivers:
-                                  </Typography>
-                                  {(formData.selectedDrivers?.length || 0) > 0 ? (
-                                    formData.selectedDrivers.map(driverId => {
-                                      const driver = drivers.find(d => d.id === driverId);
-                                      return (
-                                        <Typography key={driverId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                          • {driver ? `${driver.first_name || driver.firstName || driver.name || 'Driver'} ${driver.last_name || driver.lastName || ''}` : `Driver ID: ${driverId}`}
-                                        </Typography>
-                                      );
-                                    })
-                                  ) : (
-                                    <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                      No drivers selected
-                                    </Typography>
-                                  )}
-                                </Box>
-                                
-                                {/* Show applied conductors */}
-                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                    Conductors:
-                                  </Typography>
-                                  {(formData.selectedConductors?.length || 0) > 0 ? (
-                                    formData.selectedConductors.map(conductorId => {
-                                      const conductor = conductors.find(c => c.id === conductorId);
-                                      return (
-                                        <Typography key={conductorId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                          • {conductor ? `${conductor.first_name || conductor.firstName || conductor.name || 'Conductor'} ${conductor.last_name || conductor.lastName || ''}` : `Conductor ${conductorId}`}
-                                        </Typography>
-                                      );
-                                    })
-                                  ) : (
-                                    <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                      No conductors selected
-                                    </Typography>
-                                  )}
-                                </Box>
-                                
-                                {/* Show applied buses */}
-                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                    Buses:
-                                  </Typography>
-                                  {(formData.selectedBuses?.length || 0) > 0 ? (
-                                    formData.selectedBuses.map(busId => {
-                                      const bus = buses.find(b => b.id === busId);
-                                      return (
-                                        <Typography key={busId} variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                          • {bus ? `${bus.title || bus.bus_number || bus.busNumber || bus.name || `Bus ${bus.id}`}${bus.no_of_sittings ? ` - ${bus.no_of_sittings} seats` : ''}` : `Bus ID: ${busId}`}
-                                        </Typography>
-                                      );
-                                    })
-                                  ) : (
-                                    <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                      No buses selected
-                                    </Typography>
-                                  )}
-                                </Box>
-                                
-                                {/* Show applied timings */}
-                                <Box sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                    Timings:
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                    Start: {formData.timeByDay[day]?.startTime || 'Not set'}
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                                    End: {formData.timeByDay[day]?.endTime || 'Not set'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Card>
-            </Grid>
-                        ))}
-                      </Grid>
-                    </Box>
-                  ) : (
-                    <>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Select different drivers, conductors, buses, and timings for specific days
-                      </Typography>
+                  
+                  
+                  {/* Always show editable mode in day-wise selection */}
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Select different drivers, conductors, buses, and timings for specific days
+                  </Typography>
                       
                       <Grid container spacing={1.5}>
                         {tripDays.map((day, index) => (
@@ -3002,8 +2886,6 @@ const CreateTrip = () => {
             </Grid>
                         ))}
                       </Grid>
-                    </>
-                  )}
                 </Box>
               )}
             </Box>
