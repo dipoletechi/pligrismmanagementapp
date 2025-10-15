@@ -40,6 +40,7 @@ import {
   CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 import axios from 'axios';
+import QRScanner from './QRScanner';
 
 const ScannerPage = () => {
   const { tripId } = useParams();
@@ -56,6 +57,13 @@ const ScannerPage = () => {
   const [checkInOutData, setCheckInOutData] = useState({});
   const [tripDays, setTripDays] = useState([]);
   const [descriptionModal, setDescriptionModal] = useState({ open: false, title: '', description: '' });
+  const [qrScanner, setQrScanner] = useState({ 
+    open: false, 
+    action: null, 
+    dayString: null, 
+    category: null, 
+    eventKey: null 
+  });
 
   // Fetch trip details with all related data
   useEffect(() => {
@@ -594,6 +602,126 @@ const ScannerPage = () => {
     });
   };
 
+  const handleQRScanSuccess = async (decodedText, decodedResult) => {
+    try {
+      console.log('=== QR CODE SCANNED ===');
+      console.log('Raw QR Data:', decodedText);
+      console.log('Decoded Result:', decodedResult);
+      console.log('Scanner Context:', {
+        action: qrScanner.action,
+        category: qrScanner.category,
+        dayString: qrScanner.dayString,
+        eventKey: qrScanner.eventKey
+      });
+      
+      // Try to parse the scanned data, but handle cases where it's not JSON
+      let scannedData;
+      try {
+        scannedData = JSON.parse(decodedText);
+        console.log('Parsed JSON Data:', scannedData);
+      } catch (parseError) {
+        // If it's not JSON, treat it as plain text
+        console.log('QR code is not JSON, treating as plain text:', decodedText);
+        scannedData = { text: decodedText };
+      }
+      
+      // Determine log type and item ID based on the action
+      let logType, logItemId;
+      
+      if (qrScanner.category === 'transport') {
+        logType = qrScanner.action === 'checkIn' ? 'TransportCheckIn' : 'TransportCheckOut';
+        logItemId = scannedData.vendorId || scannedData.busId || scannedData.text || 'Unknown';
+      } else if (qrScanner.category === 'accommodation') {
+        logType = qrScanner.action === 'checkIn' ? 'AccommodationCheckIn' : 'AccommodationCheckOut';
+        logItemId = scannedData.vendorId || scannedData.text || 'Unknown';
+      } else if (qrScanner.category === 'events') {
+        logType = qrScanner.action === 'checkIn' ? 'EventCheckIn' : 'EventCheckOut';
+        logItemId = scannedData.eventTitle || scannedData.eventId || scannedData.text || 'Unknown Event';
+      }
+
+      console.log('Determined Log Type:', logType);
+      console.log('Determined Log Item ID:', logItemId);
+
+      // Create trip log entry
+      const logData = {
+        trip_id: parseInt(tripId),
+        log_type: logType,
+        log_item_id: logItemId
+      };
+
+      console.log('Trip Log Data to be sent:', logData);
+
+      // For now, just log the data and update UI without API call
+      console.log('=== SIMULATING SUCCESS ===');
+      console.log('Would create trip log with data:', logData);
+      
+      // Update local state
+      if (qrScanner.category === 'events') {
+        handleEventCheckInOut(qrScanner.eventKey, qrScanner.action);
+      } else {
+        handleCheckInOut(qrScanner.dayString, qrScanner.category, qrScanner.action);
+      }
+      
+      // Close scanner
+      setQrScanner({ open: false, action: null, dayString: null, category: null, eventKey: null });
+      
+      console.log('UI updated successfully');
+      console.log('=== QR SCAN COMPLETE ===');
+      
+      // Show success message
+      alert(`QR Code scanned successfully!\n\nData: ${decodedText}\n\nCheck console for detailed logs.`);
+
+      // Uncomment below code when you want to enable actual API calls
+      /*
+      const response = await axios.post('/api/trip-logs', logData);
+      
+      if (response.data.success) {
+        // Update local state
+        if (qrScanner.category === 'events') {
+          handleEventCheckInOut(qrScanner.eventKey, qrScanner.action);
+        } else {
+          handleCheckInOut(qrScanner.dayString, qrScanner.category, qrScanner.action);
+        }
+        
+        // Close scanner
+        setQrScanner({ open: false, action: null, dayString: null, category: null, eventKey: null });
+        
+        console.log('Trip log created successfully:', response.data.data);
+        
+        // Show success message
+        alert(`${qrScanner.action === 'checkIn' ? 'Check In' : 'Check Out'} successful!`);
+      }
+      */
+    } catch (error) {
+      console.error('Error processing QR scan:', error);
+      alert('Failed to process QR code. Please try again.');
+    }
+  };
+
+  const handleQRScanError = (error) => {
+    console.error('QR Scan error:', error);
+  };
+
+  const openQRScanner = (action, dayString, category, eventKey = null) => {
+    console.log('=== OPENING QR SCANNER ===');
+    console.log('Action:', action);
+    console.log('Category:', category);
+    console.log('Day String:', dayString);
+    console.log('Event Key:', eventKey);
+    
+    setQrScanner({
+      open: true,
+      action,
+      dayString,
+      category,
+      eventKey
+    });
+  };
+
+  const closeQRScanner = () => {
+    setQrScanner({ open: false, action: null, dayString: null, category: null, eventKey: null });
+  };
+
   const handleScan = () => {
     // Implement QR code scanning functionality
     console.log('Starting QR code scan...');
@@ -631,7 +759,7 @@ const ScannerPage = () => {
         </IconButton>
         <Box>
           <Typography variant="h4" fontWeight="600" color="text.primary">
-          {tripData?.title || tripTitle || `Trip ID: ${tripId}`}
+            {tripData?.title || tripTitle || `Trip ID: ${tripId}`}
           </Typography>
         </Box>
       </Box>
@@ -666,7 +794,7 @@ const ScannerPage = () => {
                     <TableCell>
                       <Typography variant="subtitle2" fontWeight="600">
                         Day {day.dayNumber}
-                      </Typography>
+              </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
@@ -683,33 +811,33 @@ const ScannerPage = () => {
                             <Box>
                               <Typography variant="body2" fontWeight="600">
                                 {dayTransport.vendor.title || 'N/A'}
-                              </Typography>
+                </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 Phone: {dayTransport.vendor.phone || 'N/A'}
                               </Typography>
                               {dayTransport.buses && dayTransport.buses.length > 0 && (
                                 <Typography variant="caption" color="text.secondary" display="block">
                                   Bus: {dayTransport.buses.map(bus => bus.title || bus.bus_number || bus.name || `Bus ${bus.id}`).join(', ')}
-                                </Typography>
-                              )}
-                            </Box>
+                    </Typography>
+                  )}
+                </Box>
                           );
                         } else if (tripData?.transportVendor) {
                           return (
                             <Box>
                               <Typography variant="body2" fontWeight="600">
                                 {tripData.transportVendor.title || 'N/A'}
-                              </Typography>
+                </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 Phone: {tripData.transportVendor.phone || 'N/A'}
-                              </Typography>
-                            </Box>
+                    </Typography>
+                </Box>
                           );
                         } else {
                           return (
                             <Typography variant="body2" color="text.secondary">
                               No transport assigned
-                            </Typography>
+                </Typography>
                           );
                         }
                       })()}
@@ -720,11 +848,11 @@ const ScannerPage = () => {
                         
                         if (dayTransport?.drivers && dayTransport.drivers.length > 0) {
                           return (
-                            <Box>
+                  <Box>
                               {dayTransport.drivers.map((driver, index) => (
                                 <Typography key={index} variant="body2">
                                   {driver.first_name || driver.firstName || driver.name || 'Driver'} {driver.last_name || driver.lastName || ''}
-                                </Typography>
+                    </Typography>
                               ))}
                             </Box>
                           );
@@ -732,36 +860,36 @@ const ScannerPage = () => {
                           return (
                             <Typography variant="body2">
                               {tripData.driver.first_name} {tripData.driver.last_name}
-                            </Typography>
+                        </Typography>
                           );
                         } else {
                           return (
                             <Typography variant="body2" color="text.secondary">
                               No driver assigned
-                            </Typography>
+                        </Typography>
                           );
                         }
                       })()}
                     </TableCell>
                     <TableCell>
-                      <Chip 
+                        <Chip
                         label={checkInOutData[day.dateString]?.transport?.checkedIn ? 'Checked In' : 'Available'} 
                         color={checkInOutData[day.dateString]?.transport?.checkedIn ? 'success' : 'default'}
-                        size="small"
+                          size="small"
                       />
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
                           Trip Manager: {tripData?.tripManager?.name || 'Trip Manager'}
-                        </Typography>
+                    </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
                             size="small"
                             variant={checkInOutData[day.dateString]?.transport?.checkedIn ? 'contained' : 'outlined'}
                             color="success"
                             startIcon={<CheckInIcon />}
-                            onClick={() => handleCheckInOut(day.dateString, 'transport', 'checkIn')}
+                            onClick={() => openQRScanner('checkIn', day.dateString, 'transport')}
                             disabled={checkInOutData[day.dateString]?.transport?.checkedIn}
                           >
                             Check In
@@ -771,20 +899,20 @@ const ScannerPage = () => {
                             variant={checkInOutData[day.dateString]?.transport?.checkedOut ? 'contained' : 'outlined'}
                             color="error"
                             startIcon={<CheckOutIcon />}
-                            onClick={() => handleCheckInOut(day.dateString, 'transport', 'checkOut')}
+                            onClick={() => openQRScanner('checkOut', day.dateString, 'transport')}
                             disabled={checkInOutData[day.dateString]?.transport?.checkedOut}
                           >
                             Check Out
                           </Button>
-                        </Box>
-                      </Box>
+                  </Box>
+                  </Box>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-        </Paper>
+            </Paper>
       )}
 
       {activeTab === 1 && (
@@ -873,7 +1001,7 @@ const ScannerPage = () => {
                             variant={checkInOutData[day.dateString]?.accommodation?.checkedIn ? 'contained' : 'outlined'}
                             color="success"
                             startIcon={<CheckInIcon />}
-                            onClick={() => handleCheckInOut(day.dateString, 'accommodation', 'checkIn')}
+                            onClick={() => openQRScanner('checkIn', day.dateString, 'accommodation')}
                             disabled={checkInOutData[day.dateString]?.accommodation?.checkedIn}
                           >
                             Check In
@@ -883,7 +1011,7 @@ const ScannerPage = () => {
                             variant={checkInOutData[day.dateString]?.accommodation?.checkedOut ? 'contained' : 'outlined'}
                             color="error"
                             startIcon={<CheckOutIcon />}
-                            onClick={() => handleCheckInOut(day.dateString, 'accommodation', 'checkOut')}
+                            onClick={() => openQRScanner('checkOut', day.dateString, 'accommodation')}
                             disabled={checkInOutData[day.dateString]?.accommodation?.checkedOut}
                           >
                             Check Out
@@ -1003,29 +1131,29 @@ const ScannerPage = () => {
                                   </Box>
                                   
                                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                                    <Button
-                                      size="small"
+                          <Button
+                            size="small"
                                       variant={eventCheckData.checkedIn ? 'contained' : 'outlined'}
-                                      color="success"
-                                      startIcon={<CheckInIcon />}
-                                      onClick={() => handleEventCheckInOut(eventKey, 'checkIn')}
+                            color="success"
+                            startIcon={<CheckInIcon />}
+                                      onClick={() => openQRScanner('checkIn', day.dateString, 'events', eventKey)}
                                       disabled={eventCheckData.checkedIn}
                                       sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
-                                    >
-                                      Check In
-                                    </Button>
-            <Button
-                                      size="small"
+                          >
+                            Check In
+                          </Button>
+                          <Button
+                            size="small"
                                       variant={eventCheckData.checkedOut ? 'contained' : 'outlined'}
-                                      color="error"
-                                      startIcon={<CheckOutIcon />}
-                                      onClick={() => handleEventCheckInOut(eventKey, 'checkOut')}
+                            color="error"
+                            startIcon={<CheckOutIcon />}
+                                      onClick={() => openQRScanner('checkOut', day.dateString, 'events', eventKey)}
                                       disabled={eventCheckData.checkedOut}
                                       sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
-                                    >
-                                      Check Out
-            </Button>
-          </Box>
+                          >
+                            Check Out
+                          </Button>
+                        </Box>
                                 </Box>
                               );
                             })}
@@ -1035,7 +1163,7 @@ const ScannerPage = () => {
                             No events scheduled
                           </Typography>
                         )}
-                      </TableCell>
+                    </TableCell>
                   </TableRow>
                   );
                 })}
@@ -1066,6 +1194,15 @@ const ScannerPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={qrScanner.open}
+        onClose={closeQRScanner}
+        onScanSuccess={handleQRScanSuccess}
+        onScanError={handleQRScanError}
+        title={`Scan QR Code for ${qrScanner.action === 'checkIn' ? 'Check In' : 'Check Out'} - ${qrScanner.category}`}
+      />
     </Container>
   );
 };
