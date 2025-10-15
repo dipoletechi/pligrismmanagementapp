@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ export default function LoginScreen() {
   // Form validation states
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [touched, setTouched] = useState<{[key: string]: boolean}>({});
+
 
   // Validate email
   const validateEmail = (email: string) => {
@@ -91,18 +92,68 @@ export default function LoginScreen() {
       const data = await response.json();
       console.log('Login API response:', data);
 
-      if (response.ok && data.success) {
-        // Login successful
-        Alert.alert('Success', data.message || 'Login successful!', [
-          { text: 'OK', onPress: () => router.push('/dashboard' as any) }
-        ]);
+      // Check for 401 status first (registration incomplete)
+      if (response.status === 401 && data.data && data.data.requiresVerification) {
+        // Check if user has completed Step 6
+        if (data.data.step6Completed && data.data.redirectToStep === 7) {
+          // Step 6 completed but not approved - redirect to dashboard with error message
+          console.log('Step 6 completed, redirecting to dashboard with error:', data.message);
+          router.push({
+            pathname: '/dashboard',
+            params: { loginError: data.message }
+          } as any);
+        } else {
+          // User needs to complete registration - redirect to appropriate step
+          console.log('Redirecting to registration step:', data.data.redirectToStep || '3');
+          router.push({
+            pathname: '/register',
+            params: { 
+              step: data.data.redirectToStep?.toString() || '3',
+              userId: data.data.userId?.toString(),
+              email: data.data.email || '',
+              phone: data.data.phone || '',
+              password: data.data.password || '',
+              otp: data.data.otp || '',
+              otp_expiry: data.data.otp_expiry || '',
+              registrationType: data.data.registrationMethod || 'email',
+              hasAadhaarFront: data.data.hasAadhaarFront?.toString() || 'false',
+              hasAadhaarBack: data.data.hasAadhaarBack?.toString() || 'false',
+              aadhaarNumber: data.data.aadhaarNumber || '',
+              aadhaarName: data.data.aadhaarName || '',
+              age: data.data.age || '',
+              aadhaarAddress: data.data.aadhaarAddress || ''
+            }
+          } as any);
+        }
+      } else if (response.ok && data.success) {
+        // Check if user is active and approved
+        if (data.data.isActive && data.data.accountStatus === 'approved') {
+          // User fully verified and approved - redirect to dashboard
+          router.push({
+            pathname: '/dashboard',
+            params: { loginSuccess: 'true' }
+          } as any);
+        } else {
+          // User not approved yet - redirect to index page with error
+          router.push({
+            pathname: '/',
+            params: { loginError: 'Your account is in review. You will receive notification as soon as your account is approved.' }
+          } as any);
+        }
       } else {
-        // Login failed
-        Alert.alert('Login Failed', data.message || 'Invalid credentials. Please try again.');
+        // Login failed - redirect to index page, then dashboard will show error
+        router.push({
+          pathname: '/',
+          params: { loginError: data.message || 'Invalid credentials. Please try again.' }
+        } as any);
       }
     } catch (error) {
       console.error('Login API error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      // Network error - redirect to index page with error message
+      router.push({
+        pathname: '/',
+        params: { loginError: 'Network error. Please check your connection and try again.' }
+      } as any);
     } finally {
       setLoading(false);
     }

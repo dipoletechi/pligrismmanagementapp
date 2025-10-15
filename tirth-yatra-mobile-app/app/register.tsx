@@ -15,7 +15,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -27,6 +27,7 @@ import { Camera } from 'expo-camera';
 
 export default function RegisterScreen() {
   const { t } = useLanguage();
+  const params = useLocalSearchParams();
   
   // Stepper states
   const [currentStep, setCurrentStep] = useState(1);
@@ -50,6 +51,7 @@ export default function RegisterScreen() {
   // UI states
   const [loading, setLoading] = useState(false);
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // Registration response data
   const [userId, setUserId] = useState<number | null>(null);
@@ -60,11 +62,76 @@ export default function RegisterScreen() {
   // Enhanced form validation states
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [touched, setTouched] = useState<{[key: string]: boolean}>({});
-  
+
+
+
   // Animation refs - Start with visible values
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Check login status from params
+  useEffect(() => {
+    if (params.userId) {
+      setIsLoggedIn(true);
+    }
+  }, [params.userId]);
+
+  // Handle login redirect to continue registration (only once)
+  useEffect(() => {
+    if ((params.step === '2' || params.step === '3' || params.step === '4' || params.step === '5' || params.step === '6') && params.userId && !userId) {
+      console.log('Continuing registration from login:', params);
+      setCurrentStep(parseInt(params.step as string) || 2);
+      setUserId(parseInt(params.userId as string));
+      setRegistrationType(params.registrationType as 'email' | 'phone' || 'email');
+      setEmail(params.email as string || '');
+      setPhone(params.phone as string || '');
+      setPassword(params.password as string || ''); // Fill password
+      setConfirmPassword(params.password as string || ''); // Fill confirm password
+      setOtp(params.otp as string || ''); // Fill OTP
+      setReceivedOTP(params.otp as string || ''); // Set received OTP
+      
+      // If user has Aadhaar front image, set it
+      if (params.hasAadhaarFront === 'true') {
+        console.log('User has Aadhaar front image, skipping step 4');
+      }
+      
+      // If user has Aadhaar back image, set it
+      if (params.hasAadhaarBack === 'true') {
+        console.log('User has Aadhaar back image, skipping step 5');
+      }
+      
+      // Pre-fill Aadhaar details if available
+      console.log('Aadhaar details from params:', {
+        aadhaarNumber: params.aadhaarNumber,
+        aadhaarName: params.aadhaarName,
+        age: params.age,
+        aadhaarAddress: params.aadhaarAddress
+      });
+      
+      if (params.aadhaarNumber) {
+        console.log('Setting Aadhaar number:', params.aadhaarNumber);
+        setAadhaarNumber(params.aadhaarNumber as string);
+      }
+      if (params.aadhaarName) {
+        console.log('Setting Aadhaar name:', params.aadhaarName);
+        setName(params.aadhaarName as string);
+      }
+      if (params.age) {
+        console.log('Setting age:', params.age);
+        setAge(params.age as string);
+      }
+      if (params.aadhaarAddress) {
+        console.log('Setting Aadhaar address:', params.aadhaarAddress);
+        setAddress(params.aadhaarAddress as string);
+      }
+    }
+  }, [params, userId]);
+
+  // Debug step changes
+  useEffect(() => {
+    console.log('Current step changed to:', currentStep);
+  }, [currentStep]);
 
   // Initialize animations on component mount
   useEffect(() => {
@@ -89,8 +156,13 @@ export default function RegisterScreen() {
 
   // Stepper functions
   const nextStep = () => {
+    console.log('nextStep called, current step:', currentStep);
     if (currentStep < 6) {
-      setCurrentStep(currentStep + 1);
+      const newStep = currentStep + 1;
+      console.log('Moving to step:', newStep);
+      setCurrentStep(newStep);
+    } else {
+      console.log('Already at last step');
     }
   };
 
@@ -102,7 +174,7 @@ export default function RegisterScreen() {
 
   const selectRegistrationType = (type: 'email' | 'phone') => {
     setRegistrationType(type);
-    nextStep();
+    nextStep(); // Automatically go to next step after selection
   };
 
   // Enhanced validation functions
@@ -288,8 +360,12 @@ export default function RegisterScreen() {
 
       if (response.ok && data.success) {
         // OTP verification successful
+        console.log('OTP verification successful, moving to next step');
         Alert.alert('Success', data.message || 'OTP verified successfully!', [
-          { text: 'OK', onPress: () => nextStep() }
+          { text: 'OK', onPress: () => {
+            console.log('Alert OK pressed, calling nextStep()');
+            nextStep();
+          }}
         ]);
       } else {
         // OTP verification failed
@@ -297,6 +373,49 @@ export default function RegisterScreen() {
       }
     } catch (error) {
       console.error('OTP Verification API error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend OTP API call
+  const callResendOTPAPI = async () => {
+    try {
+      setLoading(true);
+      
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        return;
+      }
+
+      const requestData = {
+        userId: userId,
+        registrationMethod: registrationType
+      };
+
+      console.log('Resend OTP API call with data:', requestData);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/resend-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      console.log('Resend OTP API response:', data);
+
+      if (response.ok && data.success) {
+        setOtp(data.data.otp);
+        setReceivedOTP(data.data.otp);
+        Alert.alert('Success', 'OTP resent successfully!');
+      } else {
+        Alert.alert('Error', data.message || 'Failed to resend OTP');
+      }
+    } catch (error) {
+      console.error('Resend OTP API error:', error);
       Alert.alert('Error', 'Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
@@ -323,6 +442,142 @@ export default function RegisterScreen() {
     } catch (error) {
       console.error('Error converting image to base64:', error);
       return null;
+    }
+  };
+
+  // Check user status and redirect accordingly
+  const callCompleteStep6API = async () => {
+    try {
+      setLoading(true);
+      
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        return;
+      }
+
+      console.log('Calling complete step 6 API for userId:', userId);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/complete-step6', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+      console.log('Complete Step 6 response:', data);
+
+      if (response.ok && data.success) {
+        // Step 6 completed successfully, now check user status
+        await checkUserStatusAndRedirect();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to complete Step 6. Please try again.');
+      }
+
+    } catch (error) {
+      console.error('Complete Step 6 error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkUserStatusAndRedirect = async () => {
+    try {
+      setLoading(true);
+      
+      if (!email && !phone) {
+        Alert.alert('Error', 'Email or phone not found. Please try registering again.');
+        return;
+      }
+
+      // Use existing login API to check user status
+      const loginData = {
+        email: email || '',
+        phone: phone || '',
+        password: password || ''
+      };
+
+      console.log('Checking user status with login API:', loginData);
+
+      const response = await fetch('http://192.168.1.5:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      });
+
+      const data = await response.json();
+      console.log('User status check response:', data);
+
+      if (response.ok && data.success) {
+        // Check if user is active and approved
+        if (data.data.isActive && data.data.accountStatus === 'approved') {
+          // User is approved - redirect to dashboard with success
+          router.replace({
+            pathname: '/dashboard',
+            params: { loginSuccess: 'true' }
+          } as any);
+        } else {
+          // User not approved - redirect to dashboard with error message
+          const errorMessage = data.data.accountStatus === 'pending' || data.data.accountStatus === 'in_verification' 
+            ? 'Your account is in review. You will receive notification as soon as your account is approved.'
+            : 'Account not verified. Please verify your account first.';
+          
+          router.replace({
+            pathname: '/dashboard',
+            params: { loginError: errorMessage }
+          } as any);
+        }
+      } else if (response.status === 401 && data.data && data.data.requiresVerification) {
+        // User needs verification - check if Step 6 completed
+        if (data.data.step6Completed) {
+          // Step 6 completed but not approved - redirect to dashboard with error
+          router.replace({
+            pathname: '/dashboard',
+            params: { loginError: data.message }
+          } as any);
+        } else {
+          // Step 6 not completed - redirect to registration
+          router.push({
+            pathname: '/register',
+            params: { 
+              step: data.data.redirectToStep?.toString() || '3',
+              userId: data.data.userId?.toString(),
+              email: data.data.email || '',
+              phone: data.data.phone || '',
+              password: data.data.password || '',
+              otp: data.data.otp || '',
+              otp_expiry: data.data.otp_expiry || '',
+              registrationType: data.data.registrationMethod || 'email',
+              hasAadhaarFront: data.data.hasAadhaarFront?.toString() || 'false',
+              hasAadhaarBack: data.data.hasAadhaarBack?.toString() || 'false',
+              aadhaarNumber: data.data.aadhaarNumber || '',
+              aadhaarName: data.data.aadhaarName || '',
+              age: data.data.age || '',
+              aadhaarAddress: data.data.aadhaarAddress || ''
+            }
+          } as any);
+        }
+      } else {
+        // Login failed - redirect to dashboard with error
+        router.replace({
+          pathname: '/dashboard',
+          params: { loginError: data.message || 'Failed to verify account status. Please try again.' }
+        } as any);
+      }
+
+    } catch (error) {
+      console.error('User status check error:', error);
+      // Network error - redirect to dashboard with error
+      router.replace({
+        pathname: '/dashboard',
+        params: { loginError: 'Network error. Please check your connection and try again.' }
+      } as any);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -454,6 +709,7 @@ export default function RegisterScreen() {
   };
 
   const handleNext = async () => {
+    // Step 1 is handled automatically in selectRegistrationType
     if (currentStep === 2) {
       if (validateStep2()) {
         callRegistrationAPI();
@@ -469,6 +725,7 @@ export default function RegisterScreen() {
     } else if (currentStep === 4) {
       if (aadhaarFront) {
         // Call API to upload front image
+        console.log('Step 4: Uploading Aadhaar front image');
         await callAadhaarImageUploadAPI(aadhaarFront, 'front');
       } else {
         Alert.alert('Upload Required', 'Please upload Aadhaar front side first');
@@ -482,9 +739,8 @@ export default function RegisterScreen() {
       }
     } else if (currentStep === 6) {
       if (aadhaarNumber && age && name) {
-        Alert.alert('Success', 'Registration completed! Welcome to Tirth Yatra!', [
-          { text: 'OK', onPress: () => router.replace('/login') }
-        ]);
+        // Call complete step 6 API first, then check user status
+        await callCompleteStep6API();
       } else {
         Alert.alert('Missing Information', 'Please fill all required fields');
       }
@@ -504,6 +760,14 @@ export default function RegisterScreen() {
         { text: 'Gallery', onPress: () => openGallery(type) }
       ]
     );
+  };
+
+  const removeImage = (type: 'front' | 'back') => {
+    if (type === 'front') {
+      setAadhaarFront(null);
+    } else {
+      setAadhaarBack(null);
+    }
   };
 
   const openCamera = async (type: 'front' | 'back') => {
@@ -561,10 +825,8 @@ export default function RegisterScreen() {
     try {
       if (type === 'front') {
         setAadhaarFront(imageUri);
-        Alert.alert('Front Side Uploaded', 'Front side uploaded successfully!');
       } else {
         setAadhaarBack(imageUri);
-        Alert.alert('Back Side Uploaded', 'Back side uploaded successfully!');
       }
     } catch (error) {
       console.error('Image processing error:', error);
@@ -597,6 +859,52 @@ export default function RegisterScreen() {
                   <LanguageDropdown />
                 </View>
               </View>
+              {isLoggedIn && (
+                <TouchableOpacity 
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    console.log('Sign Out button pressed');
+                    setHeaderMenuVisible(false);
+                    // Handle Sign Out
+                    Alert.alert(
+                      'Sign Out',
+                      'Are you sure you want to sign out?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { 
+                          text: 'Sign Out', 
+                          style: 'destructive',
+                          onPress: () => {
+                            console.log('Sign Out confirmed');
+                            setIsLoggedIn(false);
+                            // Clear all registration data
+                            setUserId(null);
+                            setCurrentStep(1);
+                            setRegistrationType(null);
+                            setEmail('');
+                            setPhone('');
+                            setPassword('');
+                            setConfirmPassword('');
+                            setOtp('');
+                            setReceivedOTP(null);
+                            setAadhaarFront(null);
+                            setAadhaarBack(null);
+                            setAadhaarNumber('');
+                            setAge('');
+                            setName('');
+                            setAddress('');
+                            // Redirect to index page
+                            router.replace('/');
+                          }
+                        }
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons name="log-out-outline" size={20} color="#000" />
+                  <Text style={styles.dropdownItemText}>Sign Out</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -644,27 +952,69 @@ export default function RegisterScreen() {
                   <Text style={styles.stepSubtitle}>{t('howWouldYouLikeToRegister')}</Text>
                   
                   <TouchableOpacity 
-                    style={styles.registrationOption}
+                    style={[
+                      styles.registrationOption,
+                      registrationType === 'email' && styles.registrationOptionSelected
+                    ]}
                     onPress={() => selectRegistrationType('email')}
                   >
-                    <Ionicons name="mail-outline" size={24} color="#007AFF" />
+                    <Ionicons 
+                      name="mail-outline" 
+                      size={24} 
+                      color={registrationType === 'email' ? '#fff' : '#007AFF'} 
+                    />
                     <View style={styles.optionText}>
-                      <Text style={styles.optionTitle}>{t('email')}</Text>
-                      <Text style={styles.optionSubtitle}>{t('registerWithEmail')}</Text>
+                      <Text style={[
+                        styles.optionTitle,
+                        registrationType === 'email' && styles.optionTitleSelected
+                      ]}>
+                        {t('email')}
+                      </Text>
+                      <Text style={[
+                        styles.optionSubtitle,
+                        registrationType === 'email' && styles.optionSubtitleSelected
+                      ]}>
+                        {t('registerWithEmail')}
+                      </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#666" />
+                    {registrationType === 'email' ? (
+                      <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color="#666" />
+                    )}
                   </TouchableOpacity>
 
                   <TouchableOpacity 
-                    style={styles.registrationOption}
+                    style={[
+                      styles.registrationOption,
+                      registrationType === 'phone' && styles.registrationOptionSelected
+                    ]}
                     onPress={() => selectRegistrationType('phone')}
                   >
-                    <Ionicons name="call-outline" size={24} color="#007AFF" />
+                    <Ionicons 
+                      name="call-outline" 
+                      size={24} 
+                      color={registrationType === 'phone' ? '#fff' : '#007AFF'} 
+                    />
                     <View style={styles.optionText}>
-                      <Text style={styles.optionTitle}>{t('phone')}</Text>
-                      <Text style={styles.optionSubtitle}>{t('registerWithPhone')}</Text>
+                      <Text style={[
+                        styles.optionTitle,
+                        registrationType === 'phone' && styles.optionTitleSelected
+                      ]}>
+                        {t('phone')}
+                      </Text>
+                      <Text style={[
+                        styles.optionSubtitle,
+                        registrationType === 'phone' && styles.optionSubtitleSelected
+                      ]}>
+                        {t('registerWithPhone')}
+                      </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#666" />
+                    {registrationType === 'phone' ? (
+                      <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color="#666" />
+                    )}
                   </TouchableOpacity>
                 </View>
               )}
@@ -836,7 +1186,11 @@ export default function RegisterScreen() {
                     )}
                   </View>
 
-                  <TouchableOpacity style={styles.resendButton}>
+                  <TouchableOpacity 
+                    style={styles.resendButton}
+                    onPress={callResendOTPAPI}
+                    disabled={loading}
+                  >
                     <Text style={styles.resendText}>Resend OTP</Text>
                   </TouchableOpacity>
                 </View>
@@ -844,27 +1198,34 @@ export default function RegisterScreen() {
 
               {/* Step 4: Aadhaar Front Upload */}
               {currentStep === 4 && (
+                console.log('Rendering Step 4 - Aadhaar Front Upload'),
                 <View style={styles.stepContent}>
                   <Text style={styles.stepTitle}>{t('uploadAadhaarFront')}</Text>
                   <Text style={styles.stepSubtitle}>{t('takeClearPhoto')}</Text>
 
-                  <TouchableOpacity 
-                    style={styles.uploadButton}
-                    onPress={() => handleAadhaarUpload('front')}
-                  >
-                    <Ionicons name="camera-outline" size={48} color="#007AFF" />
-                    <Text style={styles.uploadText}>{t('tapToUploadFront')}</Text>
-                    <Text style={styles.uploadSubtext}>{t('makeSureDetailsVisible')}</Text>
-                  </TouchableOpacity>
-
-                  {aadhaarFront && (
+                  {aadhaarFront ? (
                     <View style={styles.imagePreviewContainer}>
                       <Image source={{ uri: aadhaarFront }} style={styles.previewImage} />
+                      <TouchableOpacity 
+                        style={styles.removeImageButton}
+                        onPress={() => removeImage('front')}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#ff4444" />
+                      </TouchableOpacity>
                       <View style={styles.imageStatus}>
                         <Ionicons name="checkmark-circle" size={20} color="#28a745" />
                         <Text style={styles.imageStatusText}>{t('frontSideUploaded')}</Text>
                       </View>
                     </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={() => handleAadhaarUpload('front')}
+                    >
+                      <Ionicons name="camera-outline" size={48} color="#007AFF" />
+                      <Text style={styles.uploadText}>{t('tapToUploadFront')}</Text>
+                      <Text style={styles.uploadSubtext}>{t('makeSureDetailsVisible')}</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               )}
@@ -875,30 +1236,30 @@ export default function RegisterScreen() {
                   <Text style={styles.stepTitle}>{t('uploadAadhaarBack')}</Text>
                   <Text style={styles.stepSubtitle}>{t('takeClearPhoto')}</Text>
 
-                  <TouchableOpacity 
-                    style={styles.uploadButton}
-                    onPress={() => handleAadhaarUpload('back')}
-                  >
-                    <Ionicons name="camera-outline" size={48} color="#007AFF" />
-                    <Text style={styles.uploadText}>{t('tapToUploadBack')}</Text>
-                    <Text style={styles.uploadSubtext}>{t('makeSureDetailsVisible')}</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.imagePreviewContainer}>
-                    {aadhaarBack ? (
-                      <>
-                        <Image source={{ uri: aadhaarBack }} style={styles.previewImage} />
-                        <View style={styles.imageStatus}>
-                          <Ionicons name="checkmark-circle" size={20} color="#28a745" />
-                          <Text style={styles.imageStatusText}>{t('backSideUploaded')}</Text>
-                        </View>
-                      </>
-                    ) : (
-                      <View style={styles.placeholderContainer}>
-                        <Text style={styles.placeholderText}>{t('noImageUploadedYet')}</Text>
+                  {aadhaarBack ? (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image source={{ uri: aadhaarBack }} style={styles.previewImage} />
+                      <TouchableOpacity 
+                        style={styles.removeImageButton}
+                        onPress={() => removeImage('back')}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#ff4444" />
+                      </TouchableOpacity>
+                      <View style={styles.imageStatus}>
+                        <Ionicons name="checkmark-circle" size={20} color="#28a745" />
+                        <Text style={styles.imageStatusText}>{t('backSideUploaded')}</Text>
                       </View>
-                    )}
-                  </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={() => handleAadhaarUpload('back')}
+                    >
+                      <Ionicons name="camera-outline" size={48} color="#007AFF" />
+                      <Text style={styles.uploadText}>{t('tapToUploadBack')}</Text>
+                      <Text style={styles.uploadSubtext}>{t('makeSureDetailsVisible')}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
 
@@ -1007,30 +1368,32 @@ export default function RegisterScreen() {
                   </TouchableOpacity>
                 )}
                 
-                <TouchableOpacity 
-                  style={[
-                    styles.nextButton,
-                    currentStep === 1 && styles.nextButtonDisabled,
-                    loading && styles.nextButtonDisabled
-                  ]}
-                  onPress={handleNext}
-                  disabled={currentStep === 1 || loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={styles.nextButtonText}>
-                        {currentStep === 6 ? 'Complete' : 'Next'}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={20} color="#fff" />
-                    </>
-                  )}
-                </TouchableOpacity>
+                {currentStep !== 1 && (
+                  <TouchableOpacity 
+                    style={[
+                      styles.nextButton,
+                      loading && styles.nextButtonDisabled
+                    ]}
+                    onPress={handleNext}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Text style={styles.nextButtonText}>
+                          {currentStep === 6 ? 'Complete' : 'Next'}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={20} color="#fff" />
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
           </View>
         </ScrollView>
         </KeyboardAvoidingView>
+
 
         {/* Fixed Footer */}
         <View style={styles.mainFooter}>
@@ -1081,6 +1444,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#000',
+    marginLeft: 8,
+  },
   languageDropdownContainer: {
     marginLeft: 8,
   },
@@ -1091,7 +1459,7 @@ const styles = StyleSheet.create({
   scrollContent: { 
     flexGrow: 1, 
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 40, // Reduce padding since container has paddingBottom
     minHeight: '100%',
   },
   formContainer: {
@@ -1303,6 +1671,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e1e5e9',
   },
+  registrationOptionSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
   optionText: {
     flex: 1,
     marginLeft: 16,
@@ -1313,9 +1685,15 @@ const styles = StyleSheet.create({
     color: '#000',
     marginBottom: 4,
   },
+  optionTitleSelected: {
+    color: '#fff',
+  },
   optionSubtitle: {
     fontSize: 14,
     color: '#666',
+  },
+  optionSubtitleSelected: {
+    color: '#fff',
   },
   // Upload styles
   uploadButton: {
@@ -1356,6 +1734,19 @@ const styles = StyleSheet.create({
     color: '#28a745',
     marginLeft: 8,
     fontWeight: '500',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   // Resend button
   resendButton: {
