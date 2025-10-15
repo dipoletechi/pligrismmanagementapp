@@ -384,7 +384,7 @@ const TripList = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <CalendarIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {trips.filter(t => t.status === 'active').length}
+                    {trips.filter(t => t.tripStatus?.name === 'Published' && new Date(t.start_date) <= new Date() && new Date(t.end_date) >= new Date()).length}
                   </Typography>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
@@ -434,7 +434,7 @@ const TripList = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <TripIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {trips.filter(t => t.status === 'completed').length}
+                    {trips.filter(t => t.tripStatus?.name === 'Completed').length}
                   </Typography>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
