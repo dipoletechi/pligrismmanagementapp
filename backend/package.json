@@ -15,6 +15,7 @@
     "migrate:demo": "DB_NAME=tirthyatra_demo node scripts/migrate.js",
     "setup:new": "node scripts/setup-new-system.js",
     "setup:prod": "node scripts/setup-production.js",
+    "fix:env": "node scripts/fix-env-password.js",
     "reset-db": "node scripts/reset-database.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

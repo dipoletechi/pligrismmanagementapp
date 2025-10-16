@@ -11,7 +11,7 @@ const getDatabaseName = () => {
 const sequelize = new Sequelize(
   getDatabaseName(),
   process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || 'root',
+  process.env.DB_PASSWORD || '', // Use empty string as default
   {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
