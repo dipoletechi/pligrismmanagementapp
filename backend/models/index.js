@@ -18,6 +18,7 @@ const Event = require('./Event');
 const Trip = require('./Trip');
 const TripStatus = require('./TripStatus');
 const TripLog = require('./TripLog');
+const TripPligrism = require('./TripPligrism');
 
 // Associations
 FoodCategory.hasMany(FoodItem, {
@@ -195,6 +196,33 @@ TripLog.belongsTo(Trip, {
   onUpdate: 'CASCADE'
 });
 
+// TripPligrism Associations
+User.hasMany(TripPligrism, {
+  foreignKey: 'userid',
+  as: 'tripApplications',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+TripPligrism.belongsTo(User, {
+  foreignKey: 'userid',
+  as: 'user',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
+Trip.hasMany(TripPligrism, {
+  foreignKey: 'tripid',
+  as: 'applications',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+TripPligrism.belongsTo(Trip, {
+  foreignKey: 'tripid',
+  as: 'trip',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,
@@ -213,7 +241,8 @@ module.exports = {
   Event,
   Trip,
   TripStatus,
-  TripLog
+  TripLog,
+  TripPligrism
 };
 
 

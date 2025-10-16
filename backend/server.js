@@ -39,6 +39,7 @@ const eventRoutes = require('./routes/events');
 const tripStatusRoutes = require('./routes/tripStatus');
 const mobileRoutes = require('./routes/mobile');
 const tripLogRoutes = require('./routes/tripLogs');
+const tripPligrismRoutes = require('./routes/tripPligrism');
 
 const app = express();
 
@@ -110,6 +111,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/trip-status', tripStatusRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/trip-logs', tripLogRoutes);
+app.use('/api/trip-pligrism', tripPligrismRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
