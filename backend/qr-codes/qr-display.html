@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Test Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .qr-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .qr-image {
+            max-width: 300px;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        .user-info {
+            margin: 10px 0;
+            color: #333;
+        }
+        .token-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 QR Code Test Images</h1>
+    
+    <div class="instructions">
+        <h3>📱 Instructions:</h3>
+        <p>1. Use your QR scanner to scan these images</p>
+        <p>2. The scanner should read the JWT token data directly</p>
+        <p>3. Test with both users to verify the system works</p>
+    </div>
+
+    <div class="qr-container">
+        <h3>👤 Rajesh Kumar (ID: 7)</h3>
+        <div class="user-info">
+            <strong>Email:</strong> rajesh.kumar@example.com<br>
+            <strong>Phone:</strong> 9876543210<br>
+            <strong>Status:</strong> Approved
+        </div>
+        <img src="user-7-qr.png" alt="QR Code for Rajesh Kumar" class="qr-image">
+        <div class="token-info">
+            <strong>JWT Token:</strong><br>
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyRGF0YSI6eyJpZCI6NywiZmlyc3ROYW1lIjoiUmFqZXNoIiwibGFzdE5hbWUiOiJLdW1hciIsImVtYWlsIjoicmFqZXNoLmt1bWFyQGV4YW1wbGUuY29tIiwicGhvbmUiOiI5ODc2NTQzMjEwIiwicm9sZSI6InVzZXIiLCJhYWRoYWFyTnVtYmVyIjoiMTIzNDU2Nzg5MDEyIiwiYWFkaGFhckFkZHJlc3MiOiIxMjMgTWFpbiBTdHJlZXQsIERlbGhpLCBJbmRpYSIsImFjY291bnRTdGF0dXMiOiJhcHByb3ZlZCIsImdlbmVyYXRlZEF0IjoiMjAyNS0xMC0xNlQxNDozOToxMC41NDZaIn0sInR5cGUiOiJtb2JpbGVfdXNlcl9xciIsImlhdCI6MTc2MDYyNTU1MCwiZXhwIjoxNzYwNzExOTUwfQ.7_17wlm_VCR1GAjR7Qubm0Ik5ECPuCG94C1Xu2SinVI
+        </div>
+    </div>
+
+    <div class="qr-container">
+        <h3>👤 Priya Sharma (ID: 8)</h3>
+        <div class="user-info">
+            <strong>Email:</strong> priya.sharma@example.com<br>
+            <strong>Phone:</strong> 9876543211<br>
+            <strong>Status:</strong> Approved
+        </div>
+        <img src="user-8-qr.png" alt="QR Code for Priya Sharma" class="qr-image">
+        <div class="token-info">
+            <strong>JWT Token:</strong><br>
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyRGF0YSI6eyJpZCI6OCwiZmlyc3ROYW1lIjoiUHJpeWEiLCJsYXN0TmFtZSI6IlNoYXJtYSIsImVtYWlsIjoicHJpeWEuc2hhcm1hQGV4YW1wbGUuY29tIiwicGhvbmUiOiI5ODc2NTQzMjExIiwicm9sZSI6InVzZXIiLCJhYWRoYWFyTnVtYmVyIjoiMTIzNDU2Nzg5MDEzIiwiYWFkaGFhckFkZHJlc3MiOiI0NTYgUGFyayBBdmVudWUsIE11bWJhaSwgSW5kaWEiLCJhY2NvdW50U3RhdHVzIjoiYXBwcm92ZWQiLCJnZW5lcmF0ZEF0IjoiMjAyNS0xMC0xNlQxNDozOToxMC42NjBaIn0sInR5cGUiOiJtb2JpbGVfdXNlcl9xciIsImlhdCI6MTc2MDYyNTU1MCwiZXhwIjoxNzYwNzExOTUwfQ.UhSoqPXg058dxPqfuiX6ZkX9m91KMHO64xDTLq0PoU8
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>🔧 Troubleshooting:</h3>
+        <p>If scanning still fails, check the backend console for debug output</p>
+        <p>The QR scanner should read the JWT token directly, not a URL</p>
+    </div>
+</body>
+</html>
