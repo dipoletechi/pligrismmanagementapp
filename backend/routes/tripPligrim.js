@@ -2,39 +2,35 @@ const express = require('express');
 const router = express.Router();
 const { TripPligrim, User, Trip } = require('../models');
 
-// Get all pilgrim applications
+// Get all users with role 'user' (pilgrims)
 router.get('/', async (req, res) => {
   try {
-    const applications = await TripPligrim.findAll({
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'first_name', 'last_name', 'email', 'phone']
-        },
-        {
-          model: Trip,
-          as: 'trip',
-          attributes: ['id', 'title', 'start_date', 'end_date'],
-          include: [{
-            model: require('../models').Destination,
-            as: 'destinationInfo',
-            attributes: ['title']
-          }]
-        }
-      ],
+    const users = await User.findAll({
+      where: { role: 'user' },
+      attributes: ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'aadhaar_number', 'aadhaar_address', 'accountStatus', 'created_at', 'updated_at'],
       order: [['created_at', 'DESC']]
+    });
+
+    // Map user account status to display status
+    const pilgrims = users.map(user => {
+      return {
+        id: user.id,
+        user: user,
+        status: user.accountStatus || 'pending', // Use the actual accountStatus from database
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      };
     });
 
     res.json({
       success: true,
-      data: applications
+      data: pilgrims
     });
   } catch (error) {
-    console.error('Error fetching pilgrim applications:', error);
+    console.error('Error fetching pilgrims:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch pilgrim applications',
+      message: 'Failed to fetch pilgrims',
       error: error.message
     });
   }
@@ -50,17 +46,8 @@ router.get('/user/:userId', async (req, res) => {
         {
           model: User,
           as: 'user',
-          attributes: ['id', 'first_name', 'last_name', 'email', 'phone']
-        },
-        {
-          model: Trip,
-          as: 'trip',
-          attributes: ['id', 'title', 'start_date', 'end_date'],
-          include: [{
-            model: require('../models').Destination,
-            as: 'destinationInfo',
-            attributes: ['title']
-          }]
+          where: { role: 'user' },
+          attributes: ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'aadhaar_number', 'aadhaar_address']
         }
       ],
       order: [['created_at', 'DESC']]
@@ -90,17 +77,8 @@ router.get('/trip/:tripId', async (req, res) => {
         {
           model: User,
           as: 'user',
-          attributes: ['id', 'first_name', 'last_name', 'email', 'phone']
-        },
-        {
-          model: Trip,
-          as: 'trip',
-          attributes: ['id', 'title', 'start_date', 'end_date'],
-          include: [{
-            model: require('../models').Destination,
-            as: 'destinationInfo',
-            attributes: ['title']
-          }]
+          where: { role: 'user' },
+          attributes: ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'aadhaar_number', 'aadhaar_address']
         }
       ],
       order: [['created_at', 'DESC']]

@@ -164,8 +164,10 @@ router.put('/:id', protect, authorize('superadmin'), [
   body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').optional().isIn(['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'])
     .withMessage('Invalid role'),
-  body('isActive').optional().isBoolean().withMessage('isActive must be a boolean')
-], validatePasswordPolicy, async (req, res) => {
+  body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+  body('accountStatus').optional().isIn(['pending', 'in_verification', 'approved', 'rejected'])
+    .withMessage('Invalid account status')
+], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -176,7 +178,7 @@ router.put('/:id', protect, authorize('superadmin'), [
       });
     }
 
-    const { firstName, lastName, email, password, role, isActive } = req.body;
+    const { firstName, lastName, email, password, role, isActive, accountStatus } = req.body;
 
     // Check if email is already taken by another user
     if (email) {
@@ -206,6 +208,7 @@ router.put('/:id', protect, authorize('superadmin'), [
     if (email) userToUpdate.email = email;
     if (role) userToUpdate.role = role;
     if (typeof isActive === 'boolean') userToUpdate.isActive = isActive;
+    if (accountStatus) userToUpdate.accountStatus = accountStatus;
     
     // Handle password separately to ensure proper hashing
     if (password) {

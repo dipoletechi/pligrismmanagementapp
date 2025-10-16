@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Box,
   Typography,
@@ -21,6 +22,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  MenuItem,
   Alert,
   CircularProgress,
   Grid,
@@ -33,13 +35,12 @@ import {
   Pending as PendingIcon,
   Cancel as CancelIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  FilterList as FilterIcon
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const PilgrimManagement = () => {
+  const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [pilgrims, setPilgrims] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -47,13 +48,16 @@ const PilgrimManagement = () => {
   const [selectedPilgrim, setSelectedPilgrim] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editStatus, setEditStatus] = useState('');
 
-  const tabs = [
+  const [tabs, setTabs] = useState([
     { label: 'All', value: 0, status: 'All', count: 0, color: 'default' },
-    { label: 'Approved', value: 1, status: 'Approved', count: 0, color: 'success' },
-    { label: 'In Review', value: 2, status: 'InReview', count: 0, color: 'warning' },
-    { label: 'Not Verified', value: 3, status: 'NotVerified', count: 0, color: 'error' }
-  ];
+    { label: 'Approved', value: 1, status: 'approved', count: 0, color: 'success' },
+    { label: 'In Review', value: 2, status: 'in_verification', count: 0, color: 'warning' },
+    { label: 'Not Verified', value: 3, status: 'pending', count: 0, color: 'error' },
+    { label: 'Rejected', value: 4, status: 'rejected', count: 0, color: 'error' }
+  ]);
 
   useEffect(() => {
     fetchPilgrims();
@@ -79,14 +83,18 @@ const PilgrimManagement = () => {
   const updateTabCounts = (data) => {
     const counts = {
       All: data.length,
-      Approved: data.filter(p => p.status === 'Approved').length,
-      InReview: data.filter(p => p.status === 'Pending').length,
-      NotVerified: data.filter(p => p.status === 'Reject').length
+      approved: data.filter(p => p.status === 'approved').length,
+      in_verification: data.filter(p => p.status === 'in_verification').length,
+      pending: data.filter(p => p.status === 'pending').length,
+      rejected: data.filter(p => p.status === 'rejected').length
     };
     
-    tabs.forEach(tab => {
-      tab.count = counts[tab.status] || 0;
-    });
+    setTabs(prevTabs => 
+      prevTabs.map(tab => ({
+        ...tab,
+        count: counts[tab.status] || 0
+      }))
+    );
   };
 
   const handleTabChange = (event, newValue) => {
@@ -97,8 +105,8 @@ const PilgrimManagement = () => {
 
   const handleStatusUpdate = async (pilgrimId, newStatus) => {
     try {
-      const response = await axios.put(`/api/trip-pligrim/${pilgrimId}`, {
-        status: newStatus
+      const response = await axios.put(`/api/users/${pilgrimId}`, {
+        accountStatus: newStatus
       });
       
       if (response.data.success) {
@@ -111,10 +119,29 @@ const PilgrimManagement = () => {
         updateTabCounts(pilgrims.map(pilgrim =>
           pilgrim.id === pilgrimId ? { ...pilgrim, status: newStatus } : pilgrim
         ));
+        setEditDialogOpen(false);
+        setSelectedPilgrim(null);
       }
     } catch (err) {
       console.error('Error updating status:', err);
-      setError('Failed to update pilgrim status');
+      console.error('Error response:', err.response?.data);
+      setError(`Failed to update pilgrim status: ${err.response?.data?.message || err.message}`);
+    }
+  };
+
+  const handleEditClick = (pilgrim) => {
+    setSelectedPilgrim(pilgrim);
+    setEditStatus(pilgrim.status);
+    setEditDialogOpen(true);
+  };
+
+  const handleStatusChange = (event) => {
+    setEditStatus(event.target.value);
+  };
+
+  const handleSaveStatus = () => {
+    if (selectedPilgrim && editStatus) {
+      handleStatusUpdate(selectedPilgrim.id, editStatus);
     }
   };
 
@@ -135,17 +162,18 @@ const PilgrimManagement = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
-      'Approved': { color: 'success', icon: <CheckCircleIcon /> },
-      'Pending': { color: 'warning', icon: <PendingIcon /> },
-      'Reject': { color: 'error', icon: <CancelIcon /> }
+      'approved': { color: 'success', icon: <CheckCircleIcon />, label: 'Approved' },
+      'in_verification': { color: 'warning', icon: <PendingIcon />, label: 'In Review' },
+      'pending': { color: 'error', icon: <CancelIcon />, label: 'Not Verified' },
+      'rejected': { color: 'error', icon: <CancelIcon />, label: 'Rejected' }
     };
     
-    const config = statusConfig[status] || { color: 'default', icon: <PendingIcon /> };
+    const config = statusConfig[status] || { color: 'default', icon: <PendingIcon />, label: status };
     
     return (
       <Chip
         icon={config.icon}
-        label={status}
+        label={config.label}
         color={config.color}
         size="small"
         variant="outlined"
@@ -155,16 +183,15 @@ const PilgrimManagement = () => {
 
   const filteredPilgrims = pilgrims.filter(pilgrim => {
     if (statusFilter === 'All') return true;
-    if (statusFilter === 'InReview') return pilgrim.status === 'Pending';
-    if (statusFilter === 'NotVerified') return pilgrim.status === 'Reject';
     return pilgrim.status === statusFilter;
   });
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Approved': return <CheckCircleIcon color="success" />;
-      case 'Pending': return <PendingIcon color="warning" />;
-      case 'Reject': return <CancelIcon color="error" />;
+      case 'approved': return <CheckCircleIcon color="success" />;
+      case 'in_verification': return <PendingIcon color="warning" />;
+      case 'pending': return <CancelIcon color="error" />;
+      case 'rejected': return <CancelIcon color="error" />;
       default: return <PendingIcon color="action" />;
     }
   };
@@ -177,24 +204,6 @@ const PilgrimManagement = () => {
           <PersonIcon sx={{ mr: 2, fontSize: 32 }} />
           Pilgrim Management
         </Typography>
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchPilgrims}
-            disabled={loading}
-            sx={{ mr: 1 }}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<FilterIcon />}
-            onClick={() => setDialogOpen(true)}
-          >
-            Filter
-          </Button>
-        </Box>
       </Box>
 
       {/* Error Alert */}
@@ -242,13 +251,12 @@ const PilgrimManagement = () => {
               <CircularProgress />
             </Box>
           ) : (
-            <TableContainer>
-              <Table>
+            <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: 'grey.50' }}>
                     <TableCell>Pilgrim</TableCell>
-                    <TableCell>Trip Details</TableCell>
-                    <TableCell>Application Date</TableCell>
+                    <TableCell>Contact Details</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
@@ -259,79 +267,43 @@ const PilgrimManagement = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar sx={{ bgcolor: 'primary.main' }}>
-                            {pilgrim.user?.name?.charAt(0) || 'U'}
+                            {pilgrim.user?.first_name?.charAt(0) || 'U'}
                           </Avatar>
                           <Box>
                             <Typography variant="subtitle2" fontWeight="bold">
-                              {pilgrim.user?.name || 'Unknown User'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {pilgrim.user?.email || 'No email'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {pilgrim.user?.phone || 'No phone'}
+                              {pilgrim.user?.first_name} {pilgrim.user?.last_name}
                             </Typography>
                           </Box>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            {pilgrim.trip?.title || 'Trip Title'}
+                          <Typography variant="body2" color="text.secondary">
+                            📧 {pilgrim.user?.email || 'No email'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Destination: {pilgrim.trip?.destinationInfo?.title || 'Unknown'}
+                            📞 {pilgrim.user?.phone || 'No phone'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Start: {pilgrim.trip?.start_date ? new Date(pilgrim.trip.start_date).toLocaleDateString() : 'TBD'}
+                            🆔 Aadhaar: {pilgrim.user?.aadhaar_number || 'Not provided'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            End: {pilgrim.trip?.end_date ? new Date(pilgrim.trip.end_date).toLocaleDateString() : 'TBD'}
+                            📍 {pilgrim.user?.aadhaar_address || 'No address'}
                           </Typography>
                         </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(pilgrim.created_at).toLocaleDateString()}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(pilgrim.created_at).toLocaleTimeString()}
-                        </Typography>
                       </TableCell>
                       <TableCell>
                         {getStatusChip(pilgrim.status)}
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          {pilgrim.status === 'Pending' && (
-                            <Tooltip title="Approve">
-                              <IconButton
-                                size="small"
-                                color="success"
-                                onClick={() => handleStatusUpdate(pilgrim.id, 'Approved')}
-                              >
-                                <CheckCircleIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          {pilgrim.status === 'Pending' && (
-                            <Tooltip title="Reject">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleStatusUpdate(pilgrim.id, 'Reject')}
-                              >
-                                <CancelIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          <Tooltip title="Delete">
+                          <Tooltip title="Edit Status">
                             <IconButton
                               size="small"
-                              color="error"
-                              onClick={() => handleDeletePilgrim(pilgrim.id)}
+                              color="primary"
+                              onClick={() => handleEditClick(pilgrim)}
                             >
-                              <DeleteIcon />
+                              <EditIcon />
                             </IconButton>
                           </Tooltip>
                         </Box>
@@ -360,24 +332,39 @@ const PilgrimManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Statistics Cards */}
-      <Grid container spacing={2} sx={{ mt: 3 }}>
-        {tabs.map((tab) => (
-          <Grid item xs={12} sm={6} md={3} key={tab.value}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                {getStatusIcon(tab.status)}
-              </Box>
-              <Typography variant="h4" component="div" fontWeight="bold">
-                {tab.count}
+      {/* Edit Status Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit User Status</DialogTitle>
+        <DialogContent>
+          {selectedPilgrim && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                {selectedPilgrim.user?.first_name} {selectedPilgrim.user?.last_name}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {tab.label}
-              </Typography>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              <TextField
+                select
+                fullWidth
+                label="Account Status"
+                value={editStatus}
+                onChange={handleStatusChange}
+                sx={{ mt: 2 }}
+              >
+                <MenuItem value="pending">Not Verified</MenuItem>
+                <MenuItem value="in_verification">In Review</MenuItem>
+                <MenuItem value="approved">Approved</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+              </TextField>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveStatus} variant="contained" color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };
