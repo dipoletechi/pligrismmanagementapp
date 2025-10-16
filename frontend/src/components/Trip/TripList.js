@@ -37,7 +37,8 @@ import {
   CalendarToday as CalendarIcon,
   AttachMoney as MoneyIcon,
   GpsFixed as TrackIcon,
-  QrCodeScanner as ScannerIcon
+  QrCodeScanner as ScannerIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -201,6 +202,16 @@ const TripList = () => {
         trip: trip,
         tripTitle: trip.title,
         tripDestination: trip.destination 
+      } 
+    });
+  };
+
+  const handleApplicants = (trip) => {
+    console.log('Applicants button clicked for trip:', trip);
+    // Navigate to trip applicants page
+    navigate(`/trip-applicants/${trip.id}`, { 
+      state: { 
+        tripTitle: trip.title
       } 
     });
   };
@@ -643,6 +654,21 @@ const TripList = () => {
                             <ScannerIcon />
                           </IconButton>
                         )}
+                        <IconButton
+                          onClick={() => handleApplicants(trip)}
+                          sx={{
+                            color: '#ff5722',
+                            backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 87, 34, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                          title="View Applicants"
+                        >
+                          <PeopleIcon />
+                        </IconButton>
                         <IconButton
                           onClick={() => handleDelete(trip.id)}
                           sx={{

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -41,6 +42,7 @@ import axios from 'axios';
 
 const PilgrimManagement = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [tabValue, setTabValue] = useState(0);
   const [pilgrims, setPilgrims] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,7 @@ const PilgrimManagement = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editStatus, setEditStatus] = useState('');
+  const [tripFilter, setTripFilter] = useState(null);
 
   const [tabs, setTabs] = useState([
     { label: 'All', value: 0, status: 'All', count: 0, color: 'default' },
@@ -61,13 +64,31 @@ const PilgrimManagement = () => {
 
   useEffect(() => {
     fetchPilgrims();
-  }, []);
+  }, [tripFilter]);
+
+  useEffect(() => {
+    // Check if we have trip filter data from navigation
+    if (location.state?.filterByTrip && location.state?.tripId) {
+      setTripFilter({
+        tripId: location.state.tripId,
+        tripTitle: location.state.tripTitle
+      });
+    }
+  }, [location.state]);
 
   const fetchPilgrims = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('/api/trip-pligrim');
+      let response;
+      if (tripFilter?.tripId) {
+        // Fetch pilgrims who have applied for this specific trip
+        response = await axios.get(`/api/trip-pligrim/trip/${tripFilter.tripId}`);
+      } else {
+        // Fetch all pilgrims
+        response = await axios.get('/api/trip-pligrim');
+      }
+      
       if (response.data.success) {
         setPilgrims(response.data.data);
         updateTabCounts(response.data.data);
@@ -83,10 +104,10 @@ const PilgrimManagement = () => {
   const updateTabCounts = (data) => {
     const counts = {
       All: data.length,
-      approved: data.filter(p => p.status === 'approved').length,
+      approved: data.filter(p => p.status === 'Approved' || p.status === 'approved').length,
       in_verification: data.filter(p => p.status === 'in_verification').length,
-      pending: data.filter(p => p.status === 'pending').length,
-      rejected: data.filter(p => p.status === 'rejected').length
+      pending: data.filter(p => p.status === 'Pending' || p.status === 'pending').length,
+      rejected: data.filter(p => p.status === 'Reject' || p.status === 'rejected').length
     };
     
     setTabs(prevTabs => 
@@ -162,9 +183,12 @@ const PilgrimManagement = () => {
 
   const getStatusChip = (status) => {
     const statusConfig = {
+      'Approved': { color: 'success', icon: <CheckCircleIcon />, label: 'Approved' },
       'approved': { color: 'success', icon: <CheckCircleIcon />, label: 'Approved' },
       'in_verification': { color: 'warning', icon: <PendingIcon />, label: 'In Review' },
+      'Pending': { color: 'error', icon: <CancelIcon />, label: 'Not Verified' },
       'pending': { color: 'error', icon: <CancelIcon />, label: 'Not Verified' },
+      'Reject': { color: 'error', icon: <CancelIcon />, label: 'Rejected' },
       'rejected': { color: 'error', icon: <CancelIcon />, label: 'Rejected' }
     };
     
@@ -183,16 +207,38 @@ const PilgrimManagement = () => {
 
   const filteredPilgrims = pilgrims.filter(pilgrim => {
     if (statusFilter === 'All') return true;
-    return pilgrim.status === statusFilter;
+    
+    // Handle both account status and trip application status formats
+    const status = pilgrim.status;
+    switch (statusFilter) {
+      case 'approved':
+        return status === 'Approved' || status === 'approved';
+      case 'in_verification':
+        return status === 'in_verification';
+      case 'pending':
+        return status === 'Pending' || status === 'pending';
+      case 'rejected':
+        return status === 'Reject' || status === 'rejected';
+      default:
+        return status === statusFilter;
+    }
   });
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'approved': return <CheckCircleIcon color="success" />;
-      case 'in_verification': return <PendingIcon color="warning" />;
-      case 'pending': return <CancelIcon color="error" />;
-      case 'rejected': return <CancelIcon color="error" />;
-      default: return <PendingIcon color="action" />;
+      case 'Approved':
+      case 'approved': 
+        return <CheckCircleIcon color="success" />;
+      case 'in_verification': 
+        return <PendingIcon color="warning" />;
+      case 'Pending':
+      case 'pending': 
+        return <CancelIcon color="error" />;
+      case 'Reject':
+      case 'rejected': 
+        return <CancelIcon color="error" />;
+      default: 
+        return <PendingIcon color="action" />;
     }
   };
 
@@ -200,10 +246,17 @@ const PilgrimManagement = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center' }}>
-          <PersonIcon sx={{ mr: 2, fontSize: 32 }} />
-          Pilgrim Management
-        </Typography>
+        <Box>
+          <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center' }}>
+            <PersonIcon sx={{ mr: 2, fontSize: 32 }} />
+            Pilgrim Management
+          </Typography>
+          {tripFilter && (
+            <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+              Showing applicants for: <strong>{tripFilter.tripTitle}</strong>
+            </Typography>
+          )}
+        </Box>
       </Box>
 
       {/* Error Alert */}

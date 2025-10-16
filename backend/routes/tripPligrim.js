@@ -36,6 +36,50 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get pilgrims by trip ID (only users who have applied for this specific trip)
+router.get('/trip/:tripId', async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    
+    // Find all TripPligrim records for this trip
+    const tripApplications = await TripPligrim.findAll({
+      where: { tripid: tripId },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          where: { role: 'user' },
+          attributes: ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'aadhaar_number', 'aadhaar_address', 'accountStatus', 'created_at', 'updated_at']
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    // Map the data to match the expected format
+    const pilgrims = tripApplications.map(application => {
+      return {
+        id: application.user.id,
+        user: application.user,
+        status: application.status, // Use the application status from TripPligrim
+        created_at: application.created_at,
+        updated_at: application.updated_at
+      };
+    });
+
+    res.json({
+      success: true,
+      data: pilgrims
+    });
+  } catch (error) {
+    console.error('Error fetching pilgrims for trip:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pilgrims for trip',
+      error: error.message
+    });
+  }
+});
+
 // Get pilgrim applications by user
 router.get('/user/:userId', async (req, res) => {
   try {
@@ -240,6 +284,64 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete pilgrim application',
+      error: error.message
+    });
+  }
+});
+
+// Update pilgrim application status
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate status
+    const validStatuses = ['Pending', 'Approved', 'Reject'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: Pending, Approved, Reject'
+      });
+    }
+
+    // Find and update the application
+    const application = await TripPligrim.findByPk(id);
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pilgrim application not found'
+      });
+    }
+
+    await application.update({ status });
+
+    // Fetch updated application with user data
+    const updatedApplication = await TripPligrim.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'aadhaar_number', 'aadhaar_address', 'accountStatus', 'created_at', 'updated_at']
+        }
+      ]
+    });
+
+    res.json({
+      success: true,
+      message: 'Pilgrim application status updated successfully',
+      data: {
+        id: updatedApplication.user.id,
+        user: updatedApplication.user,
+        status: updatedApplication.status,
+        created_at: updatedApplication.created_at,
+        updated_at: updatedApplication.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('Error updating pilgrim application status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update pilgrim application status',
       error: error.message
     });
   }
