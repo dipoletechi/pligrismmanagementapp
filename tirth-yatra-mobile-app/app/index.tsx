@@ -18,7 +18,7 @@ import LanguageDropdown from '@/components/LanguageDropdown';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-const API_BASE_URL = 'http://192.168.1.5:5000/api/mobile/trips';
+const API_BASE_URL = 'http://192.168.1.15:5000/api/mobile/trips';
 
 interface Trip {
   id: number;

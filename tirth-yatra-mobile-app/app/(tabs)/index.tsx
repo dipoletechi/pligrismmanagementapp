@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 const { width: screenWidth } = Dimensions.get('window');
 
 // API endpoint - Using your computer's IP address
-const API_BASE_URL = 'http://192.168.1.5:5000/api/mobile/trips';
+const API_BASE_URL = 'http://192.168.1.15:5000/api/mobile/trips';
 
 // Trip data interface based on API response
 interface Trip {
@@ -258,7 +258,7 @@ export default function HomeScreen() {
         ) : error ? (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
-            <Text style={styles.errorText}>Failed to load trips</Text>
+            <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={fetchTrips}>
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
@@ -273,11 +273,6 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Fixed Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}></Text>
-        <Ionicons name="help-circle-outline" size={24} color="#666" />
-      </View>
     </SafeAreaView>
   );
 }
@@ -457,20 +452,6 @@ const styles = StyleSheet.create({
   },
   eventEndDate: {
     alignItems: 'flex-end',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#f8f8f8',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#666',
   },
   loadingContainer: {
     flex: 1,

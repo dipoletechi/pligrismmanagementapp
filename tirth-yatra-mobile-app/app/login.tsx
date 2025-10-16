@@ -81,7 +81,7 @@ export default function LoginScreen() {
 
       console.log('Login API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.5:5000/api/mobile/login', {
+      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -315,11 +315,6 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
 
-        {/* Footer */}
-        <View style={styles.mainFooter}>
-          <Text style={styles.footerText}></Text>
-          <Ionicons name="help-circle-outline" size={24} color="#666" />
-        </View>
       </SafeAreaView>
     </>
   );

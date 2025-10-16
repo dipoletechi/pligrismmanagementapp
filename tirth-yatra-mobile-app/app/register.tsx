@@ -290,7 +290,7 @@ export default function RegisterScreen() {
 
       console.log('Registration API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.5:5000/api/mobile/register', {
+      const response = await fetch('http://192.168.1.15:5000/api/mobile/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1395,11 +1395,6 @@ export default function RegisterScreen() {
         </KeyboardAvoidingView>
 
 
-        {/* Fixed Footer */}
-        <View style={styles.mainFooter}>
-          <Text style={styles.footerText}></Text>
-          <Ionicons name="help-circle-outline" size={24} color="#666" />
-        </View>
       </SafeAreaView>
     </>
   );

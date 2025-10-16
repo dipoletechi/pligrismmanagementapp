@@ -262,13 +262,6 @@ export default function DashboardScreen() {
           )}
         </ScrollView>
 
-        {/* Footer */}
-        <View style={styles.mainFooter}>
-          <Text style={styles.footerText}>© 2024 Tirth Yatra. All rights reserved.</Text>
-          <TouchableOpacity onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={24} color="#666" />
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
     </>
   );
@@ -279,7 +272,6 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingBottom: 60, // Add space for fixed footer
   },
   mainHeader: {
     flexDirection: 'row',
@@ -447,26 +439,6 @@ const styles = StyleSheet.create({
   },
   activityTime: {
     fontSize: 14,
-    color: '#666',
-  },
-  mainFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    //position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    opacity: 1,
-  },
-  footerText: {
-    fontSize: 12,
     color: '#666',
   },
   // Error styles

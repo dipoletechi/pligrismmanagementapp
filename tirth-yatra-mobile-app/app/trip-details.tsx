@@ -108,7 +108,7 @@ export default function TripDetailsScreen() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://192.168.1.5:5000/api/mobile/trips/${id}/details`, {
+      const response = await fetch(`http://192.168.1.15:5000/api/mobile/trips/${id}/details`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -116,6 +116,7 @@ export default function TripDetailsScreen() {
         signal: controller.signal,
       });
       
+      console.log('Fetch response status:', response.status);
       clearTimeout(timeoutId);
       
       if (!response.ok) {
