@@ -54,7 +54,7 @@ class SingleMigrator {
         host: this.host,
         port: this.port,
         user: this.user,
-        password: this.password || 'root', // Use 'root' if no password
+        password: this.password, // Use 'root' if no password
         database: this.dbName
       });
       
