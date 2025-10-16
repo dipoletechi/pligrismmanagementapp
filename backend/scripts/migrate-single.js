@@ -54,7 +54,7 @@ class SingleMigrator {
         host: this.host,
         port: this.port,
         user: this.user,
-        password: this.password,
+        password: this.password || 'root', // Use 'root' if no password
         database: this.dbName
       });
       
@@ -67,7 +67,7 @@ class SingleMigrator {
 
   async runSingleMigration() {
     try {
-      const migrationPath = path.join(__dirname, '..', 'migrations', '000_complete_production_schema.sql');
+      const migrationPath = path.join(__dirname, '..', 'migrations', '000_complete_actual_schema.sql');
       const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
       
       console.log('🚀 Running complete production schema migration...');
