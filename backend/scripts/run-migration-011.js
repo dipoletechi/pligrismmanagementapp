@@ -21,17 +21,17 @@ async function runMigration() {
     console.log('Connected to database successfully');
 
     // Read the migration file
-    const migrationPath = path.join(__dirname, '../migrations/011_create_trip_pligrism_table.sql');
+    const migrationPath = path.join(__dirname, '../migrations/011_create_trip_pligrim_table.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
     
-    console.log('Running migration: 011_create_trip_pligrism_table.sql');
-    console.log('Creating TripPligrism table...');
+    console.log('Running migration: 011_create_trip_pligrim_table.sql');
+    console.log('Creating TripPligrim table...');
     
     // Execute the migration
     await connection.execute(migrationSQL);
     
     console.log('✅ Migration 011 completed successfully!');
-    console.log('✅ TripPligrism table created with the following structure:');
+    console.log('✅ TripPligrim table created with the following structure:');
     console.log('   - id (Primary Key, Auto Increment)');
     console.log('   - tripid (Foreign Key to trips table)');
     console.log('   - userid (Foreign Key to users table)');

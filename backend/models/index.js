@@ -18,7 +18,7 @@ const Event = require('./Event');
 const Trip = require('./Trip');
 const TripStatus = require('./TripStatus');
 const TripLog = require('./TripLog');
-const TripPligrism = require('./TripPligrism');
+const TripPligrim = require('./TripPligrim');
 
 // Associations
 FoodCategory.hasMany(FoodItem, {
@@ -196,27 +196,27 @@ TripLog.belongsTo(Trip, {
   onUpdate: 'CASCADE'
 });
 
-// TripPligrism Associations
-User.hasMany(TripPligrism, {
+// TripPligrim Associations
+User.hasMany(TripPligrim, {
   foreignKey: 'userid',
   as: 'tripApplications',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
-TripPligrism.belongsTo(User, {
+TripPligrim.belongsTo(User, {
   foreignKey: 'userid',
   as: 'user',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
 
-Trip.hasMany(TripPligrism, {
+Trip.hasMany(TripPligrim, {
   foreignKey: 'tripid',
   as: 'applications',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
-TripPligrism.belongsTo(Trip, {
+TripPligrim.belongsTo(Trip, {
   foreignKey: 'tripid',
   as: 'trip',
   onDelete: 'CASCADE',
@@ -242,7 +242,7 @@ module.exports = {
   Trip,
   TripStatus,
   TripLog,
-  TripPligrism
+  TripPligrim
 };
 
 

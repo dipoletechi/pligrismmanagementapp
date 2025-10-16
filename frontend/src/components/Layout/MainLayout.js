@@ -27,6 +27,7 @@ import {
   Assessment as ReportsIcon,
   Settings as SettingsIcon,
   People as PeopleIcon,
+  Person as PersonIcon,
   LocationOn as LocationIcon,
   LocalShipping as TransportIcon,
   Support as SupportIcon,
@@ -51,6 +52,7 @@ const menuItems = [
   { text: 'Vendors Management', icon: <PeopleIcon />, path: '/vendors', roles: ['superadmin', 'admin'] },
   { text: 'Support Management', icon: <SupportIcon />, path: '/support', roles: ['superadmin', 'admin'] },
   { text: 'User Management', icon: <PeopleIcon />, path: '/users', roles: ['superadmin'] },
+  { text: 'Pilgrim', icon: <PersonIcon />, path: '/pilgrims', roles: ['superadmin', 'admin', 'trip_manager'] },
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager'] },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] }
 ];
