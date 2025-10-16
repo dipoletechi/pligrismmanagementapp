@@ -133,7 +133,7 @@ export default function LoginScreen() {
         }
       } else if (response.ok && data.success) {
         // Check if user is active and approved
-        if (data.data.isActive && data.data.accountStatus === 'approved') {
+        if (data.data.accountStatus === 'approved') {
           // User fully verified and approved - redirect to dashboard
           router.push({
             pathname: '/dashboard',
