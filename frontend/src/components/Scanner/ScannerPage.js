@@ -630,68 +630,107 @@ const ScannerPage = () => {
       
       if (qrScanner.category === 'transport') {
         logType = qrScanner.action === 'checkIn' ? 'TransportCheckIn' : 'TransportCheckOut';
-        logItemId = scannedData.vendorId || scannedData.busId || scannedData.text || 'Unknown';
+        // Get transport details for the specific day
+        const dayTransport = getTransportForDay(
+          tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
+          qrScanner.dayString
+        );
+        // Use transport ID instead of name
+        logItemId = dayTransport?.vendor?.id || dayTransport?.buses?.[0]?.id || 'transport_1';
+        console.log('Transport ID for log:', logItemId);
+        console.log('Transport vendor details:', dayTransport?.vendor);
+        console.log('Transport bus details:', dayTransport?.buses?.[0]);
       } else if (qrScanner.category === 'accommodation') {
         logType = qrScanner.action === 'checkIn' ? 'AccommodationCheckIn' : 'AccommodationCheckOut';
-        logItemId = scannedData.vendorId || scannedData.text || 'Unknown';
+        // Get accommodation details for the specific day
+        const dayAccommodation = getAccommodationForDay(
+          tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
+          qrScanner.dayString
+        );
+        // Use accommodation ID instead of name
+        logItemId = dayAccommodation?.id || 'accommodation_1';
+        console.log('Accommodation ID for log:', logItemId);
+        console.log('Accommodation details:', dayAccommodation);
       } else if (qrScanner.category === 'events') {
         logType = qrScanner.action === 'checkIn' ? 'EventCheckIn' : 'EventCheckOut';
-        logItemId = scannedData.eventTitle || scannedData.eventId || scannedData.text || 'Unknown Event';
+        // Get event details for the specific day
+        const dayEvents = getEventsForDay(
+          tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
+          qrScanner.dayString
+        );
+        // Use event ID instead of name
+        logItemId = dayEvents?.[0]?.id || 'event_1';
+        console.log('Event ID for log:', logItemId);
+        console.log('Event details:', dayEvents?.[0]);
       }
 
       console.log('Determined Log Type:', logType);
       console.log('Determined Log Item ID:', logItemId);
+      console.log('Day String:', qrScanner.dayString);
+      console.log('Category:', qrScanner.category);
 
-      // Create trip log entry
-      const logData = {
-        trip_id: parseInt(tripId),
-        log_type: logType,
-        log_item_id: logItemId
-      };
+      // Decode QR code using mobile QR API
+      try {
+        console.log('Decoding QR code with mobile QR API...');
+        const decodeResponse = await axios.post('/api/mobile-qr/decode-qr', {
+          qrData: decodedText
+        }, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
 
-      console.log('Trip Log Data to be sent:', logData);
+        if (decodeResponse.data.success) {
+          const { user } = decodeResponse.data.data;
+          console.log('QR Code decoded successfully:', user);
+          
+          // Create trip log entry with user ID from QR code
+          const logData = {
+            trip_id: parseInt(tripId),
+            log_type: logType,
+            log_item_id: logItemId,
+            user_id: user.id // Get user ID from decoded QR data
+          };
 
-      // For now, just log the data and update UI without API call
-      console.log('=== SIMULATING SUCCESS ===');
-      console.log('Would create trip log with data:', logData);
-      
-      // Update local state
-      if (qrScanner.category === 'events') {
-        handleEventCheckInOut(qrScanner.eventKey, qrScanner.action);
-      } else {
-        handleCheckInOut(qrScanner.dayString, qrScanner.category, qrScanner.action);
-      }
-      
-      // Close scanner
-      setQrScanner({ open: false, action: null, dayString: null, category: null, eventKey: null });
-      
-      console.log('UI updated successfully');
-      console.log('=== QR SCAN COMPLETE ===');
-      
-      // Show success message
-      alert(`QR Code scanned successfully!\n\nData: ${decodedText}\n\nCheck console for detailed logs.`);
+          console.log('Trip Log Data to be sent:', logData);
 
-      // Uncomment below code when you want to enable actual API calls
-      /*
-      const response = await axios.post('/api/trip-logs', logData);
-      
-      if (response.data.success) {
-        // Update local state
-        if (qrScanner.category === 'events') {
-          handleEventCheckInOut(qrScanner.eventKey, qrScanner.action);
+          // Insert trip log
+          const logResponse = await axios.post('/api/trip-logs', logData, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+
+          if (logResponse.data.success) {
+            console.log('Trip log created successfully:', logResponse.data.data);
+            
+            // Update local state
+            if (qrScanner.category === 'events') {
+              handleEventCheckInOut(qrScanner.eventKey, qrScanner.action);
+            } else {
+              handleCheckInOut(qrScanner.dayString, qrScanner.category, qrScanner.action);
+            }
+            
+            // Close scanner
+            setQrScanner({ open: false, action: null, dayString: null, category: null, eventKey: null });
+            
+            // Show success message
+            alert(`${qrScanner.action === 'checkIn' ? 'Check In' : 'Check Out'} successful for ${user.firstName} ${user.lastName}!`);
+            
+            console.log('=== QR SCAN COMPLETE ===');
+          } else {
+            throw new Error(logResponse.data.message || 'Failed to create trip log');
+          }
         } else {
-          handleCheckInOut(qrScanner.dayString, qrScanner.category, qrScanner.action);
+          throw new Error(decodeResponse.data.message || 'Failed to decode QR code');
         }
+      } catch (error) {
+        console.error('Error processing QR code:', error);
+        alert(`Error: ${error.response?.data?.message || error.message}`);
         
-        // Close scanner
+        // Close scanner on error
         setQrScanner({ open: false, action: null, dayString: null, category: null, eventKey: null });
-        
-        console.log('Trip log created successfully:', response.data.data);
-        
-        // Show success message
-        alert(`${qrScanner.action === 'checkIn' ? 'Check In' : 'Check Out'} successful!`);
       }
-      */
     } catch (error) {
       console.error('Error processing QR scan:', error);
       alert('Failed to process QR code. Please try again.');
@@ -890,7 +929,6 @@ const ScannerPage = () => {
                             color="success"
                             startIcon={<CheckInIcon />}
                             onClick={() => openQRScanner('checkIn', day.dateString, 'transport')}
-                            disabled={checkInOutData[day.dateString]?.transport?.checkedIn}
                           >
                             Check In
                           </Button>
@@ -900,7 +938,6 @@ const ScannerPage = () => {
                             color="error"
                             startIcon={<CheckOutIcon />}
                             onClick={() => openQRScanner('checkOut', day.dateString, 'transport')}
-                            disabled={checkInOutData[day.dateString]?.transport?.checkedOut}
                           >
                             Check Out
                           </Button>
@@ -1002,7 +1039,6 @@ const ScannerPage = () => {
                             color="success"
                             startIcon={<CheckInIcon />}
                             onClick={() => openQRScanner('checkIn', day.dateString, 'accommodation')}
-                            disabled={checkInOutData[day.dateString]?.accommodation?.checkedIn}
                           >
                             Check In
                           </Button>
@@ -1012,7 +1048,6 @@ const ScannerPage = () => {
                             color="error"
                             startIcon={<CheckOutIcon />}
                             onClick={() => openQRScanner('checkOut', day.dateString, 'accommodation')}
-                            disabled={checkInOutData[day.dateString]?.accommodation?.checkedOut}
                           >
                             Check Out
                           </Button>
@@ -1137,7 +1172,6 @@ const ScannerPage = () => {
                             color="success"
                             startIcon={<CheckInIcon />}
                                       onClick={() => openQRScanner('checkIn', day.dateString, 'events', eventKey)}
-                                      disabled={eventCheckData.checkedIn}
                                       sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
                           >
                             Check In
@@ -1148,7 +1182,6 @@ const ScannerPage = () => {
                             color="error"
                             startIcon={<CheckOutIcon />}
                                       onClick={() => openQRScanner('checkOut', day.dateString, 'events', eventKey)}
-                                      disabled={eventCheckData.checkedOut}
                                       sx={{ fontSize: '0.7rem', minWidth: 'auto', px: 1 }}
                           >
                             Check Out

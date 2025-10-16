@@ -9,6 +9,7 @@ router.post('/',
   protect,
   [
     body('trip_id').isInt().withMessage('Trip ID must be a valid integer'),
+    body('user_id').isInt().withMessage('User ID must be a valid integer'),
     body('log_type').isIn([
       'TransportCheckIn', 'TransportCheckOut',
       'AccommodationCheckIn', 'AccommodationCheckOut',
@@ -28,8 +29,7 @@ router.post('/',
         });
       }
 
-      const { trip_id, log_type, log_item_id } = req.body;
-      const user_id = req.user.id;
+      const { trip_id, log_type, log_item_id, user_id } = req.body;
 
       // Verify trip exists and user has access
       const trip = await Trip.findByPk(trip_id);
@@ -42,7 +42,7 @@ router.post('/',
 
       // Create trip log entry
       const tripLog = await TripLog.create({
-        user_id,
+        user_id: user_id, // Use the user ID from QR code, not scanner's ID
         trip_id,
         log_type,
         log_item_id,
@@ -55,7 +55,7 @@ router.post('/',
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name', 'email']
+            attributes: ['id', 'first_name', 'last_name', 'email']
           },
           {
             model: Trip,
@@ -109,7 +109,7 @@ router.get('/trip/:tripId',
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name', 'email']
+            attributes: ['id', 'first_name', 'last_name', 'email']
           },
           {
             model: Trip,
@@ -149,7 +149,7 @@ router.get('/user',
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name', 'email']
+            attributes: ['id', 'first_name', 'last_name', 'email']
           },
           {
             model: Trip,
