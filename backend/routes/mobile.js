@@ -1412,6 +1412,7 @@ router.get('/dashboard-stats', async (req, res) => {
 // Mobile Registration API
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration request body:', req.body);
     const { 
       firstName, 
       lastName, 
@@ -1473,7 +1474,7 @@ router.post('/register', async (req, res) => {
       email: email || null,
       phone: phone || null,
       password: password || null, // null for digilocker registration
-      originalPassword: password || null, // Store original password for pre-filling
+      //originalPassword: password || null, // Store original password for pre-filling
       role: 'user',
       isActive: false, // pending verification
       registrationMethod,
@@ -1720,6 +1721,7 @@ router.post('/login', async (req, res) => {
   try {
     const { email, phone, password } = req.body;
 
+    console.log("Login attempt with:", { email, phone , password});
     if (!password) {
       return res.status(400).json({
         success: false,
@@ -1765,7 +1767,7 @@ router.post('/login', async (req, res) => {
       console.log("Database status check:", { isActive, accountStatus });
       
       // User has completed Step 6, check if account is active and approved
-      if (!is_email_verified || is_phone_verified || accountStatus !== 'in_verification') {
+      if ((is_email_verified || is_phone_verified) && accountStatus === 'in_verification') {
         console.log("Entering the !isActive || accountStatus !== 'approved' block");
         let message = 'Account not verified. Please verify your account first.';
         
@@ -1835,6 +1837,46 @@ router.post('/login', async (req, res) => {
       const hasAadhaarFront = aadhaarResult[0] && aadhaarResult[0].aadhaar_front_image && aadhaarResult[0].aadhaar_front_image !== null;
       const hasAadhaarBack = aadhaarResult[0] && aadhaarResult[0].aadhaar_back_image && aadhaarResult[0].aadhaar_back_image !== null;
       
+      // Check if OTP and OTP expiry are null (user went to step 4 but didn't complete)
+      if (!user.otp && !user.otpExpiry) {
+        console.log("OTP and OTP expiry are null - checking Aadhaar status");
+        
+        // Determine redirect step based on Aadhaar images
+        let redirectStep;
+        if (hasAadhaarBack) {
+          redirectStep = 6; // If back image exists, go to step 6 (final step)
+        } else if (hasAadhaarFront) {
+          redirectStep = 5; // If only front image exists, go to step 5 (back upload)
+        } else {
+          redirectStep = 4; // If no images, go to step 4 (OTP verification)
+        }
+        console.log("Redirecting to step:", redirectStep);
+        
+        return res.status(401).json({
+          success: false,
+          message: 'Please complete your registration first',
+          data: {
+            userId: user.id,
+            email: user.email,
+            phone: user.phone,
+            password: user.password || '',
+            otp: null, // Keep OTP null
+            otp_expiry: null, // Keep expiry null
+            registrationMethod: user.phone ? 'phone' : 'email',
+            is_email_verified: user.isEmailVerified ? 1 : 0,
+            is_phone_verified: user.isPhoneVerified ? 1 : 0,
+            requiresVerification: true,
+            redirectToStep: redirectStep, // Dynamic step based on Aadhaar status
+            hasAadhaarFront: hasAadhaarFront,
+            hasAadhaarBack: hasAadhaarBack,
+            aadhaarNumber: aadhaarResult[0]?.aadhaar_number || '',
+            aadhaarName: aadhaarResult[0]?.aadhaar_name || '',
+            age: aadhaarResult[0]?.age || '',
+            aadhaarAddress: aadhaarResult[0]?.aadhaar_address || ''
+          }
+        });
+      }
+      
       // Get Aadhaar details for pre-filling
       const aadhaarNumber = aadhaarResult[0]?.aadhaar_number || '';
       const aadhaarName = aadhaarResult[0]?.aadhaar_name || '';
@@ -1888,6 +1930,46 @@ router.post('/login', async (req, res) => {
       const hasAadhaarFront = aadhaarResult[0] && aadhaarResult[0].aadhaar_front_image && aadhaarResult[0].aadhaar_front_image !== null;
       const hasAadhaarBack = aadhaarResult[0] && aadhaarResult[0].aadhaar_back_image && aadhaarResult[0].aadhaar_back_image !== null;
       
+      // Check if OTP and OTP expiry are null (user went to step 4 but didn't complete)
+      if (!user.otp && !user.otpExpiry) {
+        console.log("OTP and OTP expiry are null - checking Aadhaar status");
+        
+        // Determine redirect step based on Aadhaar images
+        let redirectStep;
+        if (hasAadhaarBack) {
+          redirectStep = 6; // If back image exists, go to step 6 (final step)
+        } else if (hasAadhaarFront) {
+          redirectStep = 5; // If only front image exists, go to step 5 (back upload)
+        } else {
+          redirectStep = 4; // If no images, go to step 4 (OTP verification)
+        }
+        console.log("Redirecting to step:", redirectStep);
+        
+        return res.status(401).json({
+          success: false,
+          message: 'Please complete your registration first',
+          data: {
+            userId: user.id,
+            email: user.email,
+            phone: user.phone,
+            password: user.originalPassword || '',
+            otp: null, // Keep OTP null
+            otp_expiry: null, // Keep expiry null
+            registrationMethod: user.phone ? 'phone' : 'email',
+            is_email_verified: user.isEmailVerified ? 1 : 0,
+            is_phone_verified: user.isPhoneVerified ? 1 : 0,
+            requiresVerification: true,
+            redirectToStep: redirectStep, // Dynamic step based on Aadhaar status
+            hasAadhaarFront: hasAadhaarFront,
+            hasAadhaarBack: hasAadhaarBack,
+            aadhaarNumber: aadhaarResult[0]?.aadhaar_number || '',
+            aadhaarName: aadhaarResult[0]?.aadhaar_name || '',
+            age: aadhaarResult[0]?.age || '',
+            aadhaarAddress: aadhaarResult[0]?.aadhaar_address || ''
+          }
+        });
+      }
+      
       // Get Aadhaar details for pre-filling
       const aadhaarNumber = aadhaarResult[0]?.aadhaar_number || '';
       const aadhaarName = aadhaarResult[0]?.aadhaar_name || '';
@@ -1903,7 +1985,7 @@ router.post('/login', async (req, res) => {
       } else if (hasAadhaarFront) {
         redirectStep = 5; // If only front image exists, go to step 5 (back upload)
       } else {
-        redirectStep = 4; // If no images, go to step 4 (front upload)
+        redirectStep = 3; // If no images, go to step 4 (front upload)
       }
       
       console.log("redirectStep:", redirectStep);
