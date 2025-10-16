@@ -1,8 +1,15 @@
 const { Sequelize } = require('sequelize');
 
-// Create Sequelize instance
+// Create Sequelize instance with environment-specific database
+const getDatabaseName = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.DB_NAME || 'tirthyatra';
+  }
+  return process.env.DB_NAME || 'tirthyatra_dev';
+};
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'tirthyatra',
+  getDatabaseName(),
   process.env.DB_USER || 'root',
   process.env.DB_PASSWORD || 'root',
   {
@@ -27,6 +34,8 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log('MySQL database connected successfully');
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Database: ${getDatabaseName()}`);
     
     // Note: Database schema is managed by migrations
     // No need to sync as it can cause "too many keys" error
