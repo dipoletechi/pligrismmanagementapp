@@ -77,7 +77,7 @@ app.use(limiter);
 
 // CORS - More permissive for development
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.1.15:5000', 'http://192.168.1.5:5000'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.1.15:5000', 'http://192.168.1.5:5000', 'https://tripmanager.dipoletechi.com'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
