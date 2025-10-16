@@ -11,7 +11,11 @@ import {
   Alert,
   SafeAreaView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageDropdown from '@/components/LanguageDropdown';
+import { router } from 'expo-router';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -43,12 +47,11 @@ const carouselData = [
 ];
 
 export default function HomeScreen() {
-  const [activeTab, setActiveTab] = useState('Current');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { t } = useLanguage();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   // Fetch trips data from API
   const fetchTrips = async () => {
@@ -98,53 +101,132 @@ export default function HomeScreen() {
     }
   };
 
+
+  // Handle logout
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: () => {
+            // Handle logout logic here
+            console.log('User logged out');
+          }
+        }
+      ]
+    );
+  };
+
+  // Check login status and navigate to dashboard
+  const navigateToDashboard = async () => {
+    try {
+      setSidebarVisible(false);
+      console.log('navigateToDashboard');
+      // Get stored login credentials from AsyncStorage
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      
+      console.log('Using stored credentials:', { email: storedEmail, password: storedPassword ? '***' : 'null' });
+      
+      if (!storedEmail || !storedPassword) {
+        console.log('No stored credentials found, using default');
+        // If no stored credentials, use default ones
+        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: storedEmail,
+            password: storedPassword
+          }),
+        });
+        
+        const data = await response.json();
+        console.log('Login API Response: banty', data);
+        console.log('Response OK banty:', response.ok);
+        console.log('Data Success:', data.success);
+        
+        if (response.ok && data.success === true) {
+          console.log('Login successful - navigating to dashboard with success');
+          router.push({
+            pathname: '/dashboard',
+            params: { loginSuccess: 'true' }
+          });
+        } else {
+          console.log('Login failed - navigating to dashboard with error:', data.message);
+          router.push({
+            pathname: '/dashboard',
+            params: { 
+              error: data.message || 'Login failed. Please try again.',
+              loginError: 'true'
+            }
+          });
+        }
+        return;
+      }
+      
+      // Call login API with stored credentials
+      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: storedEmail,
+          password: storedPassword
+        }),
+      });
+
+      const data = await response.json();
+      
+      console.log('Login API Response:', data);
+      console.log('Response OK:', response.ok);
+      console.log('Data Success:', data.success);
+      
+      // Check both response.ok AND data.success
+      if (response.ok && data.success === true) {
+        console.log('Login successful - navigating to dashboard with success');
+        // Login successful - navigate to dashboard with success parameter
+        router.push({
+          pathname: '/dashboard',
+          params: { loginSuccess: 'true' }
+        });
+      } else {
+        console.log('Login failed - navigating to dashboard with error:', data.message);
+        // Login failed or account in review - navigate to dashboard with error
+        router.push({
+          pathname: '/dashboard',
+          params: { 
+            error: data.message || 'Login failed. Please try again.',
+            loginError: 'true'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Login check error:', error);
+      // Navigate to dashboard with error
+      router.push({
+        pathname: '/dashboard',
+        params: { 
+          error: 'Network error. Please check your connection.',
+          loginError: 'true'
+        }
+      });
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     fetchTrips();
   }, []);
 
-  // Auto-rotate carousel
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        (prevIndex + 1) % carouselData.length
-      );
-    }, 3000); // Change carousel every 3 seconds
 
-    return () => clearInterval(interval);
-  }, []);
 
-  // Filter trips based on active tab
-  const filteredTrips = trips.filter(trip => 
-    trip.trip_role && trip.trip_role.toLowerCase() === activeTab.toLowerCase()
-  );
-
-  const renderCarousel = () => (
-    <View style={styles.carouselContainer}>
-      <View style={[styles.carouselImageContainer, { backgroundColor: carouselData[currentImageIndex].color }]}>
-        <View style={styles.carouselContent}>
-          <Ionicons name="location-outline" size={48} color="#fff" />
-          <Text style={styles.carouselTitle}>{carouselData[currentImageIndex].title}</Text>
-        </View>
-      </View>
-      <TouchableOpacity 
-        style={[styles.carouselButton, styles.carouselButtonLeft]}
-        onPress={() => setCurrentImageIndex((prev) => 
-          prev === 0 ? carouselData.length - 1 : prev - 1
-        )}
-      >
-        <Ionicons name="chevron-back" size={24} color="#000" />
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.carouselButton, styles.carouselButtonRight]}
-        onPress={() => setCurrentImageIndex((prev) => 
-          (prev + 1) % carouselData.length
-        )}
-      >
-        <Ionicons name="chevron-forward" size={24} color="#000" />
-      </TouchableOpacity>
-    </View>
-  );
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -208,48 +290,37 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Fixed Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Title</Text>
+      {/* Header */}
+      <View style={styles.mainHeader}>
+        <View>
+          <Text style={styles.headerTitle}>Tirth Yatra</Text>
+          <Text style={styles.headerSubtitle}>Pilgrimage Trips</Text>
+        </View>
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.headerButton}>
-            <Text style={styles.headerButtonText}>SignIn</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
-            <Text style={styles.headerButtonText}>SignUp</Text>
+          <TouchableOpacity 
+            style={styles.sidebarButton}
+            onPress={() => {
+              console.log('Menu button pressed, sidebarVisible:', sidebarVisible);
+              setSidebarVisible(!sidebarVisible);
+            }}
+          >
+            <Ionicons name="menu" size={24} color="#333" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Fixed Image Carousel */}
-      {renderCarousel()}
-
-      {/* Fixed Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'Upcoming' && styles.activeTab]}
-          onPress={() => setActiveTab('Upcoming')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Upcoming' && styles.activeTabText]}>
-            Upcoming
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'Current' && styles.activeTab]}
-          onPress={() => setActiveTab('Current')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Current' && styles.activeTabText]}>
-            Current
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Scrollable Content Area */}
+      {/* Main Content */}
       <ScrollView 
-        ref={scrollViewRef}
-        style={styles.scrollableContent}
+        style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
+        {/* Welcome Section */}
+        <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeTitle}>Your Pilgrimage Trips</Text>
+          <Text style={styles.welcomeSubtitle}>Discover and manage your spiritual journeys</Text>
+        </View>
+
+        {/* Trips Content */}
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#000" />
@@ -263,15 +334,93 @@ export default function HomeScreen() {
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
-        ) : filteredTrips.length === 0 ? (
+        ) : trips.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="calendar-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>No {activeTab.toLowerCase()} trips found</Text>
+            <Text style={styles.emptyText}>No trips found</Text>
           </View>
         ) : (
-          filteredTrips.map(renderEventCard)
+          <View style={styles.tripsGrid}>
+            {trips.map(renderEventCard)}
+          </View>
         )}
       </ScrollView>
+
+      {/* Sidebar Menu */}
+      {sidebarVisible && (
+        <View style={styles.sidebarOverlay}>
+          <View style={styles.sidebar}>
+            <View style={styles.sidebarHeader}>
+              <Text style={styles.sidebarTitle}>Menu</Text>
+              <TouchableOpacity 
+                style={styles.sidebarCloseButton}
+                onPress={() => setSidebarVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.sidebarContent}>
+              <TouchableOpacity 
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setSidebarVisible(false);
+                  // Stay on trips page
+                }}
+              >
+                <Ionicons name="airplane-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>Trips</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.sidebarItem, { backgroundColor: '#f0f0f0' }]}
+                onPress={() => {
+                  console.log('Dashboard button pressed');
+                  navigateToDashboard();
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="grid-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>sdfsdfds</Text>
+              </TouchableOpacity>
+              
+              {/* Test Button */}
+              <TouchableOpacity 
+                style={[styles.sidebarItem, { backgroundColor: '#ff0000' }]}
+                onPress={() => {
+                  console.log('TEST BUTTON PRESSED');
+                  Alert.alert('Test', 'Test button works!');
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="checkmark" size={24} color="#fff" />
+                <Text style={[styles.sidebarItemText, { color: '#fff' }]}>TEST BUTTON</Text>
+              </TouchableOpacity>
+
+              {/* Language Selection */}
+              <View style={styles.sidebarItem}>
+                <Ionicons name="language-outline" size={24} color="#007AFF" />
+                <View style={styles.languageContainer}>
+                  <Text style={styles.sidebarItemText}>Language</Text>
+                  <LanguageDropdown />
+                </View>
+              </View>
+
+              {/* Sign Out */}
+              <TouchableOpacity 
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setSidebarVisible(false);
+                  handleLogout();
+                }}
+              >
+                <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>sdfdsfsdf Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
     </SafeAreaView>
   );
@@ -280,21 +429,28 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
-  header: {
+  mainHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    paddingTop: 50,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -510,5 +666,99 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
+  },
+  // Sidebar button styles
+  sidebarButton: {
+    padding: 8,
+  },
+  // Sidebar styles
+  sidebarOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1000,
+  },
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 280,
+    height: '100%',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  sidebarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  sidebarTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sidebarCloseButton: {
+    padding: 5,
+  },
+  sidebarContent: {
+    paddingVertical: 20,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    gap: 15,
+  },
+  sidebarItemText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  languageContainer: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  // Dashboard-style content
+  scrollContent: { 
+    padding: 20,
+    paddingBottom: 40,
+  },
+  welcomeSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+  },
+  tripsGrid: {
+    gap: 16,
   },
 });

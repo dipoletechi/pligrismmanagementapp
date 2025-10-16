@@ -11,6 +11,7 @@ import {
   Alert,
   SafeAreaView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -67,6 +68,106 @@ export default function HomeScreen() {
       setLoginError(null);
     }
   }, [params]);
+
+  // Check login status and navigate to dashboard
+  const navigateToDashboard = async () => {
+    try {
+      setSidebarVisible(false);
+      console.log('navigateToDashboard called');
+      
+      // Get stored login credentials from AsyncStorage
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      
+      console.log('Using stored credentials:', { email: storedEmail, password: storedPassword ? '***' : 'null' });
+      
+      if (!storedEmail || !storedPassword) {
+        console.log('No stored credentials found, using default');
+        // If no stored credentials, use default ones
+        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: storedEmail,
+            password: storedPassword
+          }),
+        });
+        
+        const data = await response.json();
+        console.log('Login API Response:', data);
+        console.log('Response OK:', response.ok);
+        console.log('Data Success:', data.success);
+        
+        if (response.ok && data.success === true) {
+          console.log('Login successful - navigating to dashboard with success');
+          router.push({
+            pathname: '/dashboard',
+            params: { loginSuccess: 'true' }
+          });
+        } else {
+          console.log('Login failed - navigating to dashboard with error:', data.message);
+          router.push({
+            pathname: '/dashboard',
+            params: { 
+              error: data.message || 'Login failed. Please try again.',
+              loginError: 'true'
+            }
+          });
+        }
+        return;
+      }
+      
+      // Call login API with stored credentials
+      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: storedEmail,
+          password: storedPassword
+        }),
+      });
+
+      const data = await response.json();
+      
+      console.log('Login API Response:', data);
+      console.log('Response OK:', response.ok);
+      console.log('Data Success:', data.success);
+      
+      // Check both response.ok AND data.success
+      if (response.ok && data.success === true) {
+        console.log('Login successful - navigating to dashboard with success');
+        // Login successful - navigate to dashboard with success parameter
+        router.push({
+          pathname: '/dashboard',
+          params: { loginSuccess: 'true' }
+        });
+      } else {
+        console.log('Login failed - navigating to dashboard with error:', data.message);
+        // Login failed or account in review - navigate to dashboard with error
+        router.push({
+          pathname: '/dashboard',
+          params: { 
+            error: data.message || 'Login failed. Please try again.',
+            loginError: 'true'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Login check error:', error);
+      // Navigate to dashboard with error
+      router.push({
+        pathname: '/dashboard',
+        params: { 
+          error: 'Network error. Please check your connection.',
+          loginError: 'true'
+        }
+      });
+    }
+  };
 
   const fetchTrips = async () => {
     try {
@@ -212,56 +313,74 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container]}>
-      {/* ✅ HEADER FIX */}
-      <View style={styles.header}>
-        {params.fromDashboard !== 'true' && (
-          <Text style={styles.headerTitle}>Tirth Yatra</Text>
-        )}
-         <TouchableOpacity
-           style={styles.headerMenuButton}
-           onPress={() => {
-             if (params.fromDashboard === 'true') {
-               setSidebarVisible(!sidebarVisible);
-               setHeaderMenuVisible(false); // Hide header menu when showing sidebar
-             } else {
-               setHeaderMenuVisible(!headerMenuVisible);
-               setSidebarVisible(false); // Hide sidebar when showing header menu
-             }
-           }}>
-           <Ionicons name="ellipsis-horizontal" size={24} color="#000" />
-         </TouchableOpacity>
-
-        {headerMenuVisible && (
-          <View style={styles.headerDropdown}>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                setHeaderMenuVisible(false);
-                router.push('/login');
-              }}>
-              <Ionicons name="log-in-outline" size={20} color="#000" />
-              <Text style={styles.dropdownItemText}>{t('signIn')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                setHeaderMenuVisible(false);
-                router.push('/register');
-              }}>
-              <Ionicons name="person-add-outline" size={20} color="#000" />
-              <Text style={styles.dropdownItemText}>{t('signUp')}</Text>
-            </TouchableOpacity>
-
-            <View style={styles.dropdownItem}>
-              <Ionicons name="language-outline" size={20} color="#000" />
-              <View style={styles.languageDropdownContainer}>
-                <LanguageDropdown />
-              </View>
+      {/* Header - Conditional Design */}
+      <View style={styles.mainHeader}>
+        {isLoggedIn ? (
+          // Login Mode: Title on left, hamburger menu on right
+          <>
+            <View>
+              <Text style={styles.headerTitle}>Tirth Yatra - Pilgrimage Trips</Text>
             </View>
-          </View>
+            
+            <View style={styles.headerButtons}>
+              {/* Empty space to balance the layout */}
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.sidebarButton}
+              onPress={() => {
+                console.log('Menu button pressed, sidebarVisible:', sidebarVisible);
+                setSidebarVisible(!sidebarVisible);
+              }}
+            >
+              <Ionicons name="menu" size={24} color="#333" />
+            </TouchableOpacity>
+          </>
+        ) : (
+          // Sign Out Mode: Original design with Sign In/Sign Up options
+          <>
+            <Text style={styles.headerTitle}>Tirth Yatra</Text>
+            <TouchableOpacity
+              style={styles.headerMenuButton}
+              onPress={() => setHeaderMenuVisible(!headerMenuVisible)}
+            >
+              <Ionicons name="ellipsis-horizontal" size={24} color="#000" />
+            </TouchableOpacity>
+          </>
         )}
       </View>
+
+      {/* Header Dropdown for Sign Out Mode */}
+      {!isLoggedIn && headerMenuVisible && (
+        <View style={styles.headerDropdown}>
+          <TouchableOpacity
+            style={styles.dropdownItem}
+            onPress={() => {
+              setHeaderMenuVisible(false);
+              router.push('/login');
+            }}>
+            <Ionicons name="log-in-outline" size={20} color="#000" />
+            <Text style={styles.dropdownItemText}>{t('signIn')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.dropdownItem}
+            onPress={() => {
+              setHeaderMenuVisible(false);
+              router.push('/register');
+            }}>
+            <Ionicons name="person-add-outline" size={20} color="#000" />
+            <Text style={styles.dropdownItemText}>{t('signUp')}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.dropdownItem}>
+            <Ionicons name="language-outline" size={20} color="#000" />
+            <View style={styles.languageDropdownContainer}>
+              <LanguageDropdown />
+            </View>
+          </View>
+        </View>
+      )}
 
        {sidebarVisible && (
          <View style={styles.sidebarOverlay}>
@@ -280,11 +399,8 @@ export default function HomeScreen() {
                <TouchableOpacity 
                  style={styles.sidebarItem}
                  onPress={() => {
-                   setSidebarVisible(false);
-                   router.push({
-                     pathname: '/dashboard',
-                     params: { loginSuccess: 'true' }
-                   } as any);
+                   console.log('Dashboard button pressed');
+                   navigateToDashboard();
                  }}
                >
                  <Ionicons name="grid-outline" size={24} color="#007AFF" />
@@ -372,6 +488,14 @@ export default function HomeScreen() {
           filteredTrips.map(renderEventCard)
         )}
       </ScrollView>
+
+      {/* Footer - Only show in logout mode */}
+      {!isLoggedIn && (
+        <View style={styles.mainFooter}>
+          <Text style={styles.footerText}>© 2024 Tirth Yatra. All rights reserved.</Text>
+          <Text style={styles.footerSubText}>Pilgrimage Management System</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -383,19 +507,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     overflow: 'visible', // ✅ FIXED
   },
-  header: {
+  mainHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 40,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    zIndex: 10, // ✅ FIXED
-    elevation: 10, // ✅ FIXED (Android)
+    zIndex: 10,
+    elevation: 10,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#000' },
-  headerMenuButton: { padding: 8 },
+  sidebarButton: {
+    padding: 8,
+    marginTop: -5,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  headerButtons: {
+    width: 40, // Same width as sidebar button to balance layout
+  },
 
   headerDropdown: {
     position: 'absolute',
@@ -509,7 +651,7 @@ const styles = StyleSheet.create({
      alignItems: 'center',
      paddingHorizontal: 20,
      paddingVertical: 20,
-     paddingTop: 60,
+     paddingTop: 20,
      borderBottomWidth: 1,
      borderBottomColor: '#e0e0e0',
    },
@@ -535,5 +677,24 @@ const styles = StyleSheet.create({
    sidebarLanguageContainer: {
      flex: 1,
      marginLeft: 15,
+   },
+   
+   // Footer styles
+   mainFooter: {
+     backgroundColor: '#f8f9fa',
+     paddingVertical: 20,
+     paddingHorizontal: 16,
+     borderTopWidth: 1,
+     borderTopColor: '#e0e0e0',
+     alignItems: 'center',
+   },
+   footerText: {
+     fontSize: 14,
+     color: '#666',
+     marginBottom: 4,
+   },
+   footerSubText: {
+     fontSize: 12,
+     color: '#999',
    },
 });

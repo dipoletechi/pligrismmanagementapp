@@ -18,34 +18,32 @@ export default function DashboardScreen() {
   const params = useLocalSearchParams();
   
   // UI states
-  const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check for login error from params
   useEffect(() => {
+    console.log('Dashboard params received:', params);
+    
     if (params.error) {
+      console.log('Setting error from params:', params.error);
       setLoginError(params.error as string);
       setIsLoggedIn(false);
     } else if (params.loginError) {
+      console.log('Setting login error from params:', params.loginError);
       // Handle loginError parameter (from Step 6 completion)
       setLoginError(params.loginError as string);
       setIsLoggedIn(false);
     } else if (params.loginSuccess === 'true') {
+      console.log('Login success - showing dashboard data');
       setLoginError(null);
       setIsLoggedIn(true);
     } else {
-      // Check if coming from registration completion
-      // If no error and no explicit login success, assume logged in from registration
-      if (!params.error && !params.loginError && !params.loginSuccess) {
-        setLoginError(null);
-        setIsLoggedIn(true);
-      } else {
-        // Default: assume not logged in if no parameters
-        setIsLoggedIn(false);
-        setLoginError('Please login to access dashboard');
-      }
+      console.log('Default case - showing login message');
+      // Default: always show login message unless explicitly logged in
+      setIsLoggedIn(false);
+      setLoginError('Please login to access dashboard');
     }
   }, [params]);
 
@@ -128,19 +126,7 @@ export default function DashboardScreen() {
             >
               <Ionicons name="menu" size={24} color="#333" />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.headerMenuButton}
-              onPress={() => setHeaderMenuVisible(!headerMenuVisible)}
-            >
-              <Ionicons name="ellipsis-vertical" size={24} color="#333" />
-            </TouchableOpacity>
           </View>
-          
-          {headerMenuVisible && (
-            <View style={styles.headerDropdown}>
-              <LanguageDropdown />
-            </View>
-          )}
         </View>
 
         {/* Sidebar Menu */}
@@ -181,6 +167,28 @@ export default function DashboardScreen() {
                 >
                   <Ionicons name="airplane-outline" size={24} color="#007AFF" />
                   <Text style={styles.sidebarItemText}>Trips</Text>
+                </TouchableOpacity>
+
+                {/* Language Selection */}
+                <View style={styles.dropdownItem}>
+                  <Ionicons name="language-outline" size={20} color="#000" />
+                  <View style={styles.languageContainer}>
+                    <LanguageDropdown />
+                  </View>
+                </View>
+              </View>
+
+              {/* Sign Out - Fixed at bottom */}
+              <View style={styles.sidebarFooter}>
+                <TouchableOpacity 
+                  style={styles.sidebarItem}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    handleLogout();
+                  }}
+                >
+                  <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                  <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -293,23 +301,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 2,
-  },
-  headerMenuButton: {
-    padding: 5,
-  },
-  headerDropdown: {
-    position: 'absolute',
-    top: 80,
-    right: 20,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 1000,
   },
   scrollContent: { 
     padding: 20,
@@ -493,6 +484,7 @@ const styles = StyleSheet.create({
   },
   sidebarButton: {
     padding: 5,
+    marginTop: -5,
   },
   sidebarOverlay: {
     position: 'absolute',
@@ -515,6 +507,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    flex: 1,
   },
   sidebarHeader: {
     flexDirection: 'row',
@@ -522,7 +515,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    paddingTop: 60,
+    paddingTop: 40,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
@@ -536,6 +529,16 @@ const styles = StyleSheet.create({
   },
   sidebarContent: {
     paddingVertical: 20,
+    flex: 1,
+  },
+  sidebarFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingVertical: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 5,
+    alignItems: 'center',
   },
   sidebarItem: {
     flexDirection: 'row',
@@ -548,5 +551,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  languageContainer: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
 });

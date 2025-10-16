@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -80,6 +81,11 @@ export default function LoginScreen() {
       };
 
       console.log('Login API call with data:', requestData);
+      
+      // Store credentials for later use
+      await AsyncStorage.setItem('userEmail', email);
+      await AsyncStorage.setItem('userPassword', password);
+      console.log('Credentials stored for later use');
 
       const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
         method: 'POST',
