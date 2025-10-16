@@ -2745,4 +2745,178 @@ router.post('/submit-aadhaar-data', async (req, res) => {
 
 
 
+// Get comprehensive user trip data for dashboard
+router.get('/user-trips-comprehensive', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Get user-specific trip applications from trip_pligrim table
+    const [userApplications] = await sequelize.query(`
+      SELECT tp.*, t.title as trip_title, t.start_date, t.end_date, t.trip_status_id,
+             ts.name as trip_status_name, ts.description as trip_status_description,
+             tp.status as application_status
+      FROM trip_pligrim tp
+      LEFT JOIN trips t ON tp.tripid = t.id
+      LEFT JOIN trip_status ts ON t.trip_status_id = ts.id
+      WHERE tp.userid = ${userId}
+      ORDER BY tp.created_at DESC
+    `);
+
+    // Get all trips for general statistics (filter by trip_status_id = 2 for Published)
+    const [allTrips] = await sequelize.query(`
+      SELECT t.*, ts.name as status_name, ts.description as status_description
+      FROM trips t
+      LEFT JOIN trip_status ts ON t.trip_status_id = ts.id
+      WHERE t.trip_status_id = 2
+      ORDER BY t.created_at DESC
+    `);
+
+    // Get trip statuses for reference
+    const [tripStatuses] = await sequelize.query(`
+      SELECT * FROM trip_status
+    `);
+
+    // Categorize user applications by application status (from trip_pligrim table)
+    const userApplicationsByStatus = {
+      pending: userApplications.filter(app => app.application_status === 'Pending'),
+      approved: userApplications.filter(app => app.application_status === 'Approved'),
+      review: userApplications.filter(app => app.application_status === 'Review'),
+      rejected: userApplications.filter(app => app.application_status === 'Rejected')
+    };
+
+    // Categorize all trips by date and status
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentTrips = allTrips.filter(trip => {
+      const startDate = new Date(trip.start_date);
+      const endDate = new Date(trip.end_date);
+      return startDate <= today && endDate >= today;
+    });
+
+    const upcomingTrips = allTrips.filter(trip => {
+      const startDate = new Date(trip.start_date);
+      return startDate > today;
+    });
+
+    const completedTrips = allTrips.filter(trip => {
+      const endDate = new Date(trip.end_date);
+      return endDate < today;
+    });
+
+    // Count by trip status (from trip_status table)
+    const tripsByStatus = {};
+    tripStatuses.forEach(status => {
+      tripsByStatus[status.name.toLowerCase()] = allTrips.filter(trip => 
+        trip.status_name === status.name
+      ).length;
+    });
+
+    res.json({
+      success: true,
+      data: {
+        // User-specific data (from trip_pligrim table)
+        myTrips: {
+          total: userApplications.length,
+          pending: userApplicationsByStatus.pending.length,
+          approved: userApplicationsByStatus.approved.length,
+          review: userApplicationsByStatus.review.length,
+          rejected: userApplicationsByStatus.rejected.length,
+          applications: userApplications
+        },
+        
+        // General trip data (from trips table)
+        allTrips: {
+          total: allTrips.length,
+          published: allTrips.length, // All trips are published (trip_status_id = 2)
+          current: currentTrips.length,
+          upcoming: upcomingTrips.length,
+          completed: completedTrips.length,
+          byStatus: tripsByStatus
+        },
+        
+        // Summary for dashboard display
+        summary: {
+          // My Trip section
+          myTripTotal: userApplications.length,
+          currentTrip: userApplicationsByStatus.pending.length,
+          tripApproved: userApplicationsByStatus.approved.length,
+          tripReview: userApplicationsByStatus.review.length,
+          tripRejected: userApplicationsByStatus.rejected.length,
+          
+          // General Trip section
+          totalTrip: allTrips.length, // All trips are published (trip_status_id = 2)
+          upcomingTrip: upcomingTrips.length,
+          completedTrip: completedTrips.length,
+          currentTripGeneral: currentTrips.length
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching comprehensive user trips:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user trip data',
+      error: error.message
+    });
+  }
+});
+
+// Check user account status
+router.get('/check-account-status', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Get user account status using direct SQL query
+    const [userResult] = await sequelize.query(
+      `SELECT id, account_status 
+       FROM users 
+       WHERE id = ${userId}`
+    );
+
+    if (!userResult || userResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult[0];
+
+    res.json({
+      success: true,
+      data: {
+        userId: user.id,
+        email: user.email,
+        phone: user.phone,
+        accountStatus: user.account_status,
+        isEmailVerified: user.isEmailVerified,
+        isPhoneVerified: user.isPhoneVerified,
+        isApproved: user.account_status === 'approved'
+      }
+    });
+  } catch (error) {
+    console.error('Error checking account status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking account status',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
