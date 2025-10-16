@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -98,6 +99,36 @@ export default function TripDetailsScreen() {
     message: '',
     type: 'success'
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  console.log('TripDetailsScreen loaded with trip id:', id);
+  console.log('Initial isLoggedIn state:', isLoggedIn);
+
+  // Check login status
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        // Check if user came from redirect (dashboard) - means they are logged in
+        const userEmail = await AsyncStorage.getItem('userEmail');
+        const userPassword = await AsyncStorage.getItem('userPassword');
+        
+        // If user has credentials in AsyncStorage, they are logged in
+        // OR if they came from dashboard redirect, they are logged in
+        const hasCredentials = !!(userEmail && userPassword);
+        
+        console.log('Login status check:', { userEmail: !!userEmail, userPassword: !!userPassword, hasCredentials });
+        console.log('Previous isLoggedIn state:', isLoggedIn);
+        setIsLoggedIn(hasCredentials);
+        console.log('Set isLoggedIn to:', hasCredentials);
+        console.log('Login status updated from', isLoggedIn, 'to', hasCredentials);
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        setIsLoggedIn(false);
+      }
+    };
+    
+    checkLoginStatus();
+  }, []);
 
   // Fetch trip details from API
   const fetchTripDetails = async () => {
@@ -606,6 +637,96 @@ export default function TripDetailsScreen() {
     );
   };
 
+  // Handle Apply for Trip
+  const handleApplyForTrip = async () => {
+    try {
+      console.log('Apply button clicked for trip:', id);
+      
+      // Get user credentials from AsyncStorage
+      const userEmail = await AsyncStorage.getItem('userEmail');
+      const userPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (!userEmail || !userPassword) {
+        Alert.alert('Error', 'Please login to apply for trips');
+        return;
+      }
+
+      // First, get user ID by calling login API
+      const loginResponse = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          password: userPassword
+        }),
+      });
+
+      const loginData = await loginResponse.json();
+      
+      if (!loginResponse.ok || !loginData.success) {
+        Alert.alert('Error', 'Unable to verify user. Please try again.');
+        return;
+      }
+
+      const userId = loginData.data.userId;
+      console.log('User ID for application:', userId);
+
+      // Check account status
+      const statusResponse = await fetch(`http://192.168.1.15:5000/api/mobile/check-account-status?userId=${userId}`);
+      const statusData = await statusResponse.json();
+      
+      console.log('Account status check:', statusData);
+
+      if (!statusData.success) {
+        Alert.alert('Error', 'Unable to check account status. Please try again.');
+        return;
+      }
+
+      // Check if account is approved
+      if (statusData.data.accountStatus !== 'approved') {
+        Alert.alert(
+          'Account Not Approved', 
+          'Your account is not approved yet. Please wait for approval before applying for trips.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Account is approved, create trip application
+      const applicationResponse = await fetch('http://192.168.1.15:5000/api/trip-pligrim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tripid: id,
+          userid: userId,
+          status: 'Pending'
+        }),
+      });
+
+      const applicationData = await applicationResponse.json();
+      
+      console.log('Trip application response:', applicationData);
+
+      if (applicationResponse.ok && applicationData.success) {
+        Alert.alert(
+          'Application Submitted', 
+          'Your account is approved and trip application created successfully!',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Error', applicationData.message || 'Failed to submit application. Please try again.');
+      }
+
+    } catch (error) {
+      console.error('Error applying for trip:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Fixed Header */}
@@ -621,34 +742,40 @@ export default function TripDetailsScreen() {
         {/* Header Dropdown Menu */}
         {headerMenuVisible && (
           <View style={styles.headerDropdown}>
-            <TouchableOpacity 
-              style={styles.dropdownItem}
-              onPress={() => {
-                setHeaderMenuVisible(false);
-                router.push('/login')
-              }}
-            >
-              <Ionicons name="log-in-outline" size={20} color="#000" />
-              <Text style={styles.dropdownItemText}>{t('signIn')}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.dropdownItem}
-              onPress={() => {
-                setHeaderMenuVisible(false);
-                // Handle Sign Up
-              }}
-            >
-              <Ionicons name="person-add-outline" size={20} color="#000" />
-              <Text style={styles.dropdownItemText}>{t('signUp')}</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.dropdownItem}>
-              <Ionicons name="language-outline" size={20} color="#000" />
-              <View style={styles.languageDropdownContainer}>
-                <LanguageDropdown />
-              </View>
-            </View>
+            {isLoggedIn ? (
+              // Logged in: Show only Language
+              <>
+                {console.log('Showing logged in options: Language only')}
+                <View style={styles.dropdownItem}>
+                  <Ionicons name="language-outline" size={20} color="#000" />
+                  <View style={styles.languageDropdownContainer}>
+                    <LanguageDropdown />
+                  </View>
+                </View>
+              </>
+            ) : (
+              // Logged out: Show only Language and Cancel
+              <>
+                {console.log('Showing logged out options: Language + Cancel')}
+                <View style={styles.dropdownItem}>
+                  <Ionicons name="language-outline" size={20} color="#000" />
+                  <View style={styles.languageDropdownContainer}>
+                    <LanguageDropdown />
+                  </View>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setHeaderMenuVisible(false);
+                    router.back();
+                  }}
+                >
+                  <Ionicons name="close-outline" size={20} color="#000" />
+                  <Text style={styles.dropdownItemText}>Cancel</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         )}
       </View>
@@ -703,12 +830,17 @@ export default function TripDetailsScreen() {
         >
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.applyButton}
-          onPress={() => router.push('/login')}
-        >
-          <Text style={styles.applyButtonText}>{t('apply')}</Text>
-        </TouchableOpacity>
+        {isLoggedIn && (
+          <>
+            {console.log('Showing Apply button - user is logged in')}
+            <TouchableOpacity 
+              style={styles.applyButton}
+              onPress={handleApplyForTrip}
+            >
+              <Text style={styles.applyButtonText}>{t('apply')}</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       {/* Fixed Footer */}

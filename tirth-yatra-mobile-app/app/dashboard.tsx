@@ -21,6 +21,10 @@ export default function DashboardScreen() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAccountVerified, setIsAccountVerified] = useState(false);
+  const [tripData, setTripData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [tripModalVisible, setTripModalVisible] = useState(false);
 
   // Check for login error from params
   useEffect(() => {
@@ -30,22 +34,57 @@ export default function DashboardScreen() {
       console.log('Setting error from params:', params.error);
       setLoginError(params.error as string);
       setIsLoggedIn(false);
+      setIsAccountVerified(false);
     } else if (params.loginError) {
       console.log('Setting login error from params:', params.loginError);
       // Handle loginError parameter (from Step 6 completion)
       setLoginError(params.loginError as string);
-      setIsLoggedIn(false);
+      setIsLoggedIn(true); // User is logged in but account not verified
+      setIsAccountVerified(false);
     } else if (params.loginSuccess === 'true') {
       console.log('Login success - showing dashboard data');
       setLoginError(null);
       setIsLoggedIn(true);
+      setIsAccountVerified(true); // Account is verified if login is successful
     } else {
       console.log('Default case - showing login message');
       // Default: always show login message unless explicitly logged in
       setIsLoggedIn(false);
       setLoginError('Please login to access dashboard');
+      setIsAccountVerified(false);
     }
   }, [params]);
+
+  // Fetch comprehensive trip data
+  const fetchTripData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://192.168.1.15:5000/api/mobile/user-trips-comprehensive?userId=70'); // Updated to correct user ID
+      const data = await response.json();
+      
+      if (data.success) {
+        setTripData(data.data);
+        console.log('Comprehensive trip data loaded:', data.data);
+      } else {
+        console.error('Failed to fetch trip data:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching trip data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch trip data when logged in
+  useEffect(() => {
+    console.log('Dashboard state check:', { isLoggedIn, isAccountVerified, tripData: !!tripData });
+    if (isLoggedIn && isAccountVerified) {
+      console.log('Fetching trip data...');
+      fetchTripData();
+    } else {
+      console.log('Not fetching trip data - conditions not met');
+    }
+  }, [isLoggedIn, isAccountVerified]);
 
   // Handle logout
   const handleLogout = () => {
@@ -63,51 +102,6 @@ export default function DashboardScreen() {
     );
   };
 
-  // Dashboard menu items
-  const menuItems = [
-    {
-      id: 1,
-      title: 'My Trips',
-      icon: 'airplane-outline',
-      color: '#007AFF',
-      onPress: () => Alert.alert('Coming Soon', 'My Trips feature will be available soon!')
-    },
-    {
-      id: 2,
-      title: 'Book Trip',
-      icon: 'calendar-outline',
-      color: '#34C759',
-      onPress: () => router.push('/')
-    },
-    {
-      id: 3,
-      title: 'Profile',
-      icon: 'person-outline',
-      color: '#FF9500',
-      onPress: () => Alert.alert('Coming Soon', 'Profile feature will be available soon!')
-    },
-    {
-      id: 4,
-      title: 'Support',
-      icon: 'help-circle-outline',
-      color: '#FF3B30',
-      onPress: () => Alert.alert('Coming Soon', 'Support feature will be available soon!')
-    },
-    {
-      id: 5,
-      title: 'Notifications',
-      icon: 'notifications-outline',
-      color: '#AF52DE',
-      onPress: () => Alert.alert('Coming Soon', 'Notifications feature will be available soon!')
-    },
-    {
-      id: 6,
-      title: 'Settings',
-      icon: 'settings-outline',
-      color: '#8E8E93',
-      onPress: () => Alert.alert('Coming Soon', 'Settings feature will be available soon!')
-    }
-  ];
 
   return (
     <>
@@ -200,7 +194,8 @@ export default function DashboardScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {isLoggedIn ? (
+          {console.log('Dashboard render check:', { isLoggedIn, isAccountVerified, tripData: !!tripData })}
+          {isLoggedIn && isAccountVerified ? (
             <>
               {/* Welcome Section */}
               <View style={styles.welcomeSection}>
@@ -210,43 +205,80 @@ export default function DashboardScreen() {
                 </Text>
               </View>
 
-              {/* Quick Stats */}
+              {/* My Trip Stats */}
               <View style={styles.statsContainer}>
-                <View style={styles.statCard}>
-                  <Ionicons name="airplane" size={24} color="#007AFF" />
-                  <Text style={styles.statNumber}>0</Text>
-                  <Text style={styles.statLabel}>Trips Booked</Text>
+                <Text style={styles.sectionTitle}>My Trip</Text>
+                {console.log('My Trip Data Debug:', {
+                  tripData: tripData,
+                  summary: tripData?.summary,
+                  myTripTotal: tripData?.summary?.myTripTotal,
+                  currentTrip: tripData?.summary?.currentTrip
+                })}
+                <View style={styles.statsRow}>
+                  <View style={styles.statCard}>
+                    <Ionicons name="airplane" size={24} color="#007AFF" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.myTripTotal || 0}</Text>
+                    <Text style={styles.statLabel}>Total</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Ionicons name="time" size={24} color="#FF9500" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.currentTrip || 0}</Text>
+                    <Text style={styles.statLabel}>Current Trip</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Ionicons name="checkmark" size={24} color="#34C759" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.tripApproved || 0}</Text>
+                    <Text style={styles.statLabel}>Trip Approved</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Ionicons name="eye" size={24} color="#007AFF" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.tripReview || 0}</Text>
+                    <Text style={styles.statLabel}>Trip Review</Text>
+                  </View>
                 </View>
-                <View style={styles.statCard}>
-                  <Ionicons name="location" size={24} color="#34C759" />
-                  <Text style={styles.statNumber}>0</Text>
-                  <Text style={styles.statLabel}>Destinations</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Ionicons name="star" size={24} color="#FF9500" />
-                  <Text style={styles.statNumber}>0</Text>
-                  <Text style={styles.statLabel}>Reviews</Text>
+                <View style={styles.statsRow}>
+                  <View style={styles.statCard}>
+                    <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.tripRejected || 0}</Text>
+                    <Text style={styles.statLabel}>Trip Rejected</Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Menu Grid */}
-              <View style={styles.menuContainer}>
-                <Text style={styles.menuTitle}>Quick Actions</Text>
-                <View style={styles.menuGrid}>
-                  {menuItems.map((item) => (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[styles.menuItem, { borderLeftColor: item.color }]}
-                      onPress={item.onPress}
-                    >
-                      <View style={[styles.menuIcon, { backgroundColor: item.color + '20' }]}>
-                        <Ionicons name={item.icon as any} size={24} color={item.color} />
-                      </View>
-                      <Text style={styles.menuText}>{item.title}</Text>
-                    </TouchableOpacity>
-                  ))}
+              {/* General Trip Stats */}
+              <View style={styles.statsContainer}>
+                <Text style={styles.sectionTitle}>General Trip Statistics</Text>
+                {console.log('General Trip Data Debug:', {
+                  totalTrip: tripData?.summary?.totalTrip,
+                  upcomingTrip: tripData?.summary?.upcomingTrip,
+                  completedTrip: tripData?.summary?.completedTrip
+                })}
+                <View style={styles.statsRow}>
+                  <View style={styles.statCard}>
+                    <Ionicons name="globe" size={24} color="#007AFF" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.totalTrip || 0}</Text>
+                    <Text style={styles.statLabel}>Total Trip (Published)</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Ionicons name="calendar" size={24} color="#34C759" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.upcomingTrip || 0}</Text>
+                    <Text style={styles.statLabel}>Upcoming Trip</Text>
+                  </View>
+                </View>
+                <View style={styles.statsRow}>
+                  <View style={styles.statCard}>
+                    <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.completedTrip || 0}</Text>
+                    <Text style={styles.statLabel}>Completed Trip</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Ionicons name="play-circle" size={24} color="#FF9500" />
+                    <Text style={styles.statNumber}>{tripData?.summary?.currentTripGeneral || 0}</Text>
+                    <Text style={styles.statLabel}>Current Trip (Today)</Text>
+                  </View>
                 </View>
               </View>
+
 
               {/* Recent Activity */}
               <View style={styles.activityContainer}>
@@ -329,22 +361,38 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 20,
-  },
-  statCard: {
-    flex: 1,
     backgroundColor: '#fff',
-    padding: 15,
     borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: 5,
+    padding: 16,
+    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   statNumber: {
     fontSize: 24,

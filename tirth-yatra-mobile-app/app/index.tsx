@@ -57,17 +57,44 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
+    console.log('Index page params received:', params);
+    console.log('fromDashboard param:', params.fromDashboard);
     if (params.loginSuccess === 'true') {
+      console.log('Setting login status to true from loginSuccess');
       setIsLoggedIn(true);
       setLoginError(null);
     } else if (params.loginError) {
+      console.log('Setting login status to false from loginError:', params.loginError);
       setIsLoggedIn(false);
       setLoginError(params.loginError as string);
     } else if (params.fromDashboard === 'true') {
+      console.log('Setting login status to true from fromDashboard');
       setIsLoggedIn(true);
       setLoginError(null);
+    } else {
+      console.log('No special params, checking AsyncStorage for login status');
+      // Check AsyncStorage for login status
+      const checkLoginStatus = async () => {
+        try {
+          const userEmail = await AsyncStorage.getItem('userEmail');
+          const userPassword = await AsyncStorage.getItem('userPassword');
+          const hasCredentials = !!(userEmail && userPassword);
+          console.log('AsyncStorage login check:', { userEmail: !!userEmail, userPassword: !!userPassword, hasCredentials });
+          setIsLoggedIn(hasCredentials);
+        } catch (error) {
+          console.error('Error checking login status:', error);
+          setIsLoggedIn(false);
+        }
+      };
+      checkLoginStatus();
     }
   }, [params]);
+
+  // Log login status changes
+  useEffect(() => {
+    console.log('Index page isLoggedIn state changed to:', isLoggedIn);
+    console.log('Current UI should show:', isLoggedIn ? 'Logged-in UI' : 'Logged-out UI');
+  }, [isLoggedIn]);
 
   // Check login status and navigate to dashboard
   const navigateToDashboard = async () => {
@@ -294,6 +321,8 @@ export default function HomeScreen() {
         style={styles.eventCard}
         onPress={() => {
           console.log('Event clicked:', trip.title);
+          console.log('Current login status before navigation:', isLoggedIn);
+          console.log('Navigating to trip-details with id:', trip.id);
           router.push(`/trip-details?id=${trip.id}`);
         }}
       >
@@ -439,10 +468,23 @@ export default function HomeScreen() {
                        { 
                          text: 'Sign Out', 
                          style: 'destructive',
-                         onPress: () => {
+                         onPress: async () => {
+                           console.log('Sign out pressed in index page');
+                           // Clear credentials from AsyncStorage
+                           await AsyncStorage.removeItem('userEmail');
+                           await AsyncStorage.removeItem('userPassword');
+                           console.log('Credentials cleared from AsyncStorage');
+                           
+                           // Clear fromDashboard parameter by navigating to same page without params
+                           router.replace('/');
+                           
+                           // Update UI state
                            setIsLoggedIn(false);
                            setLoginError(null);
-                           router.replace('/');
+                           setSidebarVisible(false);
+                           
+                           console.log('Login status set to false, fromDashboard cleared');
+                           console.log('UI should update to show logged-out state');
                          }
                        }
                      ]
