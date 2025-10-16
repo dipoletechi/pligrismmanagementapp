@@ -239,11 +239,11 @@ function App() {
                 } 
               />
 
-              {/* Scanner - Trip Manager only */}
+              {/* Scanner - Superadmin, Admin, Trip Manager */}
               <Route 
                 path="/scanner/:tripId" 
                 element={
-                  <ProtectedRoute requiredRoles={['trip_manager']}>
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager']}>
                     <MainLayout>
                       <ScannerPage />
                     </MainLayout>

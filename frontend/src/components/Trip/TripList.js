@@ -637,7 +637,7 @@ const TripList = () => {
                         >
                           <TrackIcon />
                         </IconButton>
-                        {user?.role === 'trip_manager' && (
+                        {user?.role !== 'finance' && user?.role !== 'user' && (
                           <IconButton
                             onClick={() => handleScannerAction(trip)}
                             sx={{
