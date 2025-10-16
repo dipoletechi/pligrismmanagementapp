@@ -117,7 +117,19 @@ class DatabaseMigrator {
         
         for (const statement of statements) {
           if (statement.trim()) {
-            await this.connection.execute(statement);
+            try {
+              await this.connection.execute(statement);
+            } catch (error) {
+              // Handle duplicate entry errors gracefully
+              if (error.message.includes('Duplicate entry') || 
+                  error.message.includes('already exists') ||
+                  error.message.includes('Duplicate key')) {
+                console.log(`⚠️  Skipping duplicate entry: ${error.message.split(':')[0]}`);
+                continue;
+              } else {
+                throw error;
+              }
+            }
           }
         }
         

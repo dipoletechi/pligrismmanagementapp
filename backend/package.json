@@ -11,6 +11,7 @@
     "build:prod": "NODE_ENV=production node server.js",
     "migrate": "node scripts/migrate-no-password.js",
     "migrate:no-password": "node scripts/migrate-no-password.js",
+    "migrate:fresh": "node scripts/reset-and-migrate.js",
     "migrate:demo": "DB_NAME=tirthyatra_demo node scripts/migrate.js",
     "setup:new": "node scripts/setup-new-system.js",
     "setup:prod": "node scripts/setup-production.js",
