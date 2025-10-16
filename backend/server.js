@@ -39,6 +39,7 @@ const eventRoutes = require('./routes/events');
 const tripStatusRoutes = require('./routes/tripStatus');
 const mobileRoutes = require('./routes/mobile');
 const tripLogRoutes = require('./routes/tripLogs');
+const tripPligrimRoutes = require('./routes/tripPligrim');
 
 const app = express();
 
@@ -67,7 +68,7 @@ app.use(limiter);
 
 // CORS - More permissive for development
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.1.15:5000', 'http://192.168.1.5:5000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -110,6 +111,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/trip-status', tripStatusRoutes);
 app.use('/api/mobile', mobileRoutes);
 app.use('/api/trip-logs', tripLogRoutes);
+app.use('/api/trip-pligrim', tripPligrimRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

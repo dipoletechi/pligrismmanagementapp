@@ -22,6 +22,7 @@ import TripList from './components/Trip/TripList';
 import CreateTrip from './components/Trip/CreateTrip';
 import TripTracking from './components/Trip/TripTracking';
 import ScannerPage from './components/Scanner/ScannerPage';
+import PilgrimManagement from './components/Pilgrim/PilgrimManagement';
 import Settings from './components/Settings';
 import './App.css';
 
@@ -74,6 +75,18 @@ function App() {
                   <ProtectedRoute requiredRoles={['superadmin']}>
                     <MainLayout>
                       <UserManagement />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Pilgrim Management - Admin, Trip Manager */}
+              <Route 
+                path="/pilgrims" 
+                element={
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager']}>
+                    <MainLayout>
+                      <PilgrimManagement />
                     </MainLayout>
                   </ProtectedRoute>
                 } 
