@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -25,6 +26,51 @@ export default function DashboardScreen() {
   const [tripData, setTripData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [tripModalVisible, setTripModalVisible] = useState(false);
+
+  // Check account status and login state
+  const checkAccountStatus = async () => {
+    try {
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (storedEmail && storedPassword) {
+        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: storedEmail,
+            password: storedPassword
+          }),
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success && data.data.accountStatus === 'approved') {
+          setLoginError(null);
+          setIsLoggedIn(true);
+          setIsAccountVerified(true);
+        } else if (response.ok && data.success) {
+          setLoginError(data.message || 'Your account is in review, you will receive notification as soon as your account is approved');
+          setIsLoggedIn(true);
+          setIsAccountVerified(false);
+        } else {
+          setLoginError(data.message || 'Please login to access dashboard');
+          setIsLoggedIn(false);
+          setIsAccountVerified(false);
+        }
+      } else {
+        setLoginError('Please login to access dashboard');
+        setIsLoggedIn(false);
+        setIsAccountVerified(false);
+      }
+    } catch (error) {
+      console.error('Error checking account status:', error);
+      setLoginError('Network error. Please check your connection.');
+      setIsLoggedIn(false);
+      setIsAccountVerified(false);
+    }
+  };
 
   // Check for login error from params
   useEffect(() => {
@@ -46,12 +92,14 @@ export default function DashboardScreen() {
       setLoginError(null);
       setIsLoggedIn(true);
       setIsAccountVerified(true); // Account is verified if login is successful
+    } else if (params.fromMyTrips === 'true' || params.fromTrips === 'true') {
+      console.log('Navigated from My Trips or Trips - checking account status');
+      // When navigating from My Trips or Trips, check account status
+      checkAccountStatus();
     } else {
-      console.log('Default case - showing login message');
-      // Default: always show login message unless explicitly logged in
-      setIsLoggedIn(false);
-      setLoginError('Please login to access dashboard');
-      setIsAccountVerified(false);
+      console.log('Default case - checking account status');
+      // Default: check account status from stored credentials
+      checkAccountStatus();
     }
   }, [params]);
 
@@ -154,13 +202,27 @@ export default function DashboardScreen() {
                   onPress={() => {
                     setSidebarVisible(false);
                     router.push({
+                      pathname: '/my-trips',
+                      params: { accountApproved: isAccountVerified ? 'true' : 'false' }
+                    } as any);
+                  }}
+                >
+                  <Ionicons name="airplane-outline" size={24} color="#007AFF" />
+                  <Text style={styles.sidebarItemText}>My Trips</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.sidebarItem}
+                  onPress={() => {
+                    setSidebarVisible(false);
+                    router.push({
                       pathname: '/',
                       params: { fromDashboard: 'true' }
                     } as any);
                   }}
                 >
-                  <Ionicons name="airplane-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>Trips</Text>
+                  <Ionicons name="globe-outline" size={24} color="#007AFF" />
+                  <Text style={styles.sidebarItemText}>All Trips</Text>
                 </TouchableOpacity>
 
                 {/* Language Selection */}
@@ -194,26 +256,11 @@ export default function DashboardScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {console.log('Dashboard render check:', { isLoggedIn, isAccountVerified, tripData: !!tripData })}
           {isLoggedIn && isAccountVerified ? (
             <>
-              {/* Welcome Section */}
-              <View style={styles.welcomeSection}>
-                <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                <Text style={styles.welcomeSubtitle}>
-                  Discover amazing pilgrimage destinations and book your spiritual journey
-                </Text>
-              </View>
-
               {/* My Trip Stats */}
               <View style={styles.statsContainer}>
                 <Text style={styles.sectionTitle}>My Trip</Text>
-                {console.log('My Trip Data Debug:', {
-                  tripData: tripData,
-                  summary: tripData?.summary,
-                  myTripTotal: tripData?.summary?.myTripTotal,
-                  currentTrip: tripData?.summary?.currentTrip
-                })}
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="airplane" size={24} color="#007AFF" />
@@ -225,6 +272,8 @@ export default function DashboardScreen() {
                     <Text style={styles.statNumber}>{tripData?.summary?.currentTrip || 0}</Text>
                     <Text style={styles.statLabel}>Current Trip</Text>
                   </View>
+                </View>
+                <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="checkmark" size={24} color="#34C759" />
                     <Text style={styles.statNumber}>{tripData?.summary?.tripApproved || 0}</Text>
@@ -236,7 +285,7 @@ export default function DashboardScreen() {
                     <Text style={styles.statLabel}>Trip Review</Text>
                   </View>
                 </View>
-                <View style={styles.statsRow}>
+                <View style={styles.statsRowSingle}>
                   <View style={styles.statCard}>
                     <Ionicons name="close-circle" size={24} color="#FF3B30" />
                     <Text style={styles.statNumber}>{tripData?.summary?.tripRejected || 0}</Text>
@@ -248,11 +297,6 @@ export default function DashboardScreen() {
               {/* General Trip Stats */}
               <View style={styles.statsContainer}>
                 <Text style={styles.sectionTitle}>General Trip Statistics</Text>
-                {console.log('General Trip Data Debug:', {
-                  totalTrip: tripData?.summary?.totalTrip,
-                  upcomingTrip: tripData?.summary?.upcomingTrip,
-                  completedTrip: tripData?.summary?.completedTrip
-                })}
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="globe" size={24} color="#007AFF" />
@@ -278,25 +322,16 @@ export default function DashboardScreen() {
                   </View>
                 </View>
               </View>
-
-
-              {/* Recent Activity */}
-              <View style={styles.activityContainer}>
-                <Text style={styles.activityTitle}>Recent Activity</Text>
-                <View style={styles.activityCard}>
-                  <Ionicons name="information-circle-outline" size={24} color="#007AFF" />
-                  <View style={styles.activityContent}>
-                    <Text style={styles.activityText}>Welcome to Tirth Yatra!</Text>
-                    <Text style={styles.activityTime}>Just now</Text>
-                  </View>
-                </View>
-              </View>
             </>
           ) : (
-            /* Login Error Message */
+            /* Account Status Message */
             <View style={styles.errorContainer}>
               <View style={styles.errorCard}>
-                <Text style={styles.errorMessage}>{loginError || 'Unable to login. Please try again.'}</Text>
+                <Ionicons name="time-outline" size={48} color="#FF9500" />
+                <Text style={styles.errorTitle}>Account Under Review</Text>
+                <Text style={styles.errorMessage}>
+                  {loginError || 'Your account is in review, you will receive notification as soon as your account is approved'}
+                </Text>
               </View>
             </View>
           )}
@@ -338,28 +373,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40, // Reduce padding since container has paddingBottom
   },
-  welcomeSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-  },
   statsContainer: {
     marginBottom: 20,
     backgroundColor: '#fff',
@@ -382,6 +395,11 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 12,
+  },
+  statsRowSingle: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   statCard: {
@@ -445,40 +463,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
-  },
-  activityContainer: {
-    marginBottom: 20,
-  },
-  activityTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-  },
-  activityCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  activityContent: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  activityText: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 4,
-  },
-  activityTime: {
-    fontSize: 14,
-    color: '#666',
   },
   // Error styles
   errorContainer: {

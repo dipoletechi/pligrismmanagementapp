@@ -54,6 +54,7 @@ export default function HomeScreen() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isAccountApproved, setIsAccountApproved] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -94,6 +95,46 @@ export default function HomeScreen() {
   useEffect(() => {
     console.log('Index page isLoggedIn state changed to:', isLoggedIn);
     console.log('Current UI should show:', isLoggedIn ? 'Logged-in UI' : 'Logged-out UI');
+  }, [isLoggedIn]);
+
+  // Check account status
+  const checkAccountStatus = async () => {
+    try {
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (storedEmail && storedPassword) {
+        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: storedEmail,
+            password: storedPassword
+          }),
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success && data.data.accountStatus === 'approved') {
+          setIsAccountApproved(true);
+        } else {
+          setIsAccountApproved(false);
+        }
+      } else {
+        setIsAccountApproved(false);
+      }
+    } catch (error) {
+      console.error('Error checking account status:', error);
+      setIsAccountApproved(false);
+    }
+  };
+
+  // Check account status when component mounts
+  useEffect(() => {
+    if (isLoggedIn) {
+      checkAccountStatus();
+    }
   }, [isLoggedIn]);
 
   // Check login status and navigate to dashboard
@@ -436,65 +477,81 @@ export default function HomeScreen() {
                  <Text style={styles.sidebarItemText}>Dashboard</Text>
                </TouchableOpacity>
                
-               <TouchableOpacity 
-                 style={styles.sidebarItem}
-                 onPress={() => {
-                   setSidebarVisible(false);
-                   // Stay on current page (index)
-                 }}
-               >
-                 <Ionicons name="airplane-outline" size={24} color="#007AFF" />
-                 <Text style={styles.sidebarItemText}>Trips</Text>
-               </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.sidebarItem, { backgroundColor: '#f0f0f0' }]}
+                onPress={() => {
+                  setSidebarVisible(false);
+                  // Stay on current page (index)
+                }}
+              >
+                <Ionicons name="globe-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>All Trips</Text>
+              </TouchableOpacity>
 
-               {/* Language Dropdown in Sidebar */}
-               <View style={styles.sidebarItem}>
-                 <Ionicons name="language-outline" size={24} color="#007AFF" />
-                 <View style={styles.sidebarLanguageContainer}>
-                   <LanguageDropdown />
-                 </View>
-               </View>
+              <TouchableOpacity 
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setSidebarVisible(false);
+                  router.push({
+                    pathname: '/my-trips',
+                    params: { accountApproved: isAccountApproved ? 'true' : 'false' }
+                  } as any);
+                }}
+              >
+                <Ionicons name="airplane-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>My Trips</Text>
+              </TouchableOpacity>
 
-               {/* Sign Out in Sidebar */}
-               <TouchableOpacity 
-                 style={styles.sidebarItem}
-                 onPress={() => {
-                   setSidebarVisible(false);
-                   Alert.alert(
-                     'Sign Out',
-                     'Are you sure you want to sign out?',
-                     [
-                       { text: 'Cancel', style: 'cancel' },
-                       { 
-                         text: 'Sign Out', 
-                         style: 'destructive',
-                         onPress: async () => {
-                           console.log('Sign out pressed in index page');
-                           // Clear credentials from AsyncStorage
-                           await AsyncStorage.removeItem('userEmail');
-                           await AsyncStorage.removeItem('userPassword');
-                           console.log('Credentials cleared from AsyncStorage');
-                           
-                           // Clear fromDashboard parameter by navigating to same page without params
-                           router.replace('/');
-                           
-                           // Update UI state
-                           setIsLoggedIn(false);
-                           setLoginError(null);
-                           setSidebarVisible(false);
-                           
-                           console.log('Login status set to false, fromDashboard cleared');
-                           console.log('UI should update to show logged-out state');
-                         }
-                       }
-                     ]
-                   );
-                 }}
-               >
-                 <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                 <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
-               </TouchableOpacity>
-             </View>
+              {/* Language Dropdown in Sidebar */}
+              <View style={styles.dropdownItem}>
+                <Ionicons name="language-outline" size={20} color="#000" />
+                <View style={styles.sidebarLanguageContainer}>
+                  <LanguageDropdown />
+                </View>
+              </View>
+            </View>
+
+            {/* Sign Out - Fixed at bottom */}
+            <View style={styles.sidebarFooter}>
+              <TouchableOpacity 
+                style={styles.sidebarItem}
+                onPress={() => {
+                  setSidebarVisible(false);
+                  Alert.alert(
+                    'Sign Out',
+                    'Are you sure you want to sign out?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { 
+                        text: 'Sign Out', 
+                        style: 'destructive',
+                        onPress: async () => {
+                          console.log('Sign out pressed in index page');
+                          // Clear credentials from AsyncStorage
+                          await AsyncStorage.removeItem('userEmail');
+                          await AsyncStorage.removeItem('userPassword');
+                          console.log('Credentials cleared from AsyncStorage');
+                          
+                          // Clear fromDashboard parameter by navigating to same page without params
+                          router.replace('/');
+                          
+                          // Update UI state
+                          setIsLoggedIn(false);
+                          setLoginError(null);
+                          setSidebarVisible(false);
+                          
+                          console.log('Login status set to false, fromDashboard cleared');
+                          console.log('UI should update to show logged-out state');
+                        }
+                      }
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
            </View>
          </View>
        )}
@@ -579,6 +636,9 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     width: 40, // Same width as sidebar button to balance layout
+  },
+  headerMenuButton: {
+    padding: 5,
   },
 
   headerDropdown: {
@@ -716,10 +776,19 @@ const styles = StyleSheet.create({
      color: '#333',
      fontWeight: '500',
    },
-   sidebarLanguageContainer: {
-     flex: 1,
-     marginLeft: 15,
-   },
+  sidebarLanguageContainer: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  sidebarFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingVertical: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 5,
+    alignItems: 'center',
+  },
    
    // Footer styles
    mainFooter: {

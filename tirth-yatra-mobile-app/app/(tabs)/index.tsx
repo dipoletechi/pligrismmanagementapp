@@ -52,6 +52,9 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [isAccountApproved, setIsAccountApproved] = useState(false);
+  const [activeTab, setActiveTab] = useState<'All' | 'Upcoming' | 'Current'>('All');
+  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
 
   // Fetch trips data from API
   const fetchTrips = async () => {
@@ -121,20 +124,14 @@ export default function HomeScreen() {
     );
   };
 
-  // Check login status and navigate to dashboard
-  const navigateToDashboard = async () => {
+
+  // Check account status
+  const checkAccountStatus = async () => {
     try {
-      setSidebarVisible(false);
-      console.log('navigateToDashboard');
-      // Get stored login credentials from AsyncStorage
       const storedEmail = await AsyncStorage.getItem('userEmail');
       const storedPassword = await AsyncStorage.getItem('userPassword');
       
-      console.log('Using stored credentials:', { email: storedEmail, password: storedPassword ? '***' : 'null' });
-      
-      if (!storedEmail || !storedPassword) {
-        console.log('No stored credentials found, using default');
-        // If no stored credentials, use default ones
+      if (storedEmail && storedPassword) {
         const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
           method: 'POST',
           headers: {
@@ -147,82 +144,32 @@ export default function HomeScreen() {
         });
         
         const data = await response.json();
-        console.log('Login API Response: banty', data);
-        console.log('Response OK banty:', response.ok);
-        console.log('Data Success:', data.success);
-        
-        if (response.ok && data.success === true) {
-          console.log('Login successful - navigating to dashboard with success');
-          router.push({
-            pathname: '/dashboard',
-            params: { loginSuccess: 'true' }
-          });
+        if (response.ok && data.success && data.data.accountStatus === 'approved') {
+          setIsAccountApproved(true);
         } else {
-          console.log('Login failed - navigating to dashboard with error:', data.message);
-          router.push({
-            pathname: '/dashboard',
-            params: { 
-              error: data.message || 'Login failed. Please try again.',
-              loginError: 'true'
-            }
-          });
+          setIsAccountApproved(false);
         }
-        return;
-      }
-      
-      // Call login API with stored credentials
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: storedEmail,
-          password: storedPassword
-        }),
-      });
-
-      const data = await response.json();
-      
-      console.log('Login API Response:', data);
-      console.log('Response OK:', response.ok);
-      console.log('Data Success:', data.success);
-      
-      // Check both response.ok AND data.success
-      if (response.ok && data.success === true) {
-        console.log('Login successful - navigating to dashboard with success');
-        // Login successful - navigate to dashboard with success parameter
-        router.push({
-          pathname: '/dashboard',
-          params: { loginSuccess: 'true' }
-        });
-      } else {
-        console.log('Login failed - navigating to dashboard with error:', data.message);
-        // Login failed or account in review - navigate to dashboard with error
-        router.push({
-          pathname: '/dashboard',
-          params: { 
-            error: data.message || 'Login failed. Please try again.',
-            loginError: 'true'
-          }
-        });
       }
     } catch (error) {
-      console.error('Login check error:', error);
-      // Navigate to dashboard with error
-      router.push({
-        pathname: '/dashboard',
-        params: { 
-          error: 'Network error. Please check your connection.',
-          loginError: 'true'
-        }
-      });
+      console.error('Error checking account status:', error);
+      setIsAccountApproved(false);
     }
   };
+
+  // Filter trips based on active tab
+  useEffect(() => {
+    if (activeTab === 'All') {
+      setFilteredTrips(trips);
+    } else {
+      const filtered = trips.filter(trip => trip.trip_role === activeTab);
+      setFilteredTrips(filtered);
+    }
+  }, [activeTab, trips]);
 
   // Load data on component mount
   useEffect(() => {
     fetchTrips();
+    checkAccountStatus();
   }, []);
 
 
@@ -316,9 +263,37 @@ export default function HomeScreen() {
       >
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Your Pilgrimage Trips</Text>
-          <Text style={styles.welcomeSubtitle}>Discover and manage your spiritual journeys</Text>
+          <Text style={styles.welcomeTitle}>Pilgrimage Trips</Text>
+          <Text style={styles.welcomeSubtitle}>
+            {isAccountApproved 
+              ? 'Discover and manage your spiritual journeys' 
+              : 'Discover amazing pilgrimage destinations'
+            }
+          </Text>
         </View>
+
+        {/* Tab Filter - Only show for approved accounts */}
+        {isAccountApproved && (
+          <View style={styles.tabContainer}>
+            {['All', 'Upcoming', 'Current'].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[
+                  styles.tab,
+                  activeTab === tab && styles.activeTab
+                ]}
+                onPress={() => setActiveTab(tab as any)}
+              >
+                <Text style={[
+                  styles.tabText,
+                  activeTab === tab && styles.activeTabText
+                ]}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Trips Content */}
         {loading ? (
@@ -334,14 +309,19 @@ export default function HomeScreen() {
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
-        ) : trips.length === 0 ? (
+        ) : filteredTrips.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="calendar-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyText}>No trips found</Text>
+            <Text style={styles.emptyText}>
+              {isAccountApproved 
+                ? `No ${activeTab.toLowerCase()} trips found` 
+                : 'No trips found'
+              }
+            </Text>
           </View>
         ) : (
           <View style={styles.tripsGrid}>
-            {trips.map(renderEventCard)}
+            {filteredTrips.map(renderEventCard)}
           </View>
         )}
       </ScrollView>
@@ -365,48 +345,52 @@ export default function HomeScreen() {
                 style={styles.sidebarItem}
                 onPress={() => {
                   setSidebarVisible(false);
-                  // Stay on trips page
+                  router.push({
+                    pathname: '/dashboard',
+                    params: { fromTrips: 'true' }
+                  } as any);
                 }}
               >
-                <Ionicons name="airplane-outline" size={24} color="#007AFF" />
-                <Text style={styles.sidebarItemText}>Trips</Text>
+                <Ionicons name="grid-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>Dashboard</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={[styles.sidebarItem, { backgroundColor: '#f0f0f0' }]}
                 onPress={() => {
-                  console.log('Dashboard button pressed');
-                  navigateToDashboard();
+                  setSidebarVisible(false);
+                  // Stay on trips page
                 }}
-                activeOpacity={0.7}
               >
-                <Ionicons name="grid-outline" size={24} color="#007AFF" />
-                <Text style={styles.sidebarItemText}>sdfsdfds</Text>
+                <Ionicons name="globe-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>All Trips</Text>
               </TouchableOpacity>
               
-              {/* Test Button */}
               <TouchableOpacity 
-                style={[styles.sidebarItem, { backgroundColor: '#ff0000' }]}
+                style={styles.sidebarItem}
                 onPress={() => {
-                  console.log('TEST BUTTON PRESSED');
-                  Alert.alert('Test', 'Test button works!');
+                  setSidebarVisible(false);
+                  router.push({
+                    pathname: '/my-trips',
+                    params: { accountApproved: isAccountApproved ? 'true' : 'false' }
+                  } as any);
                 }}
-                activeOpacity={0.7}
               >
-                <Ionicons name="checkmark" size={24} color="#fff" />
-                <Text style={[styles.sidebarItemText, { color: '#fff' }]}>TEST BUTTON</Text>
+                <Ionicons name="airplane-outline" size={24} color="#007AFF" />
+                <Text style={styles.sidebarItemText}>My Trips</Text>
               </TouchableOpacity>
 
               {/* Language Selection */}
-              <View style={styles.sidebarItem}>
-                <Ionicons name="language-outline" size={24} color="#007AFF" />
+              <View style={styles.dropdownItem}>
+                <Ionicons name="language-outline" size={20} color="#000" />
                 <View style={styles.languageContainer}>
-                  <Text style={styles.sidebarItemText}>Language</Text>
                   <LanguageDropdown />
                 </View>
               </View>
+            </View>
 
-              {/* Sign Out */}
+            {/* Sign Out - Fixed at bottom */}
+            <View style={styles.sidebarFooter}>
               <TouchableOpacity 
                 style={styles.sidebarItem}
                 onPress={() => {
@@ -415,7 +399,7 @@ export default function HomeScreen() {
                 }}
               >
                 <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>sdfdsfsdf Out</Text>
+                <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -526,23 +510,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 4,
   },
   tab: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#000',
+    borderBottomColor: '#007AFF',
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
+    fontWeight: '500',
   },
   activeTabText: {
-    color: '#000',
+    color: '#007AFF',
     fontWeight: 'bold',
   },
   scrollableContent: {
@@ -730,6 +719,22 @@ const styles = StyleSheet.create({
   languageContainer: {
     flex: 1,
     marginLeft: 15,
+  },
+  sidebarFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingVertical: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 5,
+    alignItems: 'center',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   // Dashboard-style content
   scrollContent: { 

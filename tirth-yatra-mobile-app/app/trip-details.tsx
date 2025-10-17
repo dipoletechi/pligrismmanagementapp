@@ -665,10 +665,10 @@ export default function TripDetailsScreen() {
 
       const loginData = await loginResponse.json();
       
-      if (!loginResponse.ok || !loginData.success) {
-        Alert.alert('Error', 'Unable to verify user. Please try again.');
-        return;
-      }
+      // if (!loginResponse.ok || !loginData.success) {
+      //   Alert.alert('Error', 'Unable to verify user. Please try again.');
+      //   return;
+      // }
 
       const userId = loginData.data.userId;
       console.log('User ID for application:', userId);
