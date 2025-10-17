@@ -86,7 +86,7 @@ interface AccommodationEntry {
 
 export default function TripDetailsScreen() {
   const { t } = useLanguage();
-  const { id } = useLocalSearchParams();
+  const { id, fromMyTrips } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('Details');
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +102,7 @@ export default function TripDetailsScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   console.log('TripDetailsScreen loaded with trip id:', id);
+  console.log('fromMyTrips parameter:', fromMyTrips);
   console.log('Initial isLoggedIn state:', isLoggedIn);
 
   // Check login status
@@ -830,9 +831,9 @@ export default function TripDetailsScreen() {
         >
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
-        {isLoggedIn && (
+        {isLoggedIn && fromMyTrips !== 'true' && (
           <>
-            {console.log('Showing Apply button - user is logged in')}
+            {console.log('Showing Apply button - user is logged in and not from My Trips')}
             <TouchableOpacity 
               style={styles.applyButton}
               onPress={handleApplyForTrip}

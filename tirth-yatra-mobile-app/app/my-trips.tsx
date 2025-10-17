@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -62,7 +63,38 @@ export default function MyTripsScreen() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/user-trips-comprehensive?userId=70`);
+      // Get user credentials from AsyncStorage
+      const userEmail = await AsyncStorage.getItem('userEmail');
+      const userPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (!userEmail || !userPassword) {
+        setError('Please login to view your trips');
+        return;
+      }
+
+      // First, get user ID by calling login API
+      const loginResponse = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          password: userPassword
+        }),
+      });
+
+      const loginData = await loginResponse.json();
+      
+      if (!loginResponse.ok || !loginData.success) {
+        setError('Unable to verify user. Please login again.');
+        return;
+      }
+
+      const userId = loginData.data.userId;
+      console.log('Fetching trips for user ID:', userId);
+      
+      const response = await fetch(`${API_BASE_URL}/user-trips-comprehensive?userId=${userId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -145,7 +177,19 @@ export default function MyTripsScreen() {
   };
 
   const renderTripApplication = (application: TripApplication) => (
-    <View key={application.id} style={styles.tripCard}>
+    <TouchableOpacity 
+      key={application.id} 
+      style={styles.tripCard}
+      onPress={() => {
+        router.push({
+          pathname: '/trip-details',
+          params: { 
+            id: application.tripid.toString(),
+            fromMyTrips: 'true'
+          }
+        } as any);
+      }}
+    >
       <View style={styles.tripHeader}>
         <Text style={styles.tripTitle}>{application.trip_title}</Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(application.application_status) }]}>
@@ -179,7 +223,7 @@ export default function MyTripsScreen() {
           </Text>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
