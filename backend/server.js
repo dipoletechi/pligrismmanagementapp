@@ -9,7 +9,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-he
 process.env.JWT_EXPIRE = process.env.JWT_EXPIRE || '7d';
 process.env.DB_NAME = process.env.DB_NAME || 'tirthyatra';
 process.env.DB_USER = process.env.DB_USER || 'root';
-process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'root';
+process.env.DB_PASSWORD = process.env.DB_PASSWORD;
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_PORT = process.env.DB_PORT || '3306';
 process.env.CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
@@ -43,7 +43,7 @@ const tripPligrimRoutes = require('./routes/tripPligrim');
 const mobileQRRoutes = require('./routes/mobileQR');
 
 const app = express();
-
+app.set('trust proxy', 1);
 // Connect to database
 connectDB().then(async () => {
   try {
@@ -60,16 +60,24 @@ app.use(helmet());
 // Rate limiting - More lenient for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs (increased for development)
+  max: 1000,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+
+  // ✅ Custom IP extraction to strip the port
+  keyGenerator: (req) => {
+    const rawIp = req.ip || req.connection?.remoteAddress || '';
+    // Remove ":<port>" if present
+    return rawIp.replace(/:\d+$/, '');
+  },
 });
 app.use(limiter);
 
+
 // CORS - More permissive for development
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.1.15:5000', 'http://192.168.1.5:5000'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.1.15:5000', 'http://192.168.1.5:5000', 'https://tripmanager.dipoletechi.com'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

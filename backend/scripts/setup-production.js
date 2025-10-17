@@ -10,7 +10,7 @@ PORT=5000
 # Database Configuration
 DB_HOST=localhost
 DB_USER=root
-DB_PASSWORD=root
+DB_PASSWORD=
 DB_NAME=tirthyatra
 
 # JWT Configuration
