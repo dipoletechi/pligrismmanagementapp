@@ -37,7 +37,11 @@ import {
   Cancel as CancelIcon,
   Visibility as ViewIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  History as HistoryIcon,
+  DirectionsBus as TransportIcon,
+  Hotel as AccommodationIcon,
+  Event as EventIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -53,6 +57,9 @@ const TripApplicants = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editStatus, setEditStatus] = useState('');
+  const [userLogs, setUserLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState(null);
 
   const [tabs, setTabs] = useState([
     { label: 'All', value: 0, status: 'All', count: 0, color: 'default' },
@@ -108,9 +115,54 @@ const TripApplicants = () => {
     setStatusFilter(selectedTab.status);
   };
 
+  const fetchUserLogs = async (userId) => {
+    setLogsLoading(true);
+    setLogsError(null);
+    try {
+      const response = await axios.get(`/api/trip-logs/user/${userId}/trip/${tripId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.data.success) {
+        setUserLogs(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching user logs:', err);
+      setUserLogs([]);
+      if (err.response?.status === 403) {
+        setLogsError('Access denied. You need admin privileges to view user logs.');
+      } else {
+        setLogsError('Failed to load activity logs. Please try again.');
+      }
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  // Helper function to group logs by date and type
+  const groupLogsByDateAndType = (logs) => {
+    return logs.reduce((groups, log) => {
+      // Use trip_check_date if available, otherwise fallback to scanned_at
+      const dateString = log.trip_check_date || log.scanned_at;
+      const date = new Date(dateString).toDateString();
+      const logType = log.log_type.includes('Transport') ? 'Transport' : 
+                    log.log_type.includes('Accommodation') ? 'Accommodation' : 'Event';
+      
+      if (!groups[date]) groups[date] = {};
+      if (!groups[date][logType]) groups[date][logType] = [];
+      groups[date][logType].push(log);
+      return groups;
+    }, {});
+  };
+
   const handleViewDetails = (applicant) => {
     setSelectedApplicant(applicant);
     setDetailsDialogOpen(true);
+    // Fetch user logs when opening details
+    if (applicant.user?.id) {
+      fetchUserLogs(applicant.user.id);
+    }
   };
 
   const handleEditClick = (applicant) => {
@@ -330,89 +382,104 @@ const TripApplicants = () => {
 
       {/* Applicant Details Dialog */}
       <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Applicant Details</DialogTitle>
         <DialogContent>
           {selectedApplicant && (
             <Box sx={{ mt: 2 }}>
-              <Grid container spacing={3}>
-                {/* Personal Information */}
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Personal Information
+               <Box>
+                 {/* Activity Logs */}
+                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                     <HistoryIcon sx={{ mr: 1, color: 'primary.main' }} />
+                     <Typography variant="h6" color="primary">
+                       Applicant Logs
                   </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Full Name</Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {selectedApplicant.user?.first_name} {selectedApplicant.user?.last_name}
+                   </Box>
+                   {logsLoading ? (
+                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                       <CircularProgress size={24} />
+                     </Box>
+                   ) : logsError ? (
+                     <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#ffebee', borderRadius: 1, border: '1px solid #f44336' }}>
+                       <CancelIcon sx={{ fontSize: 48, color: 'error.main', mb: 1 }} />
+                       <Typography variant="body2" color="error.main" sx={{ fontStyle: 'italic' }}>
+                         {logsError}
                     </Typography>
                   </Box>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Email</Typography>
-                    <Typography variant="body1">{selectedApplicant.user?.email || 'Not provided'}</Typography>
+                   ) : userLogs.length > 0 ? (
+                     <Box sx={{ maxHeight: 500, overflowY: 'auto' }}>
+                       {/* Simple table format - no grouping */}
+                       <TableContainer sx={{ border: '2px solid #000' }}>
+                         <Table>
+                           <TableHead>
+                             <TableRow sx={{ backgroundColor: '#000' }}>
+                               <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                 LOG TYPE
+                               </TableCell>
+                               <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                 VENDOR/EVENT
+                               </TableCell>
+                               <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                 DATE
+                               </TableCell>
+                               <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                 TIME
+                               </TableCell>
+                             </TableRow>
+                           </TableHead>
+                           <TableBody>
+                             {userLogs
+                               .sort((a, b) => new Date(b.scanned_at) - new Date(a.scanned_at)) // Descending order
+                               .map((log, index) => (
+                                 <TableRow 
+                                   key={log.id} 
+                                   sx={{ 
+                                     backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9',
+                                     borderBottom: '1px solid #ddd'
+                                   }}
+                                 >
+                                   <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+                                     {log.log_type}
+                                   </TableCell>
+                                   <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+                                     {log.vendor_info ? log.vendor_info.name : log.log_item_id}
+                                   </TableCell>
+                                   <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+                                     {new Date(log.trip_check_date || log.scanned_at).toLocaleDateString('en-GB', {
+                                       day: '2-digit',
+                                       month: '2-digit',
+                                       year: 'numeric'
+                                     })}
+                                   </TableCell>
+                                   <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+                                     {new Date(log.scanned_at).toLocaleTimeString('en-US', {
+                                       hour: '2-digit',
+                                       minute: '2-digit',
+                                       hour12: true
+                                     })}
+                                   </TableCell>
+                                 </TableRow>
+                               ))}
+                           </TableBody>
+                         </Table>
+                       </TableContainer>
+                     </Box>
+                   ) : (
+                     <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9', borderRadius: 1, border: '1px dashed #ccc' }}>
+                       <HistoryIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                         No activity logs found for this user.
+                       </Typography>
                   </Box>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
-                    <Typography variant="body1">{selectedApplicant.user?.phone || 'Not provided'}</Typography>
-                  </Box>
-                </Grid>
-
-                {/* Application Information */}
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Application Information
-                  </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Application Status</Typography>
-                    <Box sx={{ mt: 1 }}>
-                      {getStatusChip(selectedApplicant.status)}
-                    </Box>
-                  </Box>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Application Date</Typography>
-                    <Typography variant="body1">
-                      {new Date(selectedApplicant.created_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Last Updated</Typography>
-                    <Typography variant="body1">
-                      {new Date(selectedApplicant.updated_at).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                {/* Aadhaar Information */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    Aadhaar Information
-                  </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Aadhaar Number</Typography>
-                    <Typography variant="body1">{selectedApplicant.user?.aadhaar_number || 'Not provided'}</Typography>
-                  </Box>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">Aadhaar Address</Typography>
-                    <Typography variant="body1">{selectedApplicant.user?.aadhaar_address || 'Not provided'}</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
+                   )}
+               </Box>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailsDialogOpen(false)} variant="contained">
+          <Button onClick={() => {
+            setDetailsDialogOpen(false);
+            setUserLogs([]);
+            setLogsError(null);
+          }} variant="contained">
             Close
           </Button>
         </DialogActions>

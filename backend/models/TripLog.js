@@ -39,6 +39,11 @@ const TripLog = sequelize.define('TripLog', {
     allowNull: false,
     comment: 'Vendor ID or Event Title'
   },
+  trip_check_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    comment: 'The specific date when check-in/check-out occurred'
+  },
   scanned_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

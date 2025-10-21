@@ -1,8 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const { TripLog, User, Trip } = require('../models');
+const { TripLog, User, Trip, TransportVendor, AccommodationVendor, FoodVendor } = require('../models');
 const { protect, authorize } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
+
+// Helper function to process logs with vendor information
+const processLogsWithVendorInfo = async (logs) => {
+  return Promise.all(logs.map(async (log) => {
+    const logData = log.toJSON();
+    
+    // Add vendor information based on log type
+    if (log.log_type.includes('Transport')) {
+      try {
+        const vendorId = parseInt(log.log_item_id);
+        const vendor = await TransportVendor.findByPk(vendorId);
+        logData.vendor_info = vendor ? {
+          id: vendor.id,
+          name: vendor.title,
+          type: 'Transport'
+        } : null;
+      } catch (error) {
+        console.error('Error fetching transport vendor:', error);
+        logData.vendor_info = null;
+      }
+    } else if (log.log_type.includes('Accommodation')) {
+      try {
+        const vendorId = parseInt(log.log_item_id);
+        const vendor = await AccommodationVendor.findByPk(vendorId);
+        logData.vendor_info = vendor ? {
+          id: vendor.id,
+          name: vendor.title,
+          type: 'Accommodation'
+        } : null;
+      } catch (error) {
+        console.error('Error fetching accommodation vendor:', error);
+        logData.vendor_info = null;
+      }
+    } else if (log.log_type.includes('Event')) {
+      // For events, log_item_id might be event title or ID
+      logData.vendor_info = {
+        id: log.log_item_id,
+        name: log.log_item_id,
+        type: 'Event'
+      };
+    } else {
+      logData.vendor_info = null;
+    }
+    
+    return logData;
+  }));
+};
 
 // Create a new trip log entry
 router.post('/',
@@ -127,6 +174,82 @@ router.get('/trip/:tripId',
 
     } catch (error) {
       console.error('Error fetching trip logs:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
+      });
+    }
+  }
+);
+
+// Get trip logs for a specific user and trip (for admin viewing applicant details)
+router.get('/user/:userId/trip/:tripId',
+  protect,
+  async (req, res) => {
+    try {
+      const { userId, tripId } = req.params;
+      
+      // Check if user has admin privileges or is accessing their own logs
+      const hasAdminRole = ['admin', 'trip_manager', 'superadmin'].includes(req.user.role);
+      const isOwnLogs = req.user.id == userId;
+      
+      if (!hasAdminRole && !isOwnLogs) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You can only view your own logs or need admin privileges.'
+        });
+      }
+
+      // Verify trip exists
+      const trip = await Trip.findByPk(tripId);
+      if (!trip) {
+        return res.status(404).json({
+          success: false,
+          message: 'Trip not found'
+        });
+      }
+
+      // Verify user exists
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      // Get trip logs for the specific user and trip
+      const tripLogs = await TripLog.findAll({
+        where: {
+          trip_id: tripId,
+          user_id: userId
+        },
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'first_name', 'last_name', 'email']
+          },
+          {
+            model: Trip,
+            as: 'trip',
+            attributes: ['id', 'title', 'start_date', 'end_date']
+          }
+        ],
+        order: [['scanned_at', 'DESC']]
+      });
+
+      // Process logs to include vendor information
+      const processedLogs = await processLogsWithVendorInfo(tripLogs);
+
+      res.json({
+        success: true,
+        data: processedLogs
+      });
+
+    } catch (error) {
+      console.error('Error fetching user trip logs:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
