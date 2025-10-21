@@ -21,6 +21,7 @@ import LanguageDropdown from '@/components/LanguageDropdown';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import Tesseract from 'tesseract.js'; // Disabled due to React Native Worker compatibility issues
 
 
@@ -314,16 +315,16 @@ export default function RegisterScreen() {
         }
         
         // Registration successful
-        Alert.alert('Success', data.message || 'Registration successful!', [
-          { text: 'OK', onPress: () => nextStep() }
+        Alert.alert(t('success'), t('registrationSuccessful'), [
+          { text: t('ok'), onPress: () => nextStep() }
         ]);
       } else {
         // Registration failed
-        Alert.alert('Registration Failed', data.message || 'Registration failed. Please try again.');
+        Alert.alert(t('registrationFailed'), data.message || t('errorDuringRegistration'));
       }
     } catch (error) {
       console.error('Registration API error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert(t('error'), t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -335,7 +336,7 @@ export default function RegisterScreen() {
       setLoading(true);
       
       if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        Alert.alert(t('error'), t('userIdNotFound'));
         return;
       }
 
@@ -361,19 +362,19 @@ export default function RegisterScreen() {
       if (response.ok && data.success) {
         // OTP verification successful
         console.log('OTP verification successful, moving to next step');
-        Alert.alert('Success', data.message || 'OTP verified successfully!', [
-          { text: 'OK', onPress: () => {
+        Alert.alert(t('success'), t('otpVerifiedSuccessfully'), [
+          { text: t('ok'), onPress: () => {
             console.log('Alert OK pressed, calling nextStep()');
             nextStep();
           }}
         ]);
       } else {
         // OTP verification failed
-        Alert.alert('Verification Failed', data.message || 'Invalid OTP. Please try again.');
+        Alert.alert(t('verificationFailed'), data.message || t('invalidOtp'));
       }
     } catch (error) {
       console.error('OTP Verification API error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert(t('error'), t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -385,7 +386,7 @@ export default function RegisterScreen() {
       setLoading(true);
       
       if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        Alert.alert(t('error'), t('userIdNotFound'));
         return;
       }
 
@@ -410,13 +411,13 @@ export default function RegisterScreen() {
       if (response.ok && data.success) {
         setOtp(data.data.otp);
         setReceivedOTP(data.data.otp);
-        Alert.alert('Success', 'OTP resent successfully!');
+        Alert.alert(t('success'), t('otpResentSuccessfully'));
       } else {
-        Alert.alert('Error', data.message || 'Failed to resend OTP');
+        Alert.alert(t('error'), data.message || t('failedToSendOtp'));
       }
     } catch (error) {
       console.error('Resend OTP API error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert(t('error'), t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -451,7 +452,7 @@ export default function RegisterScreen() {
       setLoading(true);
       
       if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        Alert.alert(t('error'), t('userIdNotFound'));
         return;
       }
 
@@ -472,12 +473,12 @@ export default function RegisterScreen() {
         // Step 6 completed successfully, now check user status
         await checkUserStatusAndRedirect();
       } else {
-        Alert.alert('Error', data.message || 'Failed to complete Step 6. Please try again.');
+        Alert.alert(t('error'), data.message || t('failedToCompleteStep6'));
       }
 
     } catch (error) {
       console.error('Complete Step 6 error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert(t('error'), t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -488,15 +489,22 @@ export default function RegisterScreen() {
       setLoading(true);
       
       if (!email && !phone) {
-        Alert.alert('Error', 'Email or phone not found. Please try registering again.');
+        Alert.alert(t('error'), t('emailOrPhoneNotFound'));
         return;
+      }
+
+      // Get password from AsyncStorage if not in state (for cases where user logged in from dashboard)
+      let userPassword = password;
+      if (!userPassword) {
+        const storedPassword = await AsyncStorage.getItem('userPassword');
+        userPassword = storedPassword || '';
       }
 
       // Use existing login API to check user status
       const loginData = {
         email: email || '',
         phone: phone || '',
-        password: password || ''
+        password: userPassword
       };
 
       console.log('Checking user status with login API:', loginData);
@@ -565,7 +573,7 @@ export default function RegisterScreen() {
         // Login failed - redirect to dashboard with error
         router.replace({
           pathname: '/dashboard',
-          params: { loginError: data.message || 'Failed to verify account status. Please try again.' }
+          params: { loginError: data.message || t('accountInReview') }
         } as any);
       }
 
@@ -587,14 +595,14 @@ export default function RegisterScreen() {
       setLoading(true);
       
       if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        Alert.alert(t('error'), t('userIdNotFound'));
         return;
       }
 
       // Convert image to base64
       const base64Data = await convertImageToBase64(imageUri);
       if (!base64Data) {
-        Alert.alert('Error', 'Failed to process image. Please try again.');
+        Alert.alert(t('error'), t('failedToProcessImage'));
         return;
       }
 
@@ -627,17 +635,17 @@ export default function RegisterScreen() {
           await callOCRProcessingAPI();
         } else {
           // For front image, just proceed to next step
-          Alert.alert('Success', data.message || `${imageType} image uploaded successfully!`, [
-            { text: 'OK', onPress: () => nextStep() }
+          Alert.alert(t('success'), `${imageType} ${t('imageUploadedSuccessfully')}`, [
+            { text: t('ok'), onPress: () => nextStep() }
           ]);
         }
       } else {
         // Image upload failed
-        Alert.alert('Upload Failed', data.message || `Failed to upload ${imageType} image. Please try again.`);
+        Alert.alert(t('uploadFailed'), data.message || t('failedToUploadImage'));
       }
     } catch (error) {
       console.error('Aadhaar Image Upload API error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert(t('error'), t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -647,7 +655,7 @@ export default function RegisterScreen() {
   const callOCRProcessingAPI = async () => {
     try {
       if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please try registering again.');
+        Alert.alert(t('error'), t('userIdNotFound'));
         return;
       }
 
@@ -695,16 +703,16 @@ export default function RegisterScreen() {
           });
         }
         
-        Alert.alert('Success', data.message || 'Aadhaar data processed successfully!', [
-          { text: 'OK', onPress: () => nextStep() }
+        Alert.alert(t('success'), t('aadhaarDataProcessedSuccessfully'), [
+          { text: t('ok'), onPress: () => nextStep() }
         ]);
       } else {
         // OCR processing failed
-        Alert.alert('Processing Failed', data.message || 'Failed to process Aadhaar data. Please try again.');
+        Alert.alert(t('processingFailed'), data.message || t('failedToProcessAadhaarData'));
       }
     } catch (error) {
       console.error('OCR Processing API error:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert(t('error'), t('networkError'));
     }
   };
 
@@ -714,13 +722,13 @@ export default function RegisterScreen() {
       if (validateStep2()) {
         callRegistrationAPI();
       } else {
-        Alert.alert('Validation Error', 'Please fix the errors before proceeding');
+        Alert.alert(t('validationError'), t('pleaseFixErrors'));
       }
     } else if (currentStep === 3) {
       if (validateStep3()) {
         callOTPVerificationAPI();
       } else {
-        Alert.alert('Validation Error', 'Please enter a valid OTP');
+        Alert.alert(t('validationError'), t('validOtpRequired'));
       }
     } else if (currentStep === 4) {
       if (aadhaarFront) {
@@ -728,21 +736,21 @@ export default function RegisterScreen() {
         console.log('Step 4: Uploading Aadhaar front image');
         await callAadhaarImageUploadAPI(aadhaarFront, 'front');
       } else {
-        Alert.alert('Upload Required', 'Please upload Aadhaar front side first');
+        Alert.alert(t('uploadRequired'), t('uploadAadhaarFrontFirst'));
       }
     } else if (currentStep === 5) {
       if (aadhaarBack) {
         // Call API to upload back image
         await callAadhaarImageUploadAPI(aadhaarBack, 'back');
       } else {
-        Alert.alert('Upload Required', 'Please upload Aadhaar back side first');
+        Alert.alert(t('uploadRequired'), t('uploadAadhaarBackFirst'));
       }
     } else if (currentStep === 6) {
       if (aadhaarNumber && age && name) {
         // Call complete step 6 API first, then check user status
         await callCompleteStep6API();
       } else {
-        Alert.alert('Missing Information', 'Please fill all required fields');
+        Alert.alert(t('missingInformation'), t('fillAllRequiredFields'));
       }
     } else {
       nextStep();
@@ -752,10 +760,10 @@ export default function RegisterScreen() {
   // 🟢 Aadhaar upload
   const handleAadhaarUpload = async (type: 'front' | 'back') => {
     Alert.alert(
-      'Upload Aadhaar',
+      t('uploadAadhaar'),
       `Upload ${type} side of Aadhaar card`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         { text: 'Camera', onPress: () => openCamera(type) },
         { text: 'Gallery', onPress: () => openGallery(type) }
       ]
@@ -774,7 +782,7 @@ export default function RegisterScreen() {
     try {
       const { status } = await Camera.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera permission is required');
+        Alert.alert(t('permissionRequired'), t('cameraPermissionRequired'));
         return;
       }
 
@@ -791,7 +799,7 @@ export default function RegisterScreen() {
       }
     } catch (error) {
       console.error('Camera error:', error);
-      Alert.alert('Error', 'Failed to open camera');
+      Alert.alert(t('error'), t('failedToOpenCamera'));
     }
   };
 
@@ -799,7 +807,7 @@ export default function RegisterScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Gallery permission is required');
+        Alert.alert(t('permissionRequired'), t('galleryPermissionRequired'));
         return;
       }
 
@@ -816,7 +824,7 @@ export default function RegisterScreen() {
       }
     } catch (error) {
       console.error('Gallery error:', error);
-      Alert.alert('Error', 'Failed to open gallery');
+      Alert.alert(t('error'), t('failedToOpenGallery'));
     }
   };
 
@@ -830,7 +838,7 @@ export default function RegisterScreen() {
       }
     } catch (error) {
       console.error('Image processing error:', error);
-      Alert.alert('Error', 'Failed to process image');
+      Alert.alert(t('error'), t('failedToProcessImage'));
     }
   }, []);
 
@@ -867,12 +875,12 @@ export default function RegisterScreen() {
                     setHeaderMenuVisible(false);
                     // Handle Sign Out
                     Alert.alert(
-                      'Sign Out',
-                      'Are you sure you want to sign out?',
+                      t('signOut'),
+                      t('confirmSignOut'),
                       [
-                        { text: 'Cancel', style: 'cancel' },
+                        { text: t('cancel'), style: 'cancel' },
                         { 
-                          text: 'Sign Out', 
+                          text: t('signOut'), 
                           style: 'destructive',
                           onPress: () => {
                             console.log('Sign Out confirmed');
@@ -1042,7 +1050,7 @@ export default function RegisterScreen() {
                         />
                         <TextInput
                           style={styles.textInput}
-                          placeholder="Enter your email"
+                          placeholder={t('enterYourEmail')}
                           placeholderTextColor="#999"
                           value={email}
                           onChangeText={setEmail}
@@ -1071,7 +1079,7 @@ export default function RegisterScreen() {
                         />
                         <TextInput
                           style={styles.textInput}
-                          placeholder="Enter your phone number"
+                          placeholder={t('enterYourPhone')}
                           placeholderTextColor="#999"
                           value={phone}
                           onChangeText={setPhone}
@@ -1100,7 +1108,7 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        placeholder="Enter your password"
+                        placeholder={t('enterYourPassword')}
                         placeholderTextColor="#999"
                         value={password}
                         onChangeText={setPassword}
@@ -1127,7 +1135,7 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        placeholder="Confirm your password"
+                        placeholder={t('confirmYourPassword')}
                         placeholderTextColor="#999"
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
@@ -1272,7 +1280,7 @@ export default function RegisterScreen() {
                   </Text>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Aadhaar Number *</Text>
+                    <Text style={styles.inputLabel}>{t('aadhaarNumber')} *</Text>
                     <View style={styles.inputWrapper}>
                       <Ionicons 
                         name="card-outline" 
@@ -1282,7 +1290,7 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        placeholder="Enter 12-digit Aadhaar number"
+                        placeholder={t('enterAadhaarNumber')}
                         placeholderTextColor="#999"
                         value={aadhaarNumber}
                         onChangeText={setAadhaarNumber}
@@ -1293,7 +1301,7 @@ export default function RegisterScreen() {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Age *</Text>
+                    <Text style={styles.inputLabel}>{t('age')} *</Text>
                     <View style={styles.inputWrapper}>
                       <Ionicons 
                         name="calendar-outline" 
@@ -1303,7 +1311,7 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        placeholder="Enter your age"
+                        placeholder={t('enterAge')}
                         placeholderTextColor="#999"
                         value={age}
                         onChangeText={setAge}
@@ -1314,7 +1322,7 @@ export default function RegisterScreen() {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Full Name *</Text>
+                    <Text style={styles.inputLabel}>{t('fullName')} *</Text>
                     <View style={styles.inputWrapper}>
                       <Ionicons 
                         name="person-outline" 
@@ -1324,7 +1332,7 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textInput}
-                        placeholder="Enter your full name"
+                        placeholder={t('enterFullName')}
                         placeholderTextColor="#999"
                         value={name}
                         onChangeText={setName}
@@ -1333,7 +1341,7 @@ export default function RegisterScreen() {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Address</Text>
+                    <Text style={styles.inputLabel}>{t('address')}</Text>
                     <View style={styles.inputWrapper}>
                       <Ionicons 
                         name="location-outline" 
@@ -1343,7 +1351,7 @@ export default function RegisterScreen() {
                       />
                       <TextInput
                         style={styles.textArea}
-                        placeholder="Enter your complete address"
+                        placeholder={t('enterAddress')}
                         placeholderTextColor="#999"
                         value={address}
                         onChangeText={setAddress}
