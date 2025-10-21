@@ -84,12 +84,9 @@ export default function LoginScreen() {
         password: password
       };
 
-      console.log('Login API call with data:', requestData);
-      
       // Store credentials for later use
       await AsyncStorage.setItem('userEmail', email);
       await AsyncStorage.setItem('userPassword', password);
-      console.log('Credentials stored for later use');
 
       const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
         method: 'POST',
@@ -100,18 +97,18 @@ export default function LoginScreen() {
       });
 
       const data = await response.json();
-      console.log('Login API response:', data);
 
       // Check for 401 status first (registration incomplete)
       if (response.status === 401 && data.data && data.data.requiresVerification) {
         // Check if user has completed Step 6
         if (data.data.step6Completed && data.data.redirectToStep === 7) {
-          // Step 6 completed but not approved - show error on login page
-          console.log('Step 6 completed, showing error on login page:', data.message);
-          setLoginError(data.message || 'Your account is in review. You will receive notification as soon as your account is approved.');
+          // Step 6 completed but not approved - redirect to dashboard with message
+          router.push({
+            pathname: '/dashboard',
+            params: { loginError: data.message || 'Your account is in review. You will receive notification as soon as your account is approved.' }
+          } as any);
         } else {
           // User needs to complete registration - redirect to appropriate step
-          console.log('Redirecting to registration step:', data.data.redirectToStep || '3');
           router.push({
             pathname: '/register',
             params: { 
@@ -141,17 +138,22 @@ export default function LoginScreen() {
             params: { loginSuccess: 'true' }
           } as any);
         } else {
-          // User not approved yet - show error on login page
-          setLoginError('Your account is in review. You will receive notification as soon as your account is approved.');
+          // User not approved yet - redirect to dashboard with message
+          router.push({
+            pathname: '/dashboard',
+            params: { loginError: 'Your account is in review. You will receive notification as soon as your account is approved.' }
+          } as any);
         }
       } else {
-        // Login failed - show error on login page
+        // Login failed - show error on login page only
         setLoginError(data.message || 'Invalid credentials. Please try again.');
       }
     } catch (error) {
-      console.error('Login API error:', error);
-      // Network error - show error on login page
-      setLoginError('Network error. Please check your connection and try again.');
+      // Network error - redirect to dashboard with error
+      router.push({
+        pathname: '/dashboard',
+        params: { loginError: 'Network error. Please check your connection and try again.' }
+      } as any);
     } finally {
       setLoading(false);
     }
@@ -284,9 +286,9 @@ export default function LoginScreen() {
                 )}
               </View>
 
-              {/* Login Error Message */}
+              {/* Login Error Message - Only for Invalid Credentials */}
               {loginError && (
-                <View style={styles.errorContainer}>
+                <View style={styles.loginErrorContainer}>
                   <View style={styles.errorCard}>
                     <Ionicons name="alert-circle-outline" size={24} color="#FF3B30" />
                     <Text style={styles.loginErrorText}>{loginError}</Text>

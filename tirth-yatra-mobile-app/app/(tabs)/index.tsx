@@ -55,6 +55,7 @@ export default function HomeScreen() {
   const [isAccountApproved, setIsAccountApproved] = useState(false);
   const [activeTab, setActiveTab] = useState<'All' | 'Upcoming' | 'Current'>('All');
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
+  const [userApplications, setUserApplications] = useState<any[]>([]);
 
   // Fetch trips data from API
   const fetchTrips = async () => {
@@ -146,6 +147,8 @@ export default function HomeScreen() {
         const data = await response.json();
         if (response.ok && data.success && data.data.accountStatus === 'approved') {
           setIsAccountApproved(true);
+          // Fetch user applications when account is approved
+          await fetchUserApplications();
         } else {
           setIsAccountApproved(false);
         }
@@ -153,6 +156,46 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error checking account status:', error);
       setIsAccountApproved(false);
+    }
+  };
+
+  // Fetch user trip applications
+  const fetchUserApplications = async () => {
+    try {
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (!storedEmail || !storedPassword) {
+        return;
+      }
+
+      // Get user ID by calling login API
+      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: storedEmail,
+          password: storedPassword
+        }),
+      });
+
+      const loginData = await loginResponse.json();
+      
+      if (loginResponse.ok && loginData.success) {
+        const userId = loginData.data.userId;
+        console.log('Fetching user applications for user ID:', userId);
+        
+        const response = await fetch(`http://192.168.1.3:5000/api/mobile/user-trips-comprehensive?userId=${userId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setUserApplications(data.data.myTrips.applications || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user applications:', error);
     }
   };
 
@@ -207,33 +250,71 @@ export default function HomeScreen() {
     }
   };
 
-  const renderEventCard = (trip: Trip) => (
-    <View key={trip.id} style={styles.eventCard}>
-      <View style={styles.eventHeader}>
-        <Text style={styles.eventTitle}>{trip.title}</Text>
-        <TouchableOpacity style={styles.eventAction}>
-          <Ionicons name="ellipsis-horizontal" size={20} color="#666" />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.eventDescription}>
-        {trip.destinationInfo?.description || 'A sacred pilgrimage journey. Experience the spiritual significance and cultural heritage of this holy destination.'}
-      </Text>
-      <View style={styles.eventFooter}>
-        <View style={styles.eventDates}>
-          <Text style={styles.eventDateLabel}>Start Date</Text>
-          <Text style={styles.eventDateValue}>{formatDate(trip.start_date)}</Text>
-          <Text style={styles.eventLastUpdated}>Last updated: {formatDate(trip.updated_at)}</Text>
+  // Get application status for a trip
+  const getApplicationStatus = (tripId: number) => {
+    const application = userApplications.find(app => app.tripid === tripId);
+    return application ? application.application_status : null;
+  };
+
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Approved':
+        return '#34C759';
+      case 'Pending':
+        return '#FF9500';
+      case 'Rejected':
+        return '#FF3B30';
+      case 'Review':
+        return '#007AFF';
+      default:
+        return '#666';
+    }
+  };
+
+  const renderEventCard = (trip: Trip) => {
+    const applicationStatus = getApplicationStatus(trip.id);
+    
+    return (
+      <View key={trip.id} style={styles.eventCard}>
+        <View style={styles.eventHeader}>
+          <Text style={styles.eventTitle}>{trip.title}</Text>
+          <View style={styles.eventHeaderRight}>
+            {isAccountApproved && applicationStatus && (
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(applicationStatus) }]}>
+                <Text style={styles.statusText}>{applicationStatus}</Text>
+              </View>
+            )}
+            <TouchableOpacity style={styles.eventAction}>
+              <Ionicons name="ellipsis-horizontal" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.eventEndDate}>
-          <Text style={styles.eventDateLabel}>End Datetime</Text>
-          <Text style={styles.eventDateValue}>{formatDateTime(trip.end_date)}</Text>
+        <Text style={styles.eventDescription}>
+          {trip.destinationInfo?.description || 'A sacred pilgrimage journey. Experience the spiritual significance and cultural heritage of this holy destination.'}
+        </Text>
+        <View style={styles.eventFooter}>
+          <View style={styles.eventDates}>
+            <Text style={styles.eventDateLabel}>Start Date</Text>
+            <Text style={styles.eventDateValue}>{formatDate(trip.start_date)}</Text>
+            <Text style={styles.eventLastUpdated}>Last updated: {formatDate(trip.updated_at)}</Text>
+          </View>
+          <View style={styles.eventEndDate}>
+            <Text style={styles.eventDateLabel}>End Datetime</Text>
+            <Text style={styles.eventDateValue}>{formatDateTime(trip.end_date)}</Text>
+          </View>
+        </View>
+        <View style={styles.tripStatus}>
+          <Text style={styles.tripStatusText}>Trip Status: {trip.tripStatus?.name || 'Unknown'}</Text>
+          {isAccountApproved && applicationStatus && (
+            <Text style={styles.applicationStatusText}>
+              Your Application: {applicationStatus}
+            </Text>
+          )}
         </View>
       </View>
-      <View style={styles.tripStatus}>
-        <Text style={styles.tripStatusText}>Status: {trip.tripStatus?.name || 'Unknown'}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -563,8 +644,23 @@ const styles = StyleSheet.create({
     color: '#000',
     flex: 1,
   },
+  eventHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   eventAction: {
     padding: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
   },
   eventDescription: {
     fontSize: 14,
@@ -655,6 +751,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
+  },
+  applicationStatusText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '500',
+    marginTop: 4,
   },
   // Sidebar button styles
   sidebarButton: {

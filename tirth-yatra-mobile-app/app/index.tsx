@@ -55,6 +55,7 @@ export default function HomeScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isAccountApproved, setIsAccountApproved] = useState(false);
+  const [userApplications, setUserApplications] = useState<any[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -118,6 +119,8 @@ export default function HomeScreen() {
         const data = await response.json();
         if (response.ok && data.success && data.data.accountStatus === 'approved') {
           setIsAccountApproved(true);
+          // Fetch user applications when account is approved
+          await fetchUserApplications();
         } else {
           setIsAccountApproved(false);
         }
@@ -130,12 +133,59 @@ export default function HomeScreen() {
     }
   };
 
+  // Fetch user trip applications
+  const fetchUserApplications = async () => {
+    try {
+      const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (!storedEmail || !storedPassword) {
+        return;
+      }
+
+      // Get user ID by calling login API
+      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: storedEmail,
+          password: storedPassword
+        }),
+      });
+
+      const loginData = await loginResponse.json();
+      
+      if (loginResponse.ok && loginData.success) {
+        const userId = loginData.data.userId;
+        console.log('Fetching user applications for user ID:', userId);
+        
+        const response = await fetch(`http://192.168.1.3:5000/api/mobile/user-trips-comprehensive?userId=${userId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setUserApplications(data.data.myTrips.applications || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user applications:', error);
+    }
+  };
+
   // Check account status when component mounts
   useEffect(() => {
     if (isLoggedIn) {
       checkAccountStatus();
     }
   }, [isLoggedIn]);
+
+  // Set default tab to "All" when user is logged in and account is approved
+  useEffect(() => {
+    if (isLoggedIn && isAccountApproved) {
+      setActiveTab('All');
+    }
+  }, [isLoggedIn, isAccountApproved]);
 
   // Check login status and navigate to dashboard
   const navigateToDashboard = async () => {
@@ -300,9 +350,11 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredTrips = trips.filter(
-    (trip) => trip.trip_role && trip.trip_role.toLowerCase() === activeTab.toLowerCase()
-  );
+  const filteredTrips = activeTab === 'All' 
+    ? trips.filter((trip) => trip.trip_role === 'Upcoming' || trip.trip_role === 'Current')
+    : trips.filter(
+        (trip) => trip.trip_role && trip.trip_role.toLowerCase() === activeTab.toLowerCase()
+      );
 
   const renderCarousel = () => (
     <View style={styles.carouselContainer}>
@@ -346,6 +398,28 @@ export default function HomeScreen() {
     }
   };
 
+  // Get application status for a trip
+  const getApplicationStatus = (tripId: number) => {
+    const application = userApplications.find(app => app.tripid === tripId);
+    return application ? application.application_status : null;
+  };
+
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Approved':
+        return '#34C759';
+      case 'Pending':
+        return '#FF9500';
+      case 'Rejected':
+        return '#FF3B30';
+      case 'Review':
+        return '#007AFF';
+      default:
+        return '#666';
+    }
+  };
+
   const renderEventCard = (trip: Trip) => {
     console.log('Rendering trip:', trip);
     console.log('Trip fields:', {
@@ -355,6 +429,10 @@ export default function HomeScreen() {
       end_date: trip.end_date,
       description: trip.destinationInfo?.description
     });
+    
+    const applicationStatus = getApplicationStatus(trip.id);
+    // Only show status if user is logged in, account approved, AND trip exists in user's applications
+    const shouldShowStatus = isLoggedIn && isAccountApproved && applicationStatus;
     
     return (
       <TouchableOpacity 
@@ -369,13 +447,25 @@ export default function HomeScreen() {
       >
         <View style={styles.eventHeader}>
           <Text style={styles.eventTitle}>{trip.title}</Text>
+          {shouldShowStatus && (
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(applicationStatus) }]}>
+              <Text style={styles.statusText}>{applicationStatus}</Text>
+            </View>
+          )}
         </View>
         <Text style={styles.eventDescription}>
           {trip.destinationInfo?.description ||
             'A sacred pilgrimage journey to this holy destination.'}
         </Text>
         <View style={styles.eventFooter}>
-          <Text>{formatDate(trip.start_date)} → {formatDate(trip.end_date)}</Text>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>{formatDate(trip.start_date)} → {formatDate(trip.end_date)}</Text>
+            {shouldShowStatus && (
+              <Text style={styles.applicationStatusText}>
+                Your Application: {applicationStatus}
+              </Text>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -559,6 +649,15 @@ export default function HomeScreen() {
       {renderCarousel()}
 
       <View style={styles.tabContainer}>
+        {isLoggedIn && isAccountApproved && (
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'All' && styles.activeTab]}
+            onPress={() => setActiveTab('All')}>
+            <Text style={[styles.tabText, activeTab === 'All' && styles.activeTabText]}>
+              All
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.tab, activeTab === 'Upcoming' && styles.activeTab]}
           onPress={() => setActiveTab('Upcoming')}>
@@ -718,8 +817,37 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   eventTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', flex: 1 },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+  },
   eventDescription: { fontSize: 14, color: '#666', lineHeight: 20, marginBottom: 12 },
-  eventFooter: { flexDirection: 'row', justifyContent: 'space-between' },
+  eventFooter: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  dateContainer: {
+    flex: 1,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  applicationStatusText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
 
   emptyContainer: { justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
   emptyText: { marginTop: 16, fontSize: 16, color: '#ccc' },

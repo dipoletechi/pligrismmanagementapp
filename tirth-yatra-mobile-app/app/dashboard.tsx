@@ -65,7 +65,6 @@ export default function DashboardScreen() {
         setIsAccountVerified(false);
       }
     } catch (error) {
-      console.error('Error checking account status:', error);
       setLoginError('Network error. Please check your connection.');
       setIsLoggedIn(false);
       setIsAccountVerified(false);
@@ -74,30 +73,23 @@ export default function DashboardScreen() {
 
   // Check for login error from params
   useEffect(() => {
-    console.log('Dashboard params received:', params);
-    
     if (params.error) {
-      console.log('Setting error from params:', params.error);
       setLoginError(params.error as string);
       setIsLoggedIn(false);
       setIsAccountVerified(false);
     } else if (params.loginError) {
-      console.log('Setting login error from params:', params.loginError);
       // Handle loginError parameter (from Step 6 completion)
       setLoginError(params.loginError as string);
       setIsLoggedIn(true); // User is logged in but account not verified
       setIsAccountVerified(false);
     } else if (params.loginSuccess === 'true') {
-      console.log('Login success - showing dashboard data');
       setLoginError(null);
       setIsLoggedIn(true);
       setIsAccountVerified(true); // Account is verified if login is successful
     } else if (params.fromMyTrips === 'true' || params.fromTrips === 'true') {
-      console.log('Navigated from My Trips or Trips - checking account status');
       // When navigating from My Trips or Trips, check account status
       checkAccountStatus();
     } else {
-      console.log('Default case - checking account status');
       // Default: check account status from stored credentials
       checkAccountStatus();
     }
@@ -112,12 +104,9 @@ export default function DashboardScreen() {
       
       if (data.success) {
         setTripData(data.data);
-        console.log('Comprehensive trip data loaded:', data.data);
-      } else {
-        console.error('Failed to fetch trip data:', data.message);
       }
     } catch (error) {
-      console.error('Error fetching trip data:', error);
+      // Error fetching trip data
     } finally {
       setLoading(false);
     }
@@ -125,17 +114,13 @@ export default function DashboardScreen() {
 
   // Fetch trip data when logged in
   useEffect(() => {
-    console.log('Dashboard state check:', { isLoggedIn, isAccountVerified, tripData: !!tripData });
     if (isLoggedIn && isAccountVerified) {
-      console.log('Fetching trip data...');
       fetchTripData();
-    } else {
-      console.log('Not fetching trip data - conditions not met');
     }
   }, [isLoggedIn, isAccountVerified]);
 
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -144,7 +129,13 @@ export default function DashboardScreen() {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => router.replace('/login')
+          onPress: async () => {
+            // Clear credentials from AsyncStorage
+            await AsyncStorage.removeItem('userEmail');
+            await AsyncStorage.removeItem('userPassword');
+            // Redirect to index page (All Trips)
+            router.replace('/');
+          }
         }
       ]
     );
@@ -374,23 +365,27 @@ const styles = StyleSheet.create({
     paddingBottom: 40, // Reduce padding since container has paddingBottom
   },
   statsContainer: {
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 30,
+    padding: 0,
+    marginHorizontal: 0,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginBottom: 16,
     textAlign: 'center',
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 0,
+    marginHorizontal: -20,
+    marginTop: -20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statsRow: {
     flexDirection: 'row',
@@ -401,16 +396,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 12,
+    paddingHorizontal: 0,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    padding: 12,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 0,
     alignItems: 'center',
     marginHorizontal: 4,
     borderWidth: 1,
     borderColor: '#e0e0e0',
+    minHeight: 80,
+    justifyContent: 'center',
   },
   statNumber: {
     fontSize: 24,

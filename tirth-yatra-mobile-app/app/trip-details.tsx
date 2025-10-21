@@ -101,9 +101,6 @@ export default function TripDetailsScreen() {
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  console.log('TripDetailsScreen loaded with trip id:', id);
-  console.log('fromMyTrips parameter:', fromMyTrips);
-  console.log('Initial isLoggedIn state:', isLoggedIn);
 
   // Check login status
   useEffect(() => {
@@ -117,13 +114,8 @@ export default function TripDetailsScreen() {
         // OR if they came from dashboard redirect, they are logged in
         const hasCredentials = !!(userEmail && userPassword);
         
-        console.log('Login status check:', { userEmail: !!userEmail, userPassword: !!userPassword, hasCredentials });
-        console.log('Previous isLoggedIn state:', isLoggedIn);
         setIsLoggedIn(hasCredentials);
-        console.log('Set isLoggedIn to:', hasCredentials);
-        console.log('Login status updated from', isLoggedIn, 'to', hasCredentials);
       } catch (error) {
-        console.error('Error checking login status:', error);
         setIsLoggedIn(false);
       }
     };
@@ -148,7 +140,7 @@ export default function TripDetailsScreen() {
         signal: controller.signal,
       });
       
-      console.log('Fetch response status:', response.status);
+      
       clearTimeout(timeoutId);
       
       if (!response.ok) {
@@ -171,7 +163,6 @@ export default function TripDetailsScreen() {
       }, 3000);
     } catch (err) {
       clearTimeout(timeoutId);
-      console.error('Error fetching trip details:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trip details';
       setError(errorMessage);
       
@@ -239,7 +230,6 @@ export default function TripDetailsScreen() {
       // If it's a string, parse it
       return JSON.parse(tripDetails.accommodations_by_day);
     } catch (error) {
-      console.error('Error parsing accommodations_by_day:', error);
       return {};
     }
   };
@@ -254,7 +244,7 @@ export default function TripDetailsScreen() {
       // If it's a string, parse it
       return JSON.parse(tripDetails.food_vendors_by_day);
     } catch (error) {
-      console.error('Error parsing food_vendors_by_day:', error);
+      console.error('Error parsing food_vendors_by_day:', error)
       return {};
     }
   };

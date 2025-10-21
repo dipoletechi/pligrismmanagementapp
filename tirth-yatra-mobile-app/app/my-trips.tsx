@@ -131,7 +131,7 @@ export default function MyTripsScreen() {
   }, [activeFilter, tripApplications]);
 
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -140,7 +140,14 @@ export default function MyTripsScreen() {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => router.replace('/login')
+          onPress: async () => {
+            // Clear credentials from AsyncStorage
+            await AsyncStorage.removeItem('userEmail');
+            await AsyncStorage.removeItem('userPassword');
+            console.log('Credentials cleared, redirecting to index page');
+            // Redirect to index page (All Trips)
+            router.replace('/');
+          }
         }
       ]
     );
