@@ -290,7 +290,7 @@ export default function RegisterScreen() {
 
       console.log('Registration API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/register', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -347,7 +347,7 @@ export default function RegisterScreen() {
 
       console.log('OTP Verification API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/verify-otp', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -396,7 +396,7 @@ export default function RegisterScreen() {
 
       console.log('Resend OTP API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/resend-otp', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/resend-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -457,7 +457,7 @@ export default function RegisterScreen() {
 
       console.log('Calling complete step 6 API for userId:', userId);
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/complete-step6', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/complete-step6', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -501,7 +501,7 @@ export default function RegisterScreen() {
 
       console.log('Checking user status with login API:', loginData);
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -609,7 +609,7 @@ export default function RegisterScreen() {
         imageData: `${base64Data.substring(0, 50)}...` // Log only first 50 chars
       });
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/upload-aadhaar-image', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/upload-aadhaar-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -657,7 +657,7 @@ export default function RegisterScreen() {
 
       console.log('OCR Processing API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/process-aadhaar-ocr', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/process-aadhaar-ocr', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

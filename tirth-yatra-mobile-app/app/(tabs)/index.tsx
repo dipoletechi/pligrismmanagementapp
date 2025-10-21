@@ -20,7 +20,7 @@ import { router } from 'expo-router';
 const { width: screenWidth } = Dimensions.get('window');
 
 // API endpoint - Using your computer's IP address
-const API_BASE_URL = 'http://192.168.1.15:5000/api/mobile/trips';
+const API_BASE_URL = 'http://192.168.1.3:5000/api/mobile/trips';
 
 // Trip data interface based on API response
 interface Trip {
@@ -132,7 +132,7 @@ export default function HomeScreen() {
       const storedPassword = await AsyncStorage.getItem('userPassword');
       
       if (storedEmail && storedPassword) {
-        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

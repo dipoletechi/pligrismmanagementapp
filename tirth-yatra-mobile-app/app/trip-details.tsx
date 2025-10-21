@@ -140,7 +140,7 @@ export default function TripDetailsScreen() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://192.168.1.15:5000/api/mobile/trips/${id}/details`, {
+      const response = await fetch(`http://192.168.1.3:5000/api/mobile/trips/${id}/details`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -653,7 +653,7 @@ export default function TripDetailsScreen() {
       }
 
       // First, get user ID by calling login API
-      const loginResponse = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -675,7 +675,7 @@ export default function TripDetailsScreen() {
       console.log('User ID for application:', userId);
 
       // Check account status
-      const statusResponse = await fetch(`http://192.168.1.15:5000/api/mobile/check-account-status?userId=${userId}`);
+      const statusResponse = await fetch(`http://192.168.1.3:5000/api/mobile/check-account-status?userId=${userId}`);
       const statusData = await statusResponse.json();
       
       console.log('Account status check:', statusData);
@@ -696,7 +696,7 @@ export default function TripDetailsScreen() {
       }
 
       // Account is approved, create trip application
-      const applicationResponse = await fetch('http://192.168.1.15:5000/api/trip-pligrim', {
+      const applicationResponse = await fetch('http://192.168.1.3:5000/api/trip-pligrim', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

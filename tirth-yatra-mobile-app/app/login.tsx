@@ -87,7 +87,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userPassword', password);
       console.log('Credentials stored for later use');
 
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

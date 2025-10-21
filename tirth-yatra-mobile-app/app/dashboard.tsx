@@ -34,7 +34,7 @@ export default function DashboardScreen() {
       const storedPassword = await AsyncStorage.getItem('userPassword');
       
       if (storedEmail && storedPassword) {
-        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
   const fetchTripData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/user-trips-comprehensive?userId=70'); // Updated to correct user ID
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/user-trips-comprehensive?userId=70'); // Updated to correct user ID
       const data = await response.json();
       
       if (data.success) {

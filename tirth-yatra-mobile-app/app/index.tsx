@@ -19,7 +19,7 @@ import LanguageDropdown from '@/components/LanguageDropdown';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-const API_BASE_URL = 'http://192.168.1.15:5000/api/mobile/trips';
+const API_BASE_URL = 'http://192.168.1.3:5000/api/mobile/trips';
 
 interface Trip {
   id: number;
@@ -104,7 +104,7 @@ export default function HomeScreen() {
       const storedPassword = await AsyncStorage.getItem('userPassword');
       
       if (storedEmail && storedPassword) {
-        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ export default function HomeScreen() {
       if (!storedEmail || !storedPassword) {
         console.log('No stored credentials found, using default');
         // If no stored credentials, use default ones
-        const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -188,7 +188,7 @@ export default function HomeScreen() {
       }
       
       // Call login API with stored credentials
-      const response = await fetch('http://192.168.1.15:5000/api/mobile/login', {
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

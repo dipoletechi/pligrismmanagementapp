@@ -16,7 +16,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
 
 // API endpoint
-const API_BASE_URL = 'http://192.168.1.15:5000/api/mobile';
+const API_BASE_URL = 'http://192.168.1.3:5000/api/mobile';
 
 // Trip application interface
 interface TripApplication {
