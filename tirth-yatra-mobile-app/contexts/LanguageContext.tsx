@@ -195,6 +195,15 @@ const translations = {
     'applicationRejected': 'Application rejected',
     'applicationUnderReview': 'Application under review',
     
+    // Trip Application Errors
+    'accountNotApproved': 'Your account is not approved yet. Please wait for approval before applying for trips.',
+    'accountUnderReview': 'Your account is currently under review. Please wait for approval before applying for trips.',
+    'applicationSubmitted': 'Application Submitted',
+    'applicationSubmittedSuccess': 'Your account is approved and trip application created successfully!',
+    'failedToSubmitApplication': 'Failed to submit application. Please try again.',
+    'pleaseLoginToApply': 'Please login to apply for trips',
+    'unableToVerifyUserTryAgain': 'Unable to verify user. Please try again.',
+    
     // Dashboard
     'dashboard': 'Dashboard',
     'welcomeToTirthYatra': 'Welcome to Tirth Yatra',
@@ -417,6 +426,15 @@ const translations = {
     'applicationApproved': 'ਅਰਜ਼ੀ ਮਨਜ਼ੂਰ ਹੋ ਗਈ',
     'applicationRejected': 'ਅਰਜ਼ੀ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ',
     'applicationUnderReview': 'ਅਰਜ਼ੀ ਸਮੀਖਿਆ ਅਧੀਨ ਹੈ',
+    
+    // Trip Application Errors
+    'accountNotApproved': 'ਤੁਹਾਡਾ ਖਾਤਾ ਅਜੇ ਮਨਜ਼ੂਰ ਨਹੀਂ ਹੋਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਯਾਤਰਾਵਾਂ ਲਈ ਅਰਜ਼ੀ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਮਨਜ਼ੂਰੀ ਦੀ ਉਡੀਕ ਕਰੋ।',
+    'accountUnderReview': 'ਤੁਹਾਡਾ ਖਾਤਾ ਵਰਤਮਾਨ ਵਿੱਚ ਸਮੀਖਿਆ ਅਧੀਨ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਯਾਤਰਾਵਾਂ ਲਈ ਅਰਜ਼ੀ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਮਨਜ਼ੂਰੀ ਦੀ ਉਡੀਕ ਕਰੋ।',
+    'applicationSubmitted': 'ਅਰਜ਼ੀ ਜਮ੍ਹਾਂ ਕੀਤੀ ਗਈ',
+    'applicationSubmittedSuccess': 'ਤੁਹਾਡਾ ਖਾਤਾ ਮਨਜ਼ੂਰ ਹੈ ਅਤੇ ਯਾਤਰਾ ਅਰਜ਼ੀ ਸਫਲਤਾਪੂਰਵਕ ਬਣਾਈ ਗਈ!',
+    'failedToSubmitApplication': 'ਅਰਜ਼ੀ ਜਮ੍ਹਾਂ ਕਰਨ ਵਿੱਚ ਅਸਫਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+    'pleaseLoginToApply': 'ਕਿਰਪਾ ਕਰਕੇ ਯਾਤਰਾਵਾਂ ਲਈ ਅਰਜ਼ੀ ਦੇਣ ਲਈ ਲੌਗਇਨ ਕਰੋ',
+    'unableToVerifyUserTryAgain': 'ਉਪਭੋਗਤਾ ਦੀ ਪੁਸ਼ਟੀ ਕਰਨ ਵਿੱਚ ਅਸਮਰੱਥ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
     
     // Dashboard
     'dashboard': 'ਡੈਸ਼ਬੋਰਡ',

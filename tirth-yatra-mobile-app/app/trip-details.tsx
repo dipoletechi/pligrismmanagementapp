@@ -182,18 +182,6 @@ export default function TripDetailsScreen() {
       
       const data = await response.json();
       setTripDetails(data.data);
-      
-      // Show success toast
-      setToast({
-        visible: true,
-        message: data.message || 'Trip details loaded successfully!',
-        type: 'success'
-      });
-      
-      // Hide toast after 3 seconds
-      setTimeout(() => {
-        setToast(prev => ({ ...prev, visible: false }));
-      }, 3000);
     } catch (err) {
       clearTimeout(timeoutId);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trip details';
@@ -672,7 +660,7 @@ export default function TripDetailsScreen() {
       const userPassword = await AsyncStorage.getItem('userPassword');
       
       if (!userEmail || !userPassword) {
-        Alert.alert('Error', 'Please login to apply for trips');
+        Alert.alert('Error', t('pleaseLoginToApply'));
         return;
       }
 
@@ -697,13 +685,13 @@ export default function TripDetailsScreen() {
         if (loginData.data?.accountStatus === 'in_verification') {
           Alert.alert(
             'Account Under Review', 
-            'Your account is currently under review. Please wait for approval before applying for trips.',
+            t('accountUnderReview'),
             [{ text: 'OK' }]
           );
           return;
         }
         
-        Alert.alert('Error', loginData.message || 'Unable to verify user. Please try again.');
+        Alert.alert('Error', t('unableToVerifyUserTryAgain'));
         return;
       }
 
@@ -715,7 +703,7 @@ export default function TripDetailsScreen() {
       if (accountStatus !== 'approved') {
         Alert.alert(
           'Account Not Approved', 
-          'Your account is not approved yet. Please wait for approval before applying for trips.',
+          t('accountNotApproved'),
           [{ text: 'OK' }]
         );
         return;
@@ -740,8 +728,8 @@ export default function TripDetailsScreen() {
 
       if (applicationResponse.ok && applicationData.success) {
         Alert.alert(
-          'Application Submitted', 
-          'Your account is approved and trip application created successfully!',
+          t('applicationSubmitted'), 
+          t('applicationSubmittedSuccess'),
           [{ 
             text: 'OK',
             onPress: () => {
@@ -754,12 +742,12 @@ export default function TripDetailsScreen() {
           }]
         );
       } else {
-        Alert.alert('Error', applicationData.message || 'Failed to submit application. Please try again.');
+        Alert.alert('Error', t('failedToSubmitApplication'));
       }
 
     } catch (error) {
       console.error('Error applying for trip:', error);
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      Alert.alert('Error', t('networkError'));
     }
   };
 

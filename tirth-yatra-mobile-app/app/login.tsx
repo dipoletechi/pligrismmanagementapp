@@ -81,8 +81,7 @@ export default function LoginScreen() {
       
       const requestData = {
         email: email,
-        password: password,
-        language: language // Send language preference to backend
+        password: password
       };
 
       // Store credentials for later use

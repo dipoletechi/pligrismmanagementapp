@@ -112,8 +112,7 @@ export default function HomeScreen() {
           },
           body: JSON.stringify({
             email: storedEmail,
-            password: storedPassword,
-            language: language // Send language preference
+            password: storedPassword
           }),
         });
         
@@ -211,8 +210,7 @@ export default function HomeScreen() {
           },
           body: JSON.stringify({
             email: storedEmail,
-            password: storedPassword,
-            language: language // Send language preference
+            password: storedPassword
           }),
         });
         

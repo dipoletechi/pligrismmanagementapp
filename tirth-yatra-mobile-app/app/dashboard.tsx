@@ -27,6 +27,28 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(false);
   const [tripModalVisible, setTripModalVisible] = useState(false);
 
+  // Helper function to translate error messages
+  const translateMessage = (message: string | null): string => {
+    if (!message) return '';
+    
+    // Map backend messages to translation keys
+    if (message.includes('account is in review') || message.includes('account is approved')) {
+      return t('accountInReview');
+    }
+    if (message.includes('not verified')) {
+      return t('accountInReview');
+    }
+    if (message.includes('login to access')) {
+      return t('pleaseLoginToViewTrips');
+    }
+    if (message.includes('Network error')) {
+      return t('networkError');
+    }
+    
+    // If no match, return original message
+    return message;
+  };
+
   // Check account status and login state
   const checkAccountStatus = async () => {
     try {
@@ -41,8 +63,7 @@ export default function DashboardScreen() {
           },
           body: JSON.stringify({
             email: storedEmail,
-            password: storedPassword,
-            language: language // Send language preference
+            password: storedPassword
           }),
         });
         
@@ -320,7 +341,7 @@ export default function DashboardScreen() {
             <View style={styles.errorContainer}>
               <View style={styles.errorCard}>
                 <Text style={styles.errorMessage}>
-                  {loginError}
+                  {translateMessage(loginError)}
                 </Text>
               </View>
             </View>
