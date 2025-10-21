@@ -339,8 +339,6 @@ export default function MyTripsScreen() {
             /* Account not approved message */
             <View style={styles.errorContainer}>
               <View style={styles.errorCard}>
-                <Ionicons name="time-outline" size={48} color="#FF9500" />
-                <Text style={styles.errorTitle}>Account Under Review</Text>
                 <Text style={styles.errorMessage}>
                   Your account is in review, you will receive notification as soon as your account is approved
                 </Text>

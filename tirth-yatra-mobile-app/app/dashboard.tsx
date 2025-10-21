@@ -51,7 +51,7 @@ export default function DashboardScreen() {
           setIsLoggedIn(true);
           setIsAccountVerified(true);
         } else if (response.ok && data.success) {
-          setLoginError(data.message || 'Your account is in review, you will receive notification as soon as your account is approved');
+          setLoginError(data.message);
           setIsLoggedIn(true);
           setIsAccountVerified(false);
         } else {
@@ -318,10 +318,8 @@ export default function DashboardScreen() {
             /* Account Status Message */
             <View style={styles.errorContainer}>
               <View style={styles.errorCard}>
-                <Ionicons name="time-outline" size={48} color="#FF9500" />
-                <Text style={styles.errorTitle}>Account Under Review</Text>
                 <Text style={styles.errorMessage}>
-                  {loginError || 'Your account is in review, you will receive notification as soon as your account is approved'}
+                  {loginError}
                 </Text>
               </View>
             </View>
