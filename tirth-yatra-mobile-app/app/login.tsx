@@ -31,6 +31,9 @@ export default function LoginScreen() {
   // Form validation states
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [touched, setTouched] = useState<{[key: string]: boolean}>({});
+  
+  // Login error state
+  const [loginError, setLoginError] = useState<string | null>(null);
 
 
   // Validate email
@@ -74,6 +77,7 @@ export default function LoginScreen() {
   const callLoginAPI = async () => {
     try {
       setLoading(true);
+      setLoginError(null); // Clear any previous errors
       
       const requestData = {
         email: email,
@@ -102,12 +106,9 @@ export default function LoginScreen() {
       if (response.status === 401 && data.data && data.data.requiresVerification) {
         // Check if user has completed Step 6
         if (data.data.step6Completed && data.data.redirectToStep === 7) {
-          // Step 6 completed but not approved - redirect to dashboard with error message
-          console.log('Step 6 completed, redirecting to dashboard with error:', data.message);
-          router.push({
-            pathname: '/dashboard',
-            params: { loginError: data.message }
-          } as any);
+          // Step 6 completed but not approved - show error on login page
+          console.log('Step 6 completed, showing error on login page:', data.message);
+          setLoginError(data.message || 'Your account is in review. You will receive notification as soon as your account is approved.');
         } else {
           // User needs to complete registration - redirect to appropriate step
           console.log('Redirecting to registration step:', data.data.redirectToStep || '3');
@@ -140,26 +141,17 @@ export default function LoginScreen() {
             params: { loginSuccess: 'true' }
           } as any);
         } else {
-          // User not approved yet - redirect to index page with error
-          router.push({
-            pathname: '/',
-            params: { loginError: 'Your account is in review. You will receive notification as soon as your account is approved.' }
-          } as any);
+          // User not approved yet - show error on login page
+          setLoginError('Your account is in review. You will receive notification as soon as your account is approved.');
         }
       } else {
-        // Login failed - redirect to index page, then dashboard will show error
-        router.push({
-          pathname: '/',
-          params: { loginError: data.message || 'Invalid credentials. Please try again.' }
-        } as any);
+        // Login failed - show error on login page
+        setLoginError(data.message || 'Invalid credentials. Please try again.');
       }
     } catch (error) {
       console.error('Login API error:', error);
-      // Network error - redirect to index page with error message
-      router.push({
-        pathname: '/',
-        params: { loginError: 'Network error. Please check your connection and try again.' }
-      } as any);
+      // Network error - show error on login page
+      setLoginError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -291,6 +283,16 @@ export default function LoginScreen() {
                   <Text style={styles.errorText}>{errors.password}</Text>
                 )}
               </View>
+
+              {/* Login Error Message */}
+              {loginError && (
+                <View style={styles.errorContainer}>
+                  <View style={styles.errorCard}>
+                    <Ionicons name="alert-circle-outline" size={24} color="#FF3B30" />
+                    <Text style={styles.loginErrorText}>{loginError}</Text>
+                  </View>
+                </View>
+              )}
 
               {/* Forgot Password */}
               <TouchableOpacity style={styles.forgotPasswordButton}>
@@ -432,6 +434,26 @@ const styles = StyleSheet.create({
     color: '#ff4444',
     fontSize: 14,
     marginTop: 5,
+  },
+  // Login error styles
+  errorContainer: {
+    marginBottom: 20,
+  },
+  errorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff5f5',
+    borderWidth: 1,
+    borderColor: '#ff4444',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  loginErrorText: {
+    color: '#ff4444',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
   },
   forgotPasswordButton: {
     alignSelf: 'flex-end',
