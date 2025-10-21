@@ -288,7 +288,7 @@ export default function LoginScreen() {
 
               {/* Login Error Message - Only for Invalid Credentials */}
               {loginError && (
-                <View style={styles.loginErrorContainer}>
+                <View style={styles.errorContainer}>
                   <View style={styles.errorCard}>
                     <Ionicons name="alert-circle-outline" size={24} color="#FF3B30" />
                     <Text style={styles.loginErrorText}>{loginError}</Text>
