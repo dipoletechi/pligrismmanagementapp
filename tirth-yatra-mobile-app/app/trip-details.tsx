@@ -100,6 +100,7 @@ export default function TripDetailsScreen() {
     type: 'success'
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasAlreadyApplied, setHasAlreadyApplied] = useState(false);
 
 
   // Check login status
@@ -122,6 +123,38 @@ export default function TripDetailsScreen() {
     
     checkLoginStatus();
   }, []);
+
+  // Check if user has already applied for this trip
+  const checkExistingApplication = async () => {
+    try {
+      const userEmail = await AsyncStorage.getItem('userEmail');
+      const userPassword = await AsyncStorage.getItem('userPassword');
+      
+      if (!userEmail || !userPassword || !id) return;
+
+      // Login to get user ID
+      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail, password: userPassword }),
+      });
+
+      const loginData = await loginResponse.json();
+      if (loginResponse.ok && loginData.success) {
+        const userId = loginData.data.userId;
+        
+        // Check if application exists
+        const checkResponse = await fetch(`http://192.168.1.3:5000/api/mobile/check-application?userId=${userId}&tripId=${id}`);
+        const checkData = await checkResponse.json();
+        
+        if (checkResponse.ok && checkData.exists) {
+          setHasAlreadyApplied(true);
+        }
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  };
 
   // Fetch trip details from API
   const fetchTripDetails = async () => {
@@ -185,6 +218,7 @@ export default function TripDetailsScreen() {
   useEffect(() => {
     if (id) {
       fetchTripDetails();
+      checkExistingApplication();
     }
   }, [id]);
 
@@ -655,28 +689,30 @@ export default function TripDetailsScreen() {
       });
 
       const loginData = await loginResponse.json();
+      console.log('Login response:', loginData);
       
-      // if (!loginResponse.ok || !loginData.success) {
-      //   Alert.alert('Error', 'Unable to verify user. Please try again.');
-      //   return;
-      // }
-
-      const userId = loginData.data.userId;
-      console.log('User ID for application:', userId);
-
-      // Check account status
-      const statusResponse = await fetch(`http://192.168.1.3:5000/api/mobile/check-account-status?userId=${userId}`);
-      const statusData = await statusResponse.json();
-      
-      console.log('Account status check:', statusData);
-
-      if (!statusData.success) {
-        Alert.alert('Error', 'Unable to check account status. Please try again.');
+      // Check if login was successful
+      if (!loginResponse.ok || !loginData.success) {
+        // If account is in review, show message and return
+        if (loginData.data?.accountStatus === 'in_verification') {
+          Alert.alert(
+            'Account Under Review', 
+            'Your account is currently under review. Please wait for approval before applying for trips.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        
+        Alert.alert('Error', loginData.message || 'Unable to verify user. Please try again.');
         return;
       }
 
+      const userId = loginData.data.userId;
+      const accountStatus = loginData.data.accountStatus;
+      console.log('User ID for application:', userId, 'Account Status:', accountStatus);
+
       // Check if account is approved
-      if (statusData.data.accountStatus !== 'approved') {
+      if (accountStatus !== 'approved') {
         Alert.alert(
           'Account Not Approved', 
           'Your account is not approved yet. Please wait for approval before applying for trips.',
@@ -706,7 +742,16 @@ export default function TripDetailsScreen() {
         Alert.alert(
           'Application Submitted', 
           'Your account is approved and trip application created successfully!',
-          [{ text: 'OK' }]
+          [{ 
+            text: 'OK',
+            onPress: () => {
+              // Navigate to My Trips page - it will auto-refresh on focus
+              router.push({
+                pathname: '/my-trips',
+                params: { accountApproved: 'true' }
+              } as any);
+            }
+          }]
         );
       } else {
         Alert.alert('Error', applicationData.message || 'Failed to submit application. Please try again.');

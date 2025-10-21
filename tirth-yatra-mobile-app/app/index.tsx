@@ -43,7 +43,7 @@ const carouselImages = [
 ];
 
 export default function HomeScreen() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('Upcoming');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -112,7 +112,8 @@ export default function HomeScreen() {
           },
           body: JSON.stringify({
             email: storedEmail,
-            password: storedPassword
+            password: storedPassword,
+            language: language // Send language preference
           }),
         });
         
@@ -151,7 +152,8 @@ export default function HomeScreen() {
         },
         body: JSON.stringify({
           email: storedEmail,
-          password: storedPassword
+          password: storedPassword,
+          language: language // Send language preference
         }),
       });
 
@@ -209,7 +211,8 @@ export default function HomeScreen() {
           },
           body: JSON.stringify({
             email: storedEmail,
-            password: storedPassword
+            password: storedPassword,
+            language: language // Send language preference
           }),
         });
         
@@ -245,7 +248,8 @@ export default function HomeScreen() {
         },
         body: JSON.stringify({
           email: storedEmail,
-          password: storedPassword
+          password: storedPassword,
+          language: language // Send language preference
         }),
       });
 
@@ -421,15 +425,6 @@ export default function HomeScreen() {
   };
 
   const renderEventCard = (trip: Trip) => {
-    console.log('Rendering trip:', trip);
-    console.log('Trip fields:', {
-      id: trip.id,
-      title: trip.title,
-      start_date: trip.start_date,
-      end_date: trip.end_date,
-      description: trip.destinationInfo?.description
-    });
-    
     const applicationStatus = getApplicationStatus(trip.id);
     // Only show status if user is logged in, account approved, AND trip exists in user's applications
     const shouldShowStatus = isLoggedIn && isAccountApproved && applicationStatus;
@@ -439,14 +434,11 @@ export default function HomeScreen() {
         key={trip.id} 
         style={styles.eventCard}
         onPress={() => {
-          console.log('Event clicked:', trip.title);
-          console.log('Current login status before navigation:', isLoggedIn);
-          console.log('Navigating to trip-details with id:', trip.id);
           router.push(`/trip-details?id=${trip.id}`);
         }}
       >
         <View style={styles.eventHeader}>
-          <Text style={styles.eventTitle}>{trip.title}</Text>
+          <Text style={styles.eventTitle}>{trip.title || (language === 'pa' ? 'ਸਿਰਲੇਖ ਉਪਲਬਧ ਨਹੀਂ' : 'Title not available')}</Text>
           {shouldShowStatus && (
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(applicationStatus) }]}>
               <Text style={styles.statusText}>{applicationStatus}</Text>
@@ -454,15 +446,21 @@ export default function HomeScreen() {
           )}
         </View>
         <Text style={styles.eventDescription}>
-          {trip.destinationInfo?.description ||
-            'A sacred pilgrimage journey to this holy destination.'}
+          {trip.destinationInfo?.description || 'A sacred pilgrimage journey to this holy destination.'}
         </Text>
         <View style={styles.eventFooter}>
           <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>{formatDate(trip.start_date)} → {formatDate(trip.end_date)}</Text>
+            <View style={styles.dateRow}>
+              <Text style={styles.dateLabel}>{t('startDate')}: </Text>
+              <Text style={styles.dateValue}>{formatDate(trip.start_date)}</Text>
+            </View>
+            <View style={styles.dateRow}>
+              <Text style={styles.dateLabel}>{t('endDate')}: </Text>
+              <Text style={styles.dateValue}>{formatDate(trip.end_date)}</Text>
+            </View>
             {shouldShowStatus && (
               <Text style={styles.applicationStatusText}>
-                Your Application: {applicationStatus}
+                {language === 'pa' ? 'ਤੁਹਾਡੀ ਅਰਜ਼ੀ' : 'Your Application'}: {applicationStatus}
               </Text>
             )}
           </View>
@@ -546,7 +544,7 @@ export default function HomeScreen() {
          <View style={styles.sidebarOverlay}>
            <View style={styles.sidebar}>
              <View style={styles.sidebarHeader}>
-               <Text style={styles.sidebarTitle}>Menu</Text>
+               <Text style={styles.sidebarTitle}>{t('menu')}</Text>
                <TouchableOpacity 
                  style={styles.sidebarCloseButton}
                  onPress={() => setSidebarVisible(false)}
@@ -564,7 +562,7 @@ export default function HomeScreen() {
                  }}
                >
                  <Ionicons name="grid-outline" size={24} color="#007AFF" />
-                 <Text style={styles.sidebarItemText}>Dashboard</Text>
+                 <Text style={styles.sidebarItemText}>{t('dashboard')}</Text>
                </TouchableOpacity>
                
               <TouchableOpacity 
@@ -575,7 +573,7 @@ export default function HomeScreen() {
                 }}
               >
                 <Ionicons name="globe-outline" size={24} color="#007AFF" />
-                <Text style={styles.sidebarItemText}>All Trips</Text>
+                <Text style={styles.sidebarItemText}>{t('allTrips')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -589,7 +587,7 @@ export default function HomeScreen() {
                 }}
               >
                 <Ionicons name="airplane-outline" size={24} color="#007AFF" />
-                <Text style={styles.sidebarItemText}>My Trips</Text>
+                <Text style={styles.sidebarItemText}>{t('myTrips')}</Text>
               </TouchableOpacity>
 
               {/* Language Dropdown in Sidebar */}
@@ -608,12 +606,12 @@ export default function HomeScreen() {
                 onPress={() => {
                   setSidebarVisible(false);
                   Alert.alert(
-                    'Sign Out',
+                    t('signOut'),
                     'Are you sure you want to sign out?',
                     [
                       { text: 'Cancel', style: 'cancel' },
                       { 
-                        text: 'Sign Out', 
+                        text: t('signOut'), 
                         style: 'destructive',
                         onPress: async () => {
                           console.log('Sign out pressed in index page');
@@ -639,7 +637,7 @@ export default function HomeScreen() {
                 }}
               >
                 <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
+                <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>{t('signOut')}</Text>
               </TouchableOpacity>
             </View>
            </View>
@@ -654,7 +652,7 @@ export default function HomeScreen() {
             style={[styles.tab, activeTab === 'All' && styles.activeTab]}
             onPress={() => setActiveTab('All')}>
             <Text style={[styles.tabText, activeTab === 'All' && styles.activeTabText]}>
-              All
+              {language === 'pa' ? 'ਸਭ' : 'All'}
             </Text>
           </TouchableOpacity>
         )}
@@ -662,14 +660,14 @@ export default function HomeScreen() {
           style={[styles.tab, activeTab === 'Upcoming' && styles.activeTab]}
           onPress={() => setActiveTab('Upcoming')}>
           <Text style={[styles.tabText, activeTab === 'Upcoming' && styles.activeTabText]}>
-            Upcoming
+            {t('upcoming')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'Current' && styles.activeTab]}
           onPress={() => setActiveTab('Current')}>
           <Text style={[styles.tabText, activeTab === 'Current' && styles.activeTabText]}>
-            Current
+            {t('current')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -835,6 +833,21 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     flex: 1,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  dateLabel: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '600',
+  },
+  dateValue: {
+    fontSize: 13,
+    color: '#333',
+    fontWeight: '500',
   },
   dateText: {
     fontSize: 14,

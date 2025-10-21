@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
 
 export default function DashboardScreen() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const params = useLocalSearchParams();
   
   // UI states
@@ -41,7 +41,8 @@ export default function DashboardScreen() {
           },
           body: JSON.stringify({
             email: storedEmail,
-            password: storedPassword
+            password: storedPassword,
+            language: language // Send language preference
           }),
         });
         
@@ -149,8 +150,8 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={styles.mainHeader}>
           <View>
-            <Text style={styles.headerTitle}>Dashboard</Text>
-            <Text style={styles.headerSubtitle}>Welcome to Tirth Yatra</Text>
+            <Text style={styles.headerTitle}>{t('dashboard')}</Text>
+            <Text style={styles.headerSubtitle}>{t('welcomeToTirthYatra')}</Text>
           </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity 
@@ -167,7 +168,7 @@ export default function DashboardScreen() {
           <View style={styles.sidebarOverlay}>
             <View style={styles.sidebar}>
               <View style={styles.sidebarHeader}>
-                <Text style={styles.sidebarTitle}>Menu</Text>
+                <Text style={styles.sidebarTitle}>{t('menu')}</Text>
                 <TouchableOpacity 
                   style={styles.sidebarCloseButton}
                   onPress={() => setSidebarVisible(false)}
@@ -185,7 +186,7 @@ export default function DashboardScreen() {
                   }}
                 >
                   <Ionicons name="grid-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>Dashboard</Text>
+                  <Text style={styles.sidebarItemText}>{t('dashboard')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
@@ -199,7 +200,7 @@ export default function DashboardScreen() {
                   }}
                 >
                   <Ionicons name="airplane-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>My Trips</Text>
+                  <Text style={styles.sidebarItemText}>{t('myTrips')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
@@ -213,7 +214,7 @@ export default function DashboardScreen() {
                   }}
                 >
                   <Ionicons name="globe-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>All Trips</Text>
+                  <Text style={styles.sidebarItemText}>{t('allTrips')}</Text>
                 </TouchableOpacity>
 
                 {/* Language Selection */}
@@ -235,7 +236,7 @@ export default function DashboardScreen() {
                   }}
                 >
                   <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                  <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
+                  <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>{t('signOut')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,65 +252,65 @@ export default function DashboardScreen() {
             <>
               {/* My Trip Stats */}
               <View style={styles.statsContainer}>
-                <Text style={styles.sectionTitle}>My Trip</Text>
+                <Text style={styles.sectionTitle}>{t('myTrip')}</Text>
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="airplane" size={24} color="#007AFF" />
                     <Text style={styles.statNumber}>{tripData?.summary?.myTripTotal || 0}</Text>
-                    <Text style={styles.statLabel}>Total</Text>
+                    <Text style={styles.statLabel}>{t('total')}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Ionicons name="time" size={24} color="#FF9500" />
                     <Text style={styles.statNumber}>{tripData?.summary?.currentTrip || 0}</Text>
-                    <Text style={styles.statLabel}>Current Trip</Text>
+                    <Text style={styles.statLabel}>{t('currentTrip')}</Text>
                   </View>
                 </View>
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="checkmark" size={24} color="#34C759" />
                     <Text style={styles.statNumber}>{tripData?.summary?.tripApproved || 0}</Text>
-                    <Text style={styles.statLabel}>Trip Approved</Text>
+                    <Text style={styles.statLabel}>{t('tripApproved')}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Ionicons name="eye" size={24} color="#007AFF" />
                     <Text style={styles.statNumber}>{tripData?.summary?.tripReview || 0}</Text>
-                    <Text style={styles.statLabel}>Trip Review</Text>
+                    <Text style={styles.statLabel}>{t('tripReview')}</Text>
                   </View>
                 </View>
                 <View style={styles.statsRowSingle}>
                   <View style={styles.statCard}>
                     <Ionicons name="close-circle" size={24} color="#FF3B30" />
                     <Text style={styles.statNumber}>{tripData?.summary?.tripRejected || 0}</Text>
-                    <Text style={styles.statLabel}>Trip Rejected</Text>
+                    <Text style={styles.statLabel}>{t('tripRejected')}</Text>
                   </View>
                 </View>
               </View>
 
               {/* General Trip Stats */}
               <View style={styles.statsContainer}>
-                <Text style={styles.sectionTitle}>General Trip Statistics</Text>
+                <Text style={styles.sectionTitle}>{t('generalTripStatistics')}</Text>
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="globe" size={24} color="#007AFF" />
                     <Text style={styles.statNumber}>{tripData?.summary?.totalTrip || 0}</Text>
-                    <Text style={styles.statLabel}>Total Trip (Published)</Text>
+                    <Text style={styles.statLabel}>{t('totalTripPublished')}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Ionicons name="calendar" size={24} color="#34C759" />
                     <Text style={styles.statNumber}>{tripData?.summary?.upcomingTrip || 0}</Text>
-                    <Text style={styles.statLabel}>Upcoming Trip</Text>
+                    <Text style={styles.statLabel}>{t('upcomingTrip')}</Text>
                   </View>
                 </View>
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="checkmark-circle" size={24} color="#34C759" />
                     <Text style={styles.statNumber}>{tripData?.summary?.completedTrip || 0}</Text>
-                    <Text style={styles.statLabel}>Completed Trip</Text>
+                    <Text style={styles.statLabel}>{t('completedTrip')}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Ionicons name="play-circle" size={24} color="#FF9500" />
                     <Text style={styles.statNumber}>{tripData?.summary?.currentTripGeneral || 0}</Text>
-                    <Text style={styles.statLabel}>Current Trip (Today)</Text>
+                    <Text style={styles.statLabel}>{t('currentTripToday')}</Text>
                   </View>
                 </View>
               </View>

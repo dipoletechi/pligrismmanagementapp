@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
 
@@ -55,7 +55,14 @@ export default function MyTripsScreen() {
     } else {
       setIsAccountApproved(false);
     }
-  }, [params]);
+  }, [params.accountApproved]);
+
+  // Fetch trips when page comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyTrips();
+    }, [])
+  );
 
   // Fetch user trip applications
   const fetchMyTrips = async () => {
@@ -240,7 +247,7 @@ export default function MyTripsScreen() {
         {/* Header */}
         <View style={styles.mainHeader}>
           <View>
-            <Text style={styles.headerTitle}>My Trips</Text>
+            <Text style={styles.headerTitle}>{t('myTrips')}</Text>
             <Text style={styles.headerSubtitle}>Your pilgrimage applications</Text>
           </View>
           <View style={styles.headerButtons}>
@@ -258,7 +265,7 @@ export default function MyTripsScreen() {
           <View style={styles.sidebarOverlay}>
             <View style={styles.sidebar}>
               <View style={styles.sidebarHeader}>
-                <Text style={styles.sidebarTitle}>Menu</Text>
+                <Text style={styles.sidebarTitle}>{t('menu')}</Text>
                 <TouchableOpacity 
                   style={styles.sidebarCloseButton}
                   onPress={() => setSidebarVisible(false)}
@@ -279,7 +286,7 @@ export default function MyTripsScreen() {
                   }}
                 >
                   <Ionicons name="grid-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>Dashboard</Text>
+                  <Text style={styles.sidebarItemText}>{t('dashboard')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
@@ -290,7 +297,7 @@ export default function MyTripsScreen() {
                   }}
                 >
                   <Ionicons name="globe-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>All Trips</Text>
+                  <Text style={styles.sidebarItemText}>{t('allTrips')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
@@ -301,7 +308,7 @@ export default function MyTripsScreen() {
                   }}
                 >
                   <Ionicons name="airplane-outline" size={24} color="#007AFF" />
-                  <Text style={styles.sidebarItemText}>My Trips</Text>
+                  <Text style={styles.sidebarItemText}>{t('myTrips')}</Text>
                 </TouchableOpacity>
 
                 {/* Language Selection */}
@@ -323,7 +330,7 @@ export default function MyTripsScreen() {
                   }}
                 >
                   <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                  <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
+                  <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>{t('signOut')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -340,7 +347,7 @@ export default function MyTripsScreen() {
             <View style={styles.errorContainer}>
               <View style={styles.errorCard}>
                 <Text style={styles.errorMessage}>
-                  Your account is in review, you will receive notification as soon as your account is approved
+                  {t('accountInReview')}
                 </Text>
               </View>
             </View>
@@ -350,20 +357,25 @@ export default function MyTripsScreen() {
               <View style={styles.filterContainer}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.filterTabs}>
-                    {['All', 'Pending', 'Approved', 'Rejected'].map((filter) => (
+                    {[
+                      { key: 'All', label: t('all') },
+                      { key: 'Pending', label: t('pending') },
+                      { key: 'Approved', label: t('approved') },
+                      { key: 'Rejected', label: t('rejected') }
+                    ].map((filter) => (
                       <TouchableOpacity
-                        key={filter}
+                        key={filter.key}
                         style={[
                           styles.filterTab,
-                          activeFilter === filter && styles.activeFilterTab
+                          activeFilter === filter.key && styles.activeFilterTab
                         ]}
-                        onPress={() => setActiveFilter(filter as any)}
+                        onPress={() => setActiveFilter(filter.key as any)}
                       >
                         <Text style={[
                           styles.filterTabText,
-                          activeFilter === filter && styles.activeFilterTabText
+                          activeFilter === filter.key && styles.activeFilterTabText
                         ]}>
-                          {filter}
+                          {filter.label}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -375,14 +387,14 @@ export default function MyTripsScreen() {
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#007AFF" />
-                  <Text style={styles.loadingText}>Loading your trips...</Text>
+                  <Text style={styles.loadingText}>{t('loadingYourTrips')}</Text>
                 </View>
               ) : error ? (
                 <View style={styles.errorContainer}>
                   <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
                   <Text style={styles.errorText}>{error}</Text>
                   <TouchableOpacity style={styles.retryButton} onPress={fetchMyTrips}>
-                    <Text style={styles.retryButtonText}>Retry</Text>
+                    <Text style={styles.retryButtonText}>{t('retry')}</Text>
                   </TouchableOpacity>
                 </View>
               ) : filteredApplications.length === 0 ? (
@@ -390,8 +402,8 @@ export default function MyTripsScreen() {
                   <Ionicons name="airplane-outline" size={48} color="#ccc" />
                   <Text style={styles.emptyText}>
                     {activeFilter === 'All' 
-                      ? 'No trip applications found' 
-                      : `No ${activeFilter.toLowerCase()} applications found`
+                      ? t('noTripApplicationsFound')
+                      : `${t('no')} ${activeFilter.toLowerCase()} ${t('noApplicationsFound')}`
                     }
                   </Text>
                 </View>

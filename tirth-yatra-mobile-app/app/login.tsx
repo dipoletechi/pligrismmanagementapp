@@ -19,7 +19,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
 
 export default function LoginScreen() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   // Form states
   const [email, setEmail] = useState('');
@@ -53,12 +53,12 @@ export default function LoginScreen() {
     
     switch (field) {
       case 'email':
-        if (!value.trim()) error = 'Email is required';
-        else if (!validateEmail(value)) error = 'Please enter a valid email';
+        if (!value.trim()) error = t('emailRequired');
+        else if (!validateEmail(value)) error = t('validEmailRequired');
         break;
       case 'password':
-        if (!value.trim()) error = 'Password is required';
-        else if (!validatePassword(value)) error = 'Password must be at least 6 characters';
+        if (!value.trim()) error = t('passwordRequired');
+        else if (!validatePassword(value)) error = t('passwordMinLength');
         break;
     }
     
@@ -81,7 +81,8 @@ export default function LoginScreen() {
       
       const requestData = {
         email: email,
-        password: password
+        password: password,
+        language: language // Send language preference to backend
       };
 
       // Store credentials for later use
@@ -105,7 +106,7 @@ export default function LoginScreen() {
           // Step 6 completed but not approved - redirect to dashboard with message
           router.push({
             pathname: '/dashboard',
-            params: { loginError: data.message || 'Your account is in review. You will receive notification as soon as your account is approved.' }
+            params: { loginError: data.message || t('accountInReview') }
           } as any);
         } else {
           // User needs to complete registration - redirect to appropriate step
@@ -141,18 +142,18 @@ export default function LoginScreen() {
           // User not approved yet - redirect to dashboard with message
           router.push({
             pathname: '/dashboard',
-            params: { loginError: 'Your account is in review. You will receive notification as soon as your account is approved.' }
+            params: { loginError: data.message || t('accountInReview') }
           } as any);
         }
       } else {
         // Login failed - show error on login page only
-        setLoginError(data.message || 'Invalid credentials. Please try again.');
+        setLoginError(data.message || t('invalidCredentials'));
       }
     } catch (error) {
       // Network error - redirect to dashboard with error
       router.push({
         pathname: '/dashboard',
-        params: { loginError: 'Network error. Please check your connection and try again.' }
+        params: { loginError: t('networkError') }
       } as any);
     } finally {
       setLoading(false);
@@ -179,7 +180,7 @@ export default function LoginScreen() {
     if (!emailError && !passwordError) {
       callLoginAPI();
     } else {
-      Alert.alert('Validation Error', 'Please fix the errors before proceeding');
+      Alert.alert(t('validationError'), t('pleaseFixErrors'));
     }
   };
 
@@ -215,12 +216,12 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>Welcome Back</Text>
-              <Text style={styles.formSubtitle}>Sign in to your account</Text>
+              <Text style={styles.formTitle}>{t('welcomeBack')}</Text>
+              <Text style={styles.formSubtitle}>{t('signInToAccount')}</Text>
 
               {/* Email Input */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email *</Text>
+                <Text style={styles.inputLabel}>{t('email')} *</Text>
                 <View style={[
                   styles.inputWrapper,
                   errors.email && touched.email && styles.inputError
@@ -233,7 +234,7 @@ export default function LoginScreen() {
                   />
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Enter your email"
+                    placeholder={t('enterYourEmail')}
                     placeholderTextColor="#999"
                     value={email}
                     onChangeText={setEmail}
@@ -250,7 +251,7 @@ export default function LoginScreen() {
 
               {/* Password Input */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Password *</Text>
+                <Text style={styles.inputLabel}>{t('password')} *</Text>
                 <View style={[
                   styles.inputWrapper,
                   errors.password && touched.password && styles.inputError
@@ -263,7 +264,7 @@ export default function LoginScreen() {
                   />
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Enter your password"
+                    placeholder={t('enterYourPassword')}
                     placeholderTextColor="#999"
                     value={password}
                     onChangeText={setPassword}
@@ -298,7 +299,7 @@ export default function LoginScreen() {
 
               {/* Forgot Password */}
               <TouchableOpacity style={styles.forgotPasswordButton}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
               </TouchableOpacity>
 
               {/* Login Button */}
@@ -310,15 +311,15 @@ export default function LoginScreen() {
                 {loading ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.loginButtonText}>Sign In</Text>
+                  <Text style={styles.loginButtonText}>{t('signIn')}</Text>
                 )}
               </TouchableOpacity>
 
               {/* Register Link */}
               <View style={styles.registerContainer}>
-                <Text style={styles.registerText}>Don't have an account? </Text>
+                <Text style={styles.registerText}>{t('dontHaveAccount')} </Text>
                 <TouchableOpacity onPress={() => router.push('/register')}>
-                  <Text style={styles.registerLink}>Register Now</Text>
+                  <Text style={styles.registerLink}>{t('registerNow')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

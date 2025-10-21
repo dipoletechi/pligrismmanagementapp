@@ -148,6 +148,93 @@ const translations = {
     'complete': 'Complete',
     'alreadyHaveAccount': 'Already have an account?',
     'noImageUploadedYet': 'No image uploaded yet',
+    
+    // Login Page
+    'welcomeBack': 'Welcome Back',
+    'signInToAccount': 'Sign in to your account',
+    'enterYourEmail': 'Enter your email',
+    'enterYourPassword': 'Enter your password',
+    'forgotPassword': 'Forgot Password?',
+    'dontHaveAccount': "Don't have an account?",
+    'registerNow': 'Register Now',
+    
+    // Login/Authentication errors
+    'invalidCredentials': 'Invalid credentials. Please try again.',
+    'accountDeactivated': 'Account is deactivated',
+    'passwordRequired': 'Password is required',
+    'accountInReview': 'Your account is in review. You will receive notification as soon as your account is approved.',
+    'networkError': 'Network error. Please check your connection and try again.',
+    'loginSuccessful': 'Login successful',
+    'errorDuringLogin': 'Error during login',
+    'serverError': 'Server error. Please try again later.',
+    
+    // Registration errors
+    'emailRequired': 'Email is required',
+    'phoneRequired': 'Phone is required',
+    'validEmailRequired': 'Please provide a valid email',
+    'validPhoneRequired': 'Please provide a valid phone number',
+    'passwordMinLength': 'Password must be at least 6 characters',
+    'passwordsDoNotMatch': 'Passwords do not match',
+    'userAlreadyExists': 'User already exists with this email/phone',
+    'otpSentSuccessfully': 'OTP sent successfully',
+    'failedToSendOtp': 'Failed to send OTP',
+    'invalidOtp': 'Invalid OTP',
+    'otpExpired': 'OTP has expired',
+    'otpVerifiedSuccessfully': 'OTP verified successfully',
+    'registrationSuccessful': 'Registration successful',
+    'errorDuringRegistration': 'Error during registration',
+    
+    // Validation errors
+    'validationError': 'Validation Error',
+    'pleaseFixErrors': 'Please fix the errors before proceeding',
+    'allFieldsRequired': 'All fields are required',
+    
+    // Application Status
+    'applicationPending': 'Your application is pending',
+    'applicationApproved': 'Application approved',
+    'applicationRejected': 'Application rejected',
+    'applicationUnderReview': 'Application under review',
+    
+    // Dashboard
+    'dashboard': 'Dashboard',
+    'welcomeToTirthYatra': 'Welcome to Tirth Yatra',
+    'menu': 'Menu',
+    'myTrips': 'My Trips',
+    'myTrip': 'My Trip',
+    'allTrips': 'All Trips',
+    'logout': 'Logout',
+    'signOut': 'Sign Out',
+    'tripsPending': 'Trips Pending',
+    'tripsApproved': 'Trips Approved',
+    'tripsRejected': 'Trips Rejected',
+    'tripsInReview': 'Trips In Review',
+    'generalTripStatistics': 'General Trip Statistics',
+    'myTripStatistics': 'My Trip Statistics',
+    'total': 'Total',
+    'currentTrip': 'Current Trip',
+    'tripApproved': 'Trip Approved',
+    'tripReview': 'Trip Review',
+    'tripRejected': 'Trip Rejected',
+    'totalTripPublished': 'Total Trip (Published)',
+    'upcomingTrip': 'Upcoming Trip',
+    'completedTrip': 'Completed Trip',
+    'currentTripToday': 'Current Trip (Today)',
+    
+    // My Trips Page
+    'all': 'All',
+    'pending': 'Pending',
+    'approved': 'Approved',
+    'rejected': 'Rejected',
+    'review': 'Review',
+    'loadingYourTrips': 'Loading your trips...',
+    'noTripApplicationsFound': 'No trip applications found',
+    'noApplicationsFound': 'applications found',
+    'no': 'No',
+    'retry': 'Retry',
+    'pleaseLoginToViewTrips': 'Please login to view your trips',
+    'unableToVerifyUser': 'Unable to verify user. Please login again.',
+    'failedToFetchTrips': 'Failed to fetch trip applications',
+    'apply': 'Apply',
   },
   pa: {
     // Header
@@ -284,6 +371,93 @@ const translations = {
     'complete': 'ਪੂਰਾ ਕਰੋ',
     'alreadyHaveAccount': 'ਪਹਿਲਾਂ ਤੋਂ ਖਾਤਾ ਹੈ?',
     'noImageUploadedYet': 'ਅਜੇ ਤੱਕ ਕੋਈ ਚਿੱਤਰ ਅਪਲੋਡ ਨਹੀਂ ਹੋਇਆ',
+    
+    // Login Page
+    'welcomeBack': 'ਜੀ ਆਇਆਂ ਨੂੰ',
+    'signInToAccount': 'ਆਪਣੇ ਖਾਤੇ ਵਿੱਚ ਸਾਈਨ ਇਨ ਕਰੋ',
+    'enterYourEmail': 'ਆਪਣਾ ਈਮੇਲ ਦਰਜ ਕਰੋ',
+    'enterYourPassword': 'ਆਪਣਾ ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ',
+    'forgotPassword': 'ਪਾਸਵਰਡ ਭੁੱਲ ਗਏ?',
+    'dontHaveAccount': 'ਖਾਤਾ ਨਹੀਂ ਹੈ?',
+    'registerNow': 'ਹੁਣੇ ਰਜਿਸਟਰ ਕਰੋ',
+    
+    // Login/Authentication errors
+    'invalidCredentials': 'ਗਲਤ ਪ੍ਰਮਾਣ ਪੱਤਰ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+    'accountDeactivated': 'ਖਾਤਾ ਬੰਦ ਹੋ ਗਿਆ ਹੈ',
+    'passwordRequired': 'ਪਾਸਵਰਡ ਲੋੜੀਂਦਾ ਹੈ',
+    'accountInReview': 'ਤੁਹਾਡਾ ਖਾਤਾ ਸਮੀਖਿਆ ਅਧੀਨ ਹੈ। ਤੁਹਾਨੂੰ ਜਲਦੀ ਹੀ ਸੂਚਨਾ ਮਿਲੇਗੀ ਜਦੋਂ ਤੁਹਾਡਾ ਖਾਤਾ ਮਨਜ਼ੂਰ ਹੋ ਜਾਂਦਾ ਹੈ।',
+    'networkError': 'ਨੈੱਟਵਰਕ ਗਲਤੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+    'loginSuccessful': 'ਲੌਗਇਨ ਸਫਲ',
+    'errorDuringLogin': 'ਲੌਗਇਨ ਦੌਰਾਨ ਗਲਤੀ',
+    'serverError': 'ਸਰਵਰ ਗਲਤੀ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+    
+    // Registration errors
+    'emailRequired': 'ਈਮੇਲ ਲੋੜੀਂਦੀ ਹੈ',
+    'phoneRequired': 'ਫੋਨ ਲੋੜੀਂਦਾ ਹੈ',
+    'validEmailRequired': 'ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਵੈਧ ਈਮੇਲ ਪ੍ਰਦਾਨ ਕਰੋ',
+    'validPhoneRequired': 'ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਵੈਧ ਫੋਨ ਨੰਬਰ ਪ੍ਰਦਾਨ ਕਰੋ',
+    'passwordMinLength': 'ਪਾਸਵਰਡ ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰਾਂ ਦਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ',
+    'passwordsDoNotMatch': 'ਪਾਸਵਰਡ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ',
+    'userAlreadyExists': 'ਇਸ ਈਮੇਲ/ਫੋਨ ਨਾਲ ਉਪਭੋਗਤਾ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ',
+    'otpSentSuccessfully': 'OTP ਸਫਲਤਾਪੂਰਵਕ ਭੇਜਿਆ ਗਿਆ',
+    'failedToSendOtp': 'OTP ਭੇਜਣ ਵਿੱਚ ਅਸਫਲ',
+    'invalidOtp': 'ਗਲਤ OTP',
+    'otpExpired': 'OTP ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ',
+    'otpVerifiedSuccessfully': 'OTP ਸਫਲਤਾਪੂਰਵਕ ਪ੍ਰਮਾਣਿਤ ਹੋ ਗਿਆ',
+    'registrationSuccessful': 'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਸਫਲ',
+    'errorDuringRegistration': 'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਦੌਰਾਨ ਗਲਤੀ',
+    
+    // Validation errors
+    'validationError': 'ਪ੍ਰਮਾਣਿਕਤਾ ਗਲਤੀ',
+    'pleaseFixErrors': 'ਕਿਰਪਾ ਕਰਕੇ ਅੱਗੇ ਵਧਣ ਤੋਂ ਪਹਿਲਾਂ ਗਲਤੀਆਂ ਨੂੰ ਠੀਕ ਕਰੋ',
+    'allFieldsRequired': 'ਸਾਰੇ ਖੇਤਰ ਲੋੜੀਂਦੇ ਹਨ',
+    
+    // Application Status
+    'applicationPending': 'ਤੁਹਾਡੀ ਅਰਜ਼ੀ ਬਕਾਇਆ ਹੈ',
+    'applicationApproved': 'ਅਰਜ਼ੀ ਮਨਜ਼ੂਰ ਹੋ ਗਈ',
+    'applicationRejected': 'ਅਰਜ਼ੀ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ',
+    'applicationUnderReview': 'ਅਰਜ਼ੀ ਸਮੀਖਿਆ ਅਧੀਨ ਹੈ',
+    
+    // Dashboard
+    'dashboard': 'ਡੈਸ਼ਬੋਰਡ',
+    'welcomeToTirthYatra': 'ਤੀਰਥ ਯਾਤਰਾ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ',
+    'menu': 'ਮੀਨੂ',
+    'myTrips': 'ਮੇਰੀਆਂ ਯਾਤਰਾਵਾਂ',
+    'myTrip': 'ਮੇਰੀ ਯਾਤਰਾ',
+    'allTrips': 'ਸਾਰੀਆਂ ਯਾਤਰਾਵਾਂ',
+    'logout': 'ਲੌਗਆਉਟ',
+    'signOut': 'ਸਾਈਨ ਆਊਟ',
+    'tripsPending': 'ਬਕਾਇਆ ਯਾਤਰਾਵਾਂ',
+    'tripsApproved': 'ਮਨਜ਼ੂਰ ਯਾਤਰਾਵਾਂ',
+    'tripsRejected': 'ਰੱਦ ਯਾਤਰਾਵਾਂ',
+    'tripsInReview': 'ਸਮੀਖਿਆ ਅਧੀਨ ਯਾਤਰਾਵਾਂ',
+    'generalTripStatistics': 'ਆਮ ਯਾਤਰਾ ਅੰਕੜੇ',
+    'myTripStatistics': 'ਮੇਰੀ ਯਾਤਰਾ ਅੰਕੜੇ',
+    'total': 'ਕੁੱਲ',
+    'currentTrip': 'ਮੌਜੂਦਾ ਯਾਤਰਾ',
+    'tripApproved': 'ਯਾਤਰਾ ਮਨਜ਼ੂਰ',
+    'tripReview': 'ਯਾਤਰਾ ਸਮੀਖਿਆ',
+    'tripRejected': 'ਯਾਤਰਾ ਰੱਦ',
+    'totalTripPublished': 'ਕੁੱਲ ਯਾਤਰਾ (ਪ੍ਰਕਾਸ਼ਿਤ)',
+    'upcomingTrip': 'ਆਉਣ ਵਾਲੀ ਯਾਤਰਾ',
+    'completedTrip': 'ਪੂਰੀ ਹੋਈ ਯਾਤਰਾ',
+    'currentTripToday': 'ਮੌਜੂਦਾ ਯਾਤਰਾ (ਅੱਜ)',
+    
+    // My Trips Page
+    'all': 'ਸਭ',
+    'pending': 'ਬਕਾਇਆ',
+    'approved': 'ਮਨਜ਼ੂਰ',
+    'rejected': 'ਰੱਦ',
+    'review': 'ਸਮੀਖਿਆ',
+    'loadingYourTrips': 'ਤੁਹਾਡੀਆਂ ਯਾਤਰਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ...',
+    'noTripApplicationsFound': 'ਕੋਈ ਯਾਤਰਾ ਅਰਜ਼ੀਆਂ ਨਹੀਂ ਮਿਲੀਆਂ',
+    'noApplicationsFound': 'ਅਰਜ਼ੀਆਂ ਨਹੀਂ ਮਿਲੀਆਂ',
+    'no': 'ਕੋਈ',
+    'retry': 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼',
+    'pleaseLoginToViewTrips': 'ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀਆਂ ਯਾਤਰਾਵਾਂ ਦੇਖਣ ਲਈ ਲੌਗਇਨ ਕਰੋ',
+    'unableToVerifyUser': 'ਉਪਭੋਗਤਾ ਦੀ ਪੁਸ਼ਟੀ ਕਰਨ ਵਿੱਚ ਅਸਮਰੱਥ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਲੌਗਇਨ ਕਰੋ।',
+    'failedToFetchTrips': 'ਯਾਤਰਾ ਅਰਜ਼ੀਆਂ ਪ੍ਰਾਪਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ',
+    'apply': 'ਲਾਗੂ ਕਰੋ',
   }
 };
 
@@ -301,7 +475,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setLanguageState(savedLanguage as Language);
       }
     } catch (error) {
-      console.error('Error loading language:', error);
+      // Error loading language
     }
   };
 
@@ -310,7 +484,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await AsyncStorage.setItem('selectedLanguage', lang);
       setLanguageState(lang);
     } catch (error) {
-      console.error('Error saving language:', error);
+      // Error saving language
     }
   };
 
