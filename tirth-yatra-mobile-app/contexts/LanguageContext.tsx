@@ -217,6 +217,12 @@ const translations = {
     'cancel': 'Cancel',
     'ok': 'OK',
     
+    // QR Code
+    'showMyQR': 'Show My QR',
+    'myQRCode': 'My QR Code',
+    'qrCodeDescription': 'Show this QR code to staff for verification',
+    'close': 'Close',
+    
     // Validation errors
     'validationError': 'Validation Error',
     'pleaseFixErrors': 'Please fix the errors before proceeding',
@@ -478,6 +484,12 @@ const translations = {
     'confirmSignOut': 'ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ ਤੇ ਸਾਈਨ ਆਊਟ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ? ਤੁਹਾਡੀ ਤਰੱਕੀ ਗੁਆਚ ਜਾਵੇਗੀ।',
     'cancel': 'ਰੱਦ ਕਰੋ',
     'ok': 'ਠੀਕ ਹੈ',
+    
+    // QR Code
+    'showMyQR': 'ਮੇਰਾ QR ਦਿਖਾਓ',
+    'myQRCode': 'ਮੇਰਾ QR ਕੋਡ',
+    'qrCodeDescription': 'ਪੁਸ਼ਟੀ ਲਈ ਇਹ QR ਕੋਡ ਸਟਾਫ ਨੂੰ ਦਿਖਾਓ',
+    'close': 'ਬੰਦ ਕਰੋ',
     
     // Validation errors
     'validationError': 'ਪ੍ਰਮਾਣਿਕਤਾ ਗਲਤੀ',

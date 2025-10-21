@@ -98,6 +98,16 @@ export default function LoginScreen() {
 
       const data = await response.json();
 
+      // Save token if available
+      if (data.data && data.data.token) {
+        await AsyncStorage.setItem('userToken', data.data.token);
+      }
+
+      // Save userId if available
+      if (data.data && data.data.userId) {
+        await AsyncStorage.setItem('userId', data.data.userId.toString());
+      }
+
       // Check for 401 status first (registration incomplete)
       if (response.status === 401 && data.data && data.data.requiresVerification) {
         // Check if user has completed Step 6

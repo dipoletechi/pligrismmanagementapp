@@ -7,12 +7,15 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import QRCode from 'react-native-qrcode-svg';
 
 export default function DashboardScreen() {
   const { t, language } = useLanguage();
@@ -26,6 +29,10 @@ export default function DashboardScreen() {
   const [tripData, setTripData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [tripModalVisible, setTripModalVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [qrData, setQrData] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
 
   // Helper function to translate error messages
   const translateMessage = (message: string | null): string => {
@@ -54,6 +61,12 @@ export default function DashboardScreen() {
     try {
       const storedEmail = await AsyncStorage.getItem('userEmail');
       const storedPassword = await AsyncStorage.getItem('userPassword');
+      const storedUserId = await AsyncStorage.getItem('userId');
+      
+      // Set userId from AsyncStorage if available
+      if (storedUserId) {
+        setUserId(parseInt(storedUserId));
+      }
       
       if (storedEmail && storedPassword) {
         const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
@@ -72,10 +85,12 @@ export default function DashboardScreen() {
           setLoginError(null);
           setIsLoggedIn(true);
           setIsAccountVerified(true);
+          setUserId(data.data.userId || null);
         } else if (response.ok && data.success) {
           setLoginError(data.message);
           setIsLoggedIn(true);
           setIsAccountVerified(false);
+          setUserId(data.data.userId || null);
         } else {
           setLoginError(data.message || 'Please login to access dashboard');
           setIsLoggedIn(false);
@@ -90,6 +105,59 @@ export default function DashboardScreen() {
       setLoginError('Network error. Please check your connection.');
       setIsLoggedIn(false);
       setIsAccountVerified(false);
+    }
+  };
+
+  // Generate QR Code
+  const generateQRCode = async () => {
+    // Get userId from state or AsyncStorage
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (storedUserId) {
+        currentUserId = parseInt(storedUserId);
+        setUserId(currentUserId);
+      }
+    }
+
+    if (!currentUserId) {
+      Alert.alert(t('error'), 'User ID not found. Please login again.');
+      return;
+    }
+
+    setQrLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (!token) {
+        Alert.alert(t('error'), 'Authentication token not found. Please login again.');
+        setQrLoading(false);
+        return;
+      }
+      
+      const response = await fetch('http://192.168.1.3:5000/api/mobile-qr/generate-qr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: currentUserId
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setQrData(data.data.qrData);
+        setQrModalVisible(true);
+      } else {
+        Alert.alert(t('error'), data.message || 'Failed to generate QR code');
+      }
+    } catch (error) {
+      Alert.alert(t('error'), t('networkError'));
+    } finally {
+      setQrLoading(false);
     }
   };
 
@@ -307,6 +375,22 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
+              {/* Show My QR Button */}
+              <TouchableOpacity 
+                style={styles.qrButton}
+                onPress={generateQRCode}
+                disabled={qrLoading}
+              >
+                {qrLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="qr-code-outline" size={24} color="#fff" />
+                    <Text style={styles.qrButtonText}>{t('showMyQR')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
               {/* General Trip Stats */}
               <View style={styles.statsContainer}>
                 <Text style={styles.sectionTitle}>{t('generalTripStatistics')}</Text>
@@ -347,6 +431,49 @@ export default function DashboardScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* QR Code Modal */}
+        <Modal
+          visible={qrModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setQrModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.qrModalContainer}>
+              <View style={styles.qrModalHeader}>
+                <Text style={styles.qrModalTitle}>{t('myQRCode')}</Text>
+                <TouchableOpacity onPress={() => setQrModalVisible(false)}>
+                  <Ionicons name="close" size={28} color="#000" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.qrCodeWrapper}>
+                {qrData ? (
+                  <QRCode
+                    value={qrData}
+                    size={250}
+                    color="#000"
+                    backgroundColor="#fff"
+                  />
+                ) : (
+                  <ActivityIndicator size="large" color="#007AFF" />
+                )}
+              </View>
+
+              <Text style={styles.qrDescription}>
+                {t('qrCodeDescription')}
+              </Text>
+
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setQrModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>{t('close')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
       </SafeAreaView>
     </>
@@ -612,5 +739,92 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  qrButton: {
+    backgroundColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 30,
+    gap: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    alignSelf: 'center',
+    maxWidth: 200,
+  },
+  qrButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrModalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  qrModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  qrModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  qrCodeWrapper: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  qrDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  closeButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
