@@ -239,8 +239,11 @@ const translations = {
     'accountUnderReview': 'Your account is currently under review. Please wait for approval before applying for trips.',
     'applicationSubmitted': 'Application Submitted',
     'applicationSubmittedSuccess': 'Your account is approved and trip application created successfully!',
+    'applicationFailed': 'Application Failed',
+    'applicationAlreadyExists': 'You have already applied for this trip. Please check My Trips section.',
     'failedToSubmitApplication': 'Failed to submit application. Please try again.',
     'pleaseLoginToApply': 'Please login to apply for trips',
+    'pleaseCheckConnection': 'Please check your internet connection and try again.',
     'unableToVerifyUserTryAgain': 'Unable to verify user. Please try again.',
     
     // Dashboard
@@ -507,8 +510,11 @@ const translations = {
     'accountUnderReview': 'ਤੁਹਾਡਾ ਖਾਤਾ ਵਰਤਮਾਨ ਵਿੱਚ ਸਮੀਖਿਆ ਅਧੀਨ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਯਾਤਰਾਵਾਂ ਲਈ ਅਰਜ਼ੀ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਮਨਜ਼ੂਰੀ ਦੀ ਉਡੀਕ ਕਰੋ।',
     'applicationSubmitted': 'ਅਰਜ਼ੀ ਜਮ੍ਹਾਂ ਕੀਤੀ ਗਈ',
     'applicationSubmittedSuccess': 'ਤੁਹਾਡਾ ਖਾਤਾ ਮਨਜ਼ੂਰ ਹੈ ਅਤੇ ਯਾਤਰਾ ਅਰਜ਼ੀ ਸਫਲਤਾਪੂਰਵਕ ਬਣਾਈ ਗਈ!',
+    'applicationFailed': 'ਅਰਜ਼ੀ ਅਸਫਲ',
+    'applicationAlreadyExists': 'ਤੁਸੀਂ ਇਸ ਯਾਤਰਾ ਲਈ ਪਹਿਲਾਂ ਹੀ ਅਰਜ਼ੀ ਦੇ ਚੁੱਕੇ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ ਮੇਰੀਆਂ ਯਾਤਰਾਵਾਂ ਸੈਕਸ਼ਨ ਦੇਖੋ।',
     'failedToSubmitApplication': 'ਅਰਜ਼ੀ ਜਮ੍ਹਾਂ ਕਰਨ ਵਿੱਚ ਅਸਫਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
     'pleaseLoginToApply': 'ਕਿਰਪਾ ਕਰਕੇ ਯਾਤਰਾਵਾਂ ਲਈ ਅਰਜ਼ੀ ਦੇਣ ਲਈ ਲੌਗਇਨ ਕਰੋ',
+    'pleaseCheckConnection': 'ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
     'unableToVerifyUserTryAgain': 'ਉਪਭੋਗਤਾ ਦੀ ਪੁਸ਼ਟੀ ਕਰਨ ਵਿੱਚ ਅਸਮਰੱਥ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
     
     // Dashboard

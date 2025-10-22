@@ -742,12 +742,22 @@ export default function TripDetailsScreen() {
           }]
         );
       } else {
-        //Alert.alert('Error', t('failedToSubmitApplication'));
+        // Show API error message
+        // Check if it's a "already exists" error
+        const errorMessage = applicationData.message || '';
+        const displayMessage = errorMessage.toLowerCase().includes('already exists') 
+          ? t('applicationAlreadyExists')
+          : (applicationData.message || t('failedToSubmitApplication'));
+          
+        Alert.alert(
+          t('applicationFailed') || 'Application Failed', 
+          displayMessage
+        );
       }
 
     } catch (error) {
       console.error('Error applying for trip:', error);
-      Alert.alert('Error', t('networkError'));
+      Alert.alert(t('networkError') || 'Network Error', t('pleaseCheckConnection') || 'Please check your internet connection');
     }
   };
 
