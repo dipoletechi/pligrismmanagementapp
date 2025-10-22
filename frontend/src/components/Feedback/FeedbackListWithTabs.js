@@ -186,9 +186,6 @@ const FeedbackListWithTabs = () => {
         <Typography variant="h4" fontWeight="bold">
           Feedback Management
         </Typography>
-        <IconButton onClick={fetchFeedbacks} color="primary">
-          <Refresh />
-        </IconButton>
       </Box>
 
       {/* Tabs */}
