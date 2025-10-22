@@ -23,7 +23,7 @@ const SupportTicket = require('../models/SupportTicket');
 const User = require('../models/User');
 
 // Middleware to authenticate token
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -34,16 +34,24 @@ const authenticateToken = (req, res, next) => {
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
-    if (err) {
-      return res.status(403).json({
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    // Fetch full user object for consistency
+    const user = await User.findByPk(decoded.userId || decoded.id);
+    if (!user) {
+      return res.status(401).json({
         success: false,
-        message: 'Invalid or expired token'
+        message: 'User not found'
       });
     }
     req.user = user;
     next();
-  });
+  } catch (err) {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid or expired token'
+    });
+  }
 };
 
 // Mobile API - Read-only endpoints for all users
@@ -1965,7 +1973,7 @@ router.post('/resend-otp', async (req, res) => {
   }
 });
 
-// Complete Step 6 API
+// Complete Step 6 API (called during registration, before login)
 router.post('/complete-step6', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -2090,7 +2098,8 @@ router.post('/login', async (req, res) => {
         const jwt = require('jsonwebtoken');
         const token = jwt.sign(
           { 
-            userId: user.id, 
+            id: user.id, 
+            userId: user.id,  // Keep for backward compatibility
             email: user.email, 
             role: user.role 
           },
@@ -2524,9 +2533,10 @@ router.post('/verify-aadhaar', async (req, res) => {
 });
 
 // Mobile Account Status Check API
-router.get('/account-status/:userId', async (req, res) => {
+router.get('/account-status', authenticateToken, async (req, res) => {
   try {
-    const { userId } = req.params;
+    // Get userId from JWT token
+    const userId = req.user.id;
 
     // Find user
     const user = await User.findByPk(userId);
@@ -2563,14 +2573,16 @@ router.get('/account-status/:userId', async (req, res) => {
 });
 
 // Mobile Aadhaar Image Upload API
-router.post('/upload-aadhaar-image', async (req, res) => {
+router.post('/upload-aadhaar-image', authenticateToken, async (req, res) => {
   try {
-    const { userId, imageType, imageData } = req.body; // imageType: 'front' or 'back'
+    // Get userId from JWT token
+    const userId = req.user.id;
+    const { imageType, imageData } = req.body; // imageType: 'front' or 'back'
 
-    if (!userId || !imageType || !imageData) {
+    if (!imageType || !imageData) {
       return res.status(400).json({
         success: false,
-        message: 'User ID, image type, and image data are required'
+        message: 'Image type and image data are required'
       });
     }
 
@@ -2641,6 +2653,7 @@ router.post('/upload-aadhaar-image', async (req, res) => {
 });
 
 // Mobile OCR Processing API
+// OCR Processing API (called during registration, before login)
 router.post('/process-aadhaar-ocr', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -2978,10 +2991,11 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
 });
 
 // Mobile Manual Aadhaar Data Entry API (if OCR fails)
-router.post('/submit-aadhaar-data', async (req, res) => {
+router.post('/submit-aadhaar-data', authenticateToken, async (req, res) => {
   try {
+    // Get userId from JWT token
+    const userId = req.user.id;
     const { 
-      userId, 
       aadhaarNumber, 
       fullName, 
       address, 
@@ -2990,10 +3004,10 @@ router.post('/submit-aadhaar-data', async (req, res) => {
       dob
     } = req.body;
 
-    if (!userId || !aadhaarNumber) {
+    if (!aadhaarNumber) {
       return res.status(400).json({
         success: false,
-        message: 'User ID and Aadhaar number are required'
+        message: 'Aadhaar number is required'
       });
     }
 
@@ -3042,16 +3056,10 @@ router.post('/submit-aadhaar-data', async (req, res) => {
 
 
 // Get comprehensive user trip data for dashboard
-router.get('/user-trips-comprehensive', async (req, res) => {
+router.get('/user-trips-comprehensive', authenticateToken, async (req, res) => {
   try {
-    const { userId } = req.query;
-    
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID is required'
-      });
-    }
+    // Get userId from JWT token
+    const userId = req.user.id;
 
     // Get user-specific trip applications from trip_pligrim table
     const [userApplications] = await sequelize.query(`
@@ -3166,9 +3174,10 @@ router.get('/user-trips-comprehensive', async (req, res) => {
 });
 
 // Check user account status
-router.get('/check-account-status', async (req, res) => {
+router.get('/check-account-status', authenticateToken, async (req, res) => {
   try {
-    const { userId } = req.query;
+    // Get userId from JWT token
+    const userId = req.user.id;
     
     if (!userId) {
       return res.status(400).json({
@@ -3216,9 +3225,11 @@ router.get('/check-account-status', async (req, res) => {
 });
 
 // Get user's feedback for a trip
-router.get('/feedback/trip/:tripId/user/:userId', async (req, res) => {
+router.get('/feedback/trip/:tripId', authenticateToken, async (req, res) => {
   try {
-    const { tripId, userId } = req.params;
+    const { tripId } = req.params;
+    // Get userId from JWT token
+    const userId = req.user.id;
 
     // Get overall trip feedback
     const [tripFeedback] = await sequelize.query(
@@ -3313,18 +3324,20 @@ router.get('/feedback/trip/:tripId/user/:userId', async (req, res) => {
 });
 
 // Submit trip feedback
-router.post('/feedback/submit', async (req, res) => {
+router.post('/feedback/submit', authenticateToken, async (req, res) => {
   const transaction = await sequelize.transaction();
   
   try {
-    const { tripId, userId, overall, food, accommodation, transport } = req.body;
+    // Get userId from JWT token
+    const userId = req.user.id;
+    const { tripId, overall, food, accommodation, transport } = req.body;
 
     // Validate required data
-    if (!tripId || !userId) {
+    if (!tripId) {
       await transaction.rollback();
       return res.status(400).json({
         success: false,
-        message: 'Trip ID and User ID are required'
+        message: 'Trip ID is required'
       });
     }
 

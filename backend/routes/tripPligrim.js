@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { TripPligrim, User, Trip } = require('../models');
+const { protect } = require('../middleware/auth');
 
 // Get all users with role 'user' (pilgrims)
 router.get('/', async (req, res) => {
@@ -192,9 +193,11 @@ router.get('/stats', async (req, res) => {
 });
 
 // Create new pilgrim application
-router.post('/', async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
-    const { tripid, userid, status = 'Pending' } = req.body;
+    // Get userid from JWT token
+    const userid = req.user.id;
+    const { tripid, status = 'Pending' } = req.body;
 
     // Check if application already exists
     const existingApplication = await TripPligrim.findOne({

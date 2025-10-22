@@ -23,12 +23,12 @@ exports.protect = async (req, res, next) => {
         });
       }
 
-      if (!req.user.isActive) {
-        return res.status(401).json({
-          success: false,
-          message: 'Not authorized, account deactivated'
-        });
-      }
+      // if (!req.user.isActive) {
+      //   return res.status(401).json({
+      //     success: false,
+      //     message: 'Not authorized, account deactivated'
+      //   });
+      // }
 
       next();
     } catch (error) {
