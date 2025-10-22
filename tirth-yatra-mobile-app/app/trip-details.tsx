@@ -1539,10 +1539,18 @@ export default function TripDetailsScreen() {
           <TouchableOpacity 
             style={styles.feedbackButton}
             onPress={() => {
+              console.log('Opening feedback page...');
+              console.log('Trip ID:', tripDetails?.id);
+              
+              if (!tripDetails?.id) {
+                Alert.alert('Error', 'Trip details not available');
+                return;
+              }
+              
               router.push({
                 pathname: '/feedback',
                 params: {
-                  tripDetails: JSON.stringify(tripDetails)
+                  tripId: tripDetails.id.toString()
                 }
               });
             }}

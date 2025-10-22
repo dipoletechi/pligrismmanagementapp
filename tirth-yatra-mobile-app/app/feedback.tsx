@@ -12,7 +12,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LanguageDropdown from '@/components/LanguageDropdown';
+
+const API_BASE_URL = 'http://192.168.1.3:5000/api';
 
 interface TripDetails {
   id?: number;
@@ -36,6 +39,9 @@ export default function FeedbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Feedback states
   const [foodFeedbackExpanded, setFoodFeedbackExpanded] = useState(false);
@@ -56,17 +62,69 @@ export default function FeedbackScreen() {
   const [overallRating, setOverallRating] = useState<number>(0);
   const [overallComment, setOverallComment] = useState<string>('');
 
-  // Load trip details from params
+  // Load trip details from API using tripId
   useEffect(() => {
-    if (params.tripDetails) {
-      try {
-        const details = JSON.parse(params.tripDetails as string);
-        setTripDetails(details);
-      } catch (error) {
-        console.error('Error parsing trip details:', error);
+    const fetchTripDetails = async () => {
+      console.log('Params received:', params);
+      console.log('Trip ID from params:', params.tripId);
+      
+      if (!params.tripId) {
+        console.log('No tripId in params!');
+        setLoading(false);
+        return;
       }
-    }
-  }, [params.tripDetails]);
+      
+      try {
+        const response = await fetch(`http://192.168.1.3:5000/api/mobile/trips/${params.tripId}/details`);
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('Trip details fetched:', result.data);
+          console.log('Trip ID from API:', result.data.id);
+          setTripDetails(result.data);
+        } else {
+          console.error('Failed to fetch trip details:', result.message);
+          Alert.alert('Error', 'Failed to load trip details');
+        }
+      } catch (error) {
+        console.error('Error fetching trip details:', error);
+        Alert.alert('Error', 'Failed to load trip details');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTripDetails();
+  }, [params.tripId]);
+
+  // Check if user has already submitted feedback (without loading the data)
+  useEffect(() => {
+    const checkFeedbackSubmitted = async () => {
+      if (!params.tripId) return;
+
+      try {
+        const userIdStr = await AsyncStorage.getItem('userId');
+        const userId = userIdStr ? parseInt(userIdStr) : null;
+
+        if (!userId) return;
+
+        const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/trip/${params.tripId}/user/${userId}`);
+        const result = await response.json();
+
+        if (result.success && result.hasSubmitted) {
+          console.log('Feedback already submitted for this trip');
+          // Just mark as submitted and enable read-only mode
+          // Don't populate any data - keep fields empty
+          setHasSubmitted(true);
+          setIsReadOnly(true);
+        }
+      } catch (error) {
+        console.error('Error checking feedback status:', error);
+      }
+    };
+
+    checkFeedbackSubmitted();
+  }, [params.tripId]);
 
   // Extract unique food vendors from all_days_food_entries or food_vendors_by_day
   const getFoodVendors = (): string[] => {
@@ -232,44 +290,109 @@ export default function FeedbackScreen() {
     }
   };
 
-  const handleSubmitFeedback = () => {
-    // Collect all feedback data
-    const feedbackData = {
-      tripId: tripDetails?.id,
-      overall: {
-        rating: overallRating,
-        comment: overallComment
-      },
-      food: Object.keys(foodVendorRatings).map(vendor => ({
-        vendor,
-        rating: foodVendorRatings[vendor],
-        description: foodVendorDescriptions[vendor] || ''
-      })),
-      accommodation: Object.keys(accommodationVendorRatings).map(vendor => ({
-        vendor,
-        rating: accommodationVendorRatings[vendor],
-        description: accommodationVendorDescriptions[vendor] || ''
-      })),
-      transport: Object.keys(transportVendorRatings).map(vendor => ({
-        vendor,
-        rating: transportVendorRatings[vendor],
-        description: transportVendorDescriptions[vendor] || ''
-      }))
-    };
-
-    console.log('Feedback Data:', feedbackData);
-    
-    Alert.alert('Success', 'Feedback submitted successfully!', [
-      {
-        text: 'OK',
-        onPress: () => router.back()
+  const handleSubmitFeedback = async () => {
+    try {
+      console.log('=== Starting Submit Feedback ===');
+      console.log('Current tripDetails state:', tripDetails);
+      console.log('Trip ID from state:', tripDetails?.id);
+      
+      // Check if tripDetails is loaded
+      if (!tripDetails || !tripDetails.id) {
+        Alert.alert('Error', 'Trip details not loaded. Please try again.');
+        return;
       }
-    ]);
+      
+      // Get user ID from AsyncStorage
+      const userIdStr = await AsyncStorage.getItem('userId');
+      const userId = userIdStr ? parseInt(userIdStr) : null;
+
+      console.log('User ID:', userId);
+      console.log('Trip ID:', tripDetails.id);
+      
+      if (!userId) {
+        Alert.alert('Error', 'Please login to submit feedback');
+        return;
+      }
+
+      // Collect all feedback data
+      console.log('=== FRONTEND DEBUG ===');
+      console.log('Food Vendor Ratings State:', foodVendorRatings);
+      console.log('Accommodation Vendor Ratings State:', accommodationVendorRatings);
+      console.log('Transport Vendor Ratings State:', transportVendorRatings);
+      
+      const feedbackData = {
+        tripId: tripDetails.id,  // Already checked above
+        userId: userId,
+        overall: {
+          rating: overallRating,
+          comment: overallComment
+        },
+        food: Object.keys(foodVendorRatings).map(vendor => ({
+          vendor,
+          rating: foodVendorRatings[vendor],
+          description: foodVendorDescriptions[vendor] || ''
+        })),
+        accommodation: Object.keys(accommodationVendorRatings).map(vendor => ({
+          vendor,
+          rating: accommodationVendorRatings[vendor],
+          description: accommodationVendorDescriptions[vendor] || ''
+        })),
+        transport: Object.keys(transportVendorRatings).map(vendor => ({
+          vendor,
+          rating: transportVendorRatings[vendor],
+          description: transportVendorDescriptions[vendor] || ''
+        }))
+      };
+
+      console.log('Feedback Data Being Sent:', JSON.stringify(feedbackData, null, 2));
+      console.log('Food array length:', feedbackData.food.length);
+      console.log('Accommodation array length:', feedbackData.accommodation.length);
+      console.log('Transport array length:', feedbackData.transport.length);
+
+      // Submit feedback to API
+      const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(feedbackData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        Alert.alert('Success', 'Feedback submitted successfully!', [
+          {
+            text: 'OK',
+            onPress: () => router.back()
+          }
+        ]);
+      } else {
+        Alert.alert('Error', result.message || 'Failed to submit feedback');
+      }
+
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      Alert.alert('Error', 'Failed to submit feedback. Please try again.');
+    }
   };
 
   const handleBack = () => {
     router.back();
   };
+
+  if (loading) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading trip details...</Text>
+          </View>
+        </SafeAreaView>
+      </>
+    );
+  }
 
   if (!tripDetails) {
     return (
@@ -277,7 +400,13 @@ export default function FeedbackScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <SafeAreaView style={styles.container}>
           <View style={styles.loadingContainer}>
-            <Text>Loading...</Text>
+            <Text style={styles.errorText}>Trip details not found</Text>
+            <TouchableOpacity 
+              style={styles.backButtonStyle}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonText}>Go Back</Text>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </>
@@ -319,9 +448,22 @@ export default function FeedbackScreen() {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={true}
       >
+        {/* Show message if feedback already submitted */}
+        {isReadOnly && (
+          <View style={styles.submittedMessageBox}>
+            <Ionicons name="checkmark-circle" size={40} color="#28a745" />
+            <View style={styles.submittedMessageContent}>
+              <Text style={styles.submittedMessageTitle}>Feedback Already Submitted</Text>
+              <Text style={styles.submittedMessageText}>You have already submitted feedback for this trip. All fields are now read-only.</Text>
+            </View>
+          </View>
+        )}
+
         {/* Overall Rating Section */}
         <View style={styles.overallRatingContainer}>
-          <Text style={styles.overallRatingTitle}>Overall Trip Rating</Text>
+          <Text style={styles.overallRatingTitle}>
+            Overall Trip Rating {isReadOnly && <Text style={styles.readOnlyBadge}>(Submitted)</Text>}
+          </Text>
           
           {/* Star Rating */}
           <View style={styles.starRatingContainer}>
@@ -329,13 +471,16 @@ export default function FeedbackScreen() {
               <TouchableOpacity
                 key={star}
                 onPress={() => {
-                  setOverallRating(overallRating === star ? 0 : star);
+                  if (!isReadOnly) {
+                    setOverallRating(overallRating === star ? 0 : star);
+                  }
                 }}
+                disabled={isReadOnly}
               >
                 <Ionicons
                   name={star <= overallRating ? "star" : "star-outline"}
                   size={36}
-                  color="#FFD700"
+                  color={isReadOnly ? "#ccc" : "#FFD700"}
                   style={styles.starIcon}
                 />
               </TouchableOpacity>
@@ -344,13 +489,14 @@ export default function FeedbackScreen() {
 
           {/* Overall Comment Box */}
           <TextInput
-            style={styles.overallCommentBox}
+            style={[styles.overallCommentBox, isReadOnly && styles.readOnlyInput]}
             placeholder="Write your overall feedback about the trip..."
             placeholderTextColor="#999"
             multiline
             numberOfLines={6}
             value={overallComment}
             onChangeText={setOverallComment}
+            editable={!isReadOnly}
           />
         </View>
 
@@ -382,17 +528,20 @@ export default function FeedbackScreen() {
                       <TouchableOpacity
                         key={star}
                         onPress={() => {
-                          const currentRating = foodVendorRatings[vendorName] || 0;
-                          setFoodVendorRatings({
-                            ...foodVendorRatings,
-                            [vendorName]: currentRating === star ? 0 : star
-                          });
+                          if (!isReadOnly) {
+                            const currentRating = foodVendorRatings[vendorName] || 0;
+                            setFoodVendorRatings({
+                              ...foodVendorRatings,
+                              [vendorName]: currentRating === star ? 0 : star
+                            });
+                          }
                         }}
+                        disabled={isReadOnly}
                       >
                         <Ionicons
                           name={star <= (foodVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
                           size={32}
-                          color="#FFD700"
+                          color={isReadOnly ? "#ccc" : "#FFD700"}
                           style={styles.starIcon}
                         />
                       </TouchableOpacity>
@@ -401,7 +550,7 @@ export default function FeedbackScreen() {
 
                   {/* Description Box */}
                   <TextInput
-                    style={styles.feedbackDescriptionBox}
+                    style={[styles.feedbackDescriptionBox, isReadOnly && styles.readOnlyInput]}
                     placeholder="Write your feedback about the food..."
                     placeholderTextColor="#999"
                     multiline
@@ -413,6 +562,7 @@ export default function FeedbackScreen() {
                         [vendorName]: text
                       });
                     }}
+                    editable={!isReadOnly}
                   />
                 </View>
               ))
@@ -450,17 +600,20 @@ export default function FeedbackScreen() {
                       <TouchableOpacity
                         key={star}
                         onPress={() => {
-                          const currentRating = accommodationVendorRatings[vendorName] || 0;
-                          setAccommodationVendorRatings({
-                            ...accommodationVendorRatings,
-                            [vendorName]: currentRating === star ? 0 : star
-                          });
+                          if (!isReadOnly) {
+                            const currentRating = accommodationVendorRatings[vendorName] || 0;
+                            setAccommodationVendorRatings({
+                              ...accommodationVendorRatings,
+                              [vendorName]: currentRating === star ? 0 : star
+                            });
+                          }
                         }}
+                        disabled={isReadOnly}
                       >
                         <Ionicons
                           name={star <= (accommodationVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
                           size={32}
-                          color="#FFD700"
+                          color={isReadOnly ? "#ccc" : "#FFD700"}
                           style={styles.starIcon}
                         />
                       </TouchableOpacity>
@@ -469,7 +622,7 @@ export default function FeedbackScreen() {
 
                   {/* Description Box */}
                   <TextInput
-                    style={styles.feedbackDescriptionBox}
+                    style={[styles.feedbackDescriptionBox, isReadOnly && styles.readOnlyInput]}
                     placeholder="Write your feedback about the accommodation..."
                     placeholderTextColor="#999"
                     multiline
@@ -481,6 +634,7 @@ export default function FeedbackScreen() {
                         [vendorName]: text
                       });
                     }}
+                    editable={!isReadOnly}
                   />
                 </View>
               ))
@@ -518,17 +672,20 @@ export default function FeedbackScreen() {
                       <TouchableOpacity
                         key={star}
                         onPress={() => {
-                          const currentRating = transportVendorRatings[vendorName] || 0;
-                          setTransportVendorRatings({
-                            ...transportVendorRatings,
-                            [vendorName]: currentRating === star ? 0 : star
-                          });
+                          if (!isReadOnly) {
+                            const currentRating = transportVendorRatings[vendorName] || 0;
+                            setTransportVendorRatings({
+                              ...transportVendorRatings,
+                              [vendorName]: currentRating === star ? 0 : star
+                            });
+                          }
                         }}
+                        disabled={isReadOnly}
                       >
                         <Ionicons
                           name={star <= (transportVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
                           size={32}
-                          color="#FFD700"
+                          color={isReadOnly ? "#ccc" : "#FFD700"}
                           style={styles.starIcon}
                         />
                       </TouchableOpacity>
@@ -537,7 +694,7 @@ export default function FeedbackScreen() {
 
                   {/* Description Box */}
                   <TextInput
-                    style={styles.feedbackDescriptionBox}
+                    style={[styles.feedbackDescriptionBox, isReadOnly && styles.readOnlyInput]}
                     placeholder="Write your feedback about the transport..."
                     placeholderTextColor="#999"
                     multiline
@@ -549,6 +706,7 @@ export default function FeedbackScreen() {
                         [vendorName]: text
                       });
                     }}
+                    editable={!isReadOnly}
                   />
                 </View>
               ))
@@ -564,19 +722,30 @@ export default function FeedbackScreen() {
 
       {/* Submit/Back Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.backButtonStyle}
-          onPress={handleBack}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+        {!isReadOnly && (
+          <TouchableOpacity 
+            style={styles.backButtonStyle}
+            onPress={handleBack}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        )}
         
-        <TouchableOpacity 
-          style={styles.submitButton}
-          onPress={handleSubmitFeedback}
-        >
-          <Text style={styles.submitButtonText}>Submit Feedback</Text>
-        </TouchableOpacity>
+        {isReadOnly ? (
+          <TouchableOpacity 
+            style={styles.fullWidthBackButton}
+            onPress={handleBack}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={styles.submitButton}
+            onPress={handleSubmitFeedback}
+          >
+            <Text style={styles.submitButtonText}>Submit Feedback</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Fixed Footer */}
@@ -598,6 +767,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 10,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#dc3545',
+    marginBottom: 20,
   },
   mainHeader: {
     flexDirection: 'row',
@@ -672,6 +851,36 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
+  readOnlyBadge: {
+    fontSize: 14,
+    fontWeight: 'normal',
+    color: '#28a745',
+  },
+  submittedMessageBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d4edda',
+    borderColor: '#c3e6cb',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  submittedMessageContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  submittedMessageTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#155724',
+    marginBottom: 4,
+  },
+  submittedMessageText: {
+    fontSize: 14,
+    color: '#155724',
+    lineHeight: 20,
+  },
   overallCommentBox: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -683,6 +892,10 @@ const styles = StyleSheet.create({
     minHeight: 120,
     textAlignVertical: 'top',
     marginTop: 16,
+  },
+  readOnlyInput: {
+    backgroundColor: '#e9ecef',
+    color: '#666',
   },
   feedbackSection: {
     flexDirection: 'row',
@@ -785,6 +998,15 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     fontSize: 16,
     fontWeight: '600',
+  },
+  fullWidthBackButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#6c757d',
+    alignItems: 'center',
   },
   submitButton: {
     flex: 1,
