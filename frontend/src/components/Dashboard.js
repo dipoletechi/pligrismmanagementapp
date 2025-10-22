@@ -108,7 +108,7 @@ const Dashboard = () => {
         <Grid container spacing={0} sx={{ mb: 4 }}>
           {/* Trip Statistics - Only for superadmin, admin, trip_manager */}
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager') && (
-            <Grid item xs={12} md={4} sx={{ pr: 0.5 }} width={'50%'} >
+            <Grid size={{ xs: 12, md: 4 }} sx={{ pr: 0.5 }} width={'50%'} >
               <Card sx={{
                 borderRadius: 3,
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -144,7 +144,7 @@ const Dashboard = () => {
                   </Box>
                   
                   <Grid container spacing={1}>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
                         p: 2.5, 
@@ -166,7 +166,7 @@ const Dashboard = () => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
                         p: 2.5, 
@@ -188,7 +188,7 @@ const Dashboard = () => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
                         p: 2.5, 
@@ -210,7 +210,7 @@ const Dashboard = () => {
       </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
                         p: 2.5, 
@@ -240,7 +240,7 @@ const Dashboard = () => {
 
           {/* User Statistics - Only for superadmin, admin, trip_manager, financial_manager */}
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
-            <Grid item xs={12} md={4} sx={{ px: 0.5 }} width={'50%'}>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ px: 0.5 }} width={'50%'}>
             <Card sx={{
               width: '100%',
               borderRadius: 4,
@@ -278,7 +278,7 @@ const Dashboard = () => {
                 </Box>
                 
                 <Grid container spacing={1}>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
                       p: 2.5, 
@@ -300,7 +300,7 @@ const Dashboard = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
                       p: 2.5, 
@@ -322,7 +322,7 @@ const Dashboard = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
                       p: 2.5, 
@@ -344,7 +344,7 @@ const Dashboard = () => {
       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
                       p: 2.5, 
@@ -376,7 +376,7 @@ const Dashboard = () => {
         {/* Financial Statistics - Only for superadmin, admin, trip_manager, financial_manager */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
-            <Grid item xs={12} md={6} width={'100%'}>
+            <Grid size={{ xs: 12, md: 6 }} width={'100%'}>
             <Card sx={{
               borderRadius: 3,
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -412,7 +412,7 @@ const Dashboard = () => {
                 </Box>
                 
                 <Grid container spacing={1}>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
                         ₹{stats.funds.total.toLocaleString()}
@@ -422,7 +422,7 @@ const Dashboard = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ fontWeight: 700, color: '#2196f3' }}>
                         ₹{stats.funds.published.toLocaleString()}
@@ -432,7 +432,7 @@ const Dashboard = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(255, 152, 0, 0.1)', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
                         ₹{stats.funds.draft.toLocaleString()}
@@ -442,7 +442,7 @@ const Dashboard = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ fontWeight: 700, color: '#9c27b0' }}>
                         ₹{stats.funds.pastPublished.toLocaleString()}
@@ -459,7 +459,7 @@ const Dashboard = () => {
           )}
           {/* Support Ticket Statistics - Only for superadmin, admin */}
           {(user.role === 'superadmin' || user.role === 'admin') && (
-            <Grid item xs={12} md={4} sx={{ pl: 0.5 }}>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ pl: 0.5 }}>
             <Card sx={{
               borderRadius: 3,
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',

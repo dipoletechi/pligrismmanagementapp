@@ -24,6 +24,7 @@ import TripTracking from './components/Trip/TripTracking';
 import ScannerPage from './components/Scanner/ScannerPage';
 import PilgrimManagement from './components/Pilgrim/PilgrimManagement';
 import TripApplicants from './components/Pilgrim/TripApplicants';
+import FeedbackList from './components/Feedback/FeedbackList';
 import Settings from './components/Settings';
 import './App.css';
 
@@ -50,7 +51,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <div className="App">
             <Routes>
               {/* Public Routes */}
@@ -258,6 +259,18 @@ function App() {
                   <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
                     <MainLayout>
                       <SupportTickets />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Feedback Management - Superadmin, Admin, Trip Manager, Transport */}
+              <Route 
+                path="/feedback" 
+                element={
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport']}>
+                    <MainLayout>
+                      <FeedbackList />
                     </MainLayout>
                   </ProtectedRoute>
                 } 

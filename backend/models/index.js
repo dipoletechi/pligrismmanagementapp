@@ -19,6 +19,8 @@ const Trip = require('./Trip');
 const TripStatus = require('./TripStatus');
 const TripLog = require('./TripLog');
 const TripPligrim = require('./TripPligrim');
+const VendorFeedback = require('./VendorFeedback');
+const TripFeedback = require('./TripFeedback');
 
 // Associations
 FoodCategory.hasMany(FoodItem, {
@@ -223,6 +225,59 @@ TripPligrim.belongsTo(Trip, {
   onUpdate: 'CASCADE'
 });
 
+// Feedback Associations
+User.hasMany(VendorFeedback, {
+  foreignKey: 'userId',
+  as: 'vendorFeedbacks',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+VendorFeedback.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
+Trip.hasMany(VendorFeedback, {
+  foreignKey: 'tripid',
+  as: 'vendorFeedbacks',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+VendorFeedback.belongsTo(Trip, {
+  foreignKey: 'tripid',
+  as: 'trip',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
+User.hasMany(TripFeedback, {
+  foreignKey: 'user_id',
+  as: 'tripFeedbacks',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+TripFeedback.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
+Trip.hasMany(TripFeedback, {
+  foreignKey: 'trip_id',
+  as: 'tripFeedbacks',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+TripFeedback.belongsTo(Trip, {
+  foreignKey: 'trip_id',
+  as: 'trip',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,
@@ -242,7 +297,9 @@ module.exports = {
   Trip,
   TripStatus,
   TripLog,
-  TripPligrim
+  TripPligrim,
+  VendorFeedback,
+  TripFeedback
 };
 
 

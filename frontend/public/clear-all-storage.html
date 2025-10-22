@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear All Storage - Fix Feedback Issue</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Clear All Storage - Fix Feedback Issue</h1>
+        
+        <div id="status">
+            <p>Click the button below to clear all storage and fix the feedback logout issue:</p>
+        </div>
+        
+        <button onclick="clearAllStorage()">Clear All Storage & Redirect to Login</button>
+        
+        <div id="result"></div>
+        
+        <script>
+            function clearAllStorage() {
+                try {
+                    // Clear localStorage
+                    localStorage.clear();
+                    console.log('✅ localStorage cleared');
+                    
+                    // Clear sessionStorage
+                    sessionStorage.clear();
+                    console.log('✅ sessionStorage cleared');
+                    
+                    // Clear cookies
+                    document.cookie.split(";").forEach(function(c) { 
+                        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                    });
+                    console.log('✅ cookies cleared');
+                    
+                    // Clear any axios defaults
+                    if (window.axios && window.axios.defaults) {
+                        delete window.axios.defaults.headers.common['Authorization'];
+                        console.log('✅ axios headers cleared');
+                    }
+                    
+                    document.getElementById('status').innerHTML = '<p class="success">✅ All storage cleared successfully!</p>';
+                    document.getElementById('result').innerHTML = '<p>Redirecting to login page...</p>';
+                    
+                    // Redirect to login after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('❌ Error clearing storage:', error);
+                    document.getElementById('result').innerHTML = '<p class="error">❌ Error: ' + error.message + '</p>';
+                }
+            }
+            
+            // Auto-run on page load
+            window.onload = function() {
+                console.log('Page loaded - ready to clear storage');
+            };
+        </script>
+    </div>
+</body>
+</html>
