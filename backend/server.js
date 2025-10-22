@@ -41,6 +41,7 @@ const mobileRoutes = require('./routes/mobile');
 const tripLogRoutes = require('./routes/tripLogs');
 const tripPligrimRoutes = require('./routes/tripPligrim');
 const mobileQRRoutes = require('./routes/mobileQR');
+const feedbackRoutes = require('./routes/feedback');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -122,6 +123,7 @@ app.use('/api/mobile', mobileRoutes);
 app.use('/api/trip-logs', tripLogRoutes);
 app.use('/api/trip-pligrim', tripPligrimRoutes);
 app.use('/api/mobile-qr', mobileQRRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
