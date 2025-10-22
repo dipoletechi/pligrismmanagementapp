@@ -6,7 +6,6 @@ const { User } = require('../models');
 // Generate QR Code Data (Hash user data with JWT)
 router.post('/generate-qr', async (req, res) => {
   try {
-    const { userId } = req.body;
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
@@ -16,15 +15,16 @@ router.post('/generate-qr', async (req, res) => {
       });
     }
 
+    // Verify JWT token and extract userId
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-change-this-in-production');
+    const userId = decoded.id || decoded.userId;
+
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'User ID is required'
+        message: 'User ID not found in token'
       });
     }
-
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-here-change-this-in-production');
     
     // Check if user exists and get their data
     const user = await User.findByPk(userId, {
