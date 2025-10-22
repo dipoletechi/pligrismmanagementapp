@@ -10,7 +10,7 @@ class AllMigrationsRunner {
     this.host = process.env.DB_HOST || 'localhost';
     this.port = process.env.DB_PORT || 3306;
     this.user = process.env.DB_USER || 'root';
-    this.password = process.env.DB_PASSWORD || 'root';
+    this.password = process.env.DB_PASSWORD ;
   }
 
   async connect() {
