@@ -9,6 +9,7 @@ import {
   Alert,
   SafeAreaView,
   Modal,
+  TextInput,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -101,7 +102,86 @@ export default function TripDetailsScreen() {
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasAlreadyApplied, setHasAlreadyApplied] = useState(false);
+  
+  // Feedback modal states
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [foodFeedbackExpanded, setFoodFeedbackExpanded] = useState(false);
+  const [foodVendorRatings, setFoodVendorRatings] = useState<{[key: string]: number}>({});
+  const [foodVendorDescriptions, setFoodVendorDescriptions] = useState<{[key: string]: string}>({});
+  const [accommodationFeedbackExpanded, setAccommodationFeedbackExpanded] = useState(false);
+  const [accommodationVendorRatings, setAccommodationVendorRatings] = useState<{[key: string]: number}>({});
+  const [accommodationVendorDescriptions, setAccommodationVendorDescriptions] = useState<{[key: string]: string}>({});
 
+  // Extract unique food vendors from food_vendors_by_day
+  const getFoodVendors = (): string[] => {
+    if (!tripDetails?.food_vendors_by_day) return [];
+    
+    try {
+      const foodVendorsByDay = typeof tripDetails.food_vendors_by_day === 'string'
+        ? JSON.parse(tripDetails.food_vendors_by_day)
+        : tripDetails.food_vendors_by_day;
+
+      const vendorSet = new Set<string>();
+      
+      // Iterate through all days
+      Object.values(foodVendorsByDay).forEach((dayData: any) => {
+        if (Array.isArray(dayData)) {
+          dayData.forEach((item: any) => {
+            if (item.vendors && Array.isArray(item.vendors)) {
+              item.vendors.forEach((vendor: string) => {
+                // Trim vendor name and only add if not empty
+                const trimmedVendor = vendor?.trim();
+                if (trimmedVendor) {
+                  vendorSet.add(trimmedVendor);
+                }
+              });
+            }
+          });
+        }
+      });
+
+      // Convert Set to Array and sort alphabetically
+      return Array.from(vendorSet).sort();
+    } catch (error) {
+      console.error('Error parsing food vendors:', error);
+      return [];
+    }
+  };
+
+  // Extract unique accommodation vendors from accommodations_by_day
+  const getAccommodationVendors = (): string[] => {
+    if (!tripDetails?.accommodations_by_day) return [];
+    
+    try {
+      const accommodationsByDay = typeof tripDetails.accommodations_by_day === 'string'
+        ? JSON.parse(tripDetails.accommodations_by_day)
+        : tripDetails.accommodations_by_day;
+
+      const vendorSet = new Set<string>();
+      
+      // Iterate through all days
+      Object.values(accommodationsByDay).forEach((dayData: any) => {
+        if (Array.isArray(dayData)) {
+          dayData.forEach((accommodation: any) => {
+            // Get vendor name from either vendorName or vendor field
+            const vendorName = accommodation.vendorName || accommodation.vendor;
+            if (vendorName) {
+              const trimmedVendor = String(vendorName).trim();
+              if (trimmedVendor) {
+                vendorSet.add(trimmedVendor);
+              }
+            }
+          });
+        }
+      });
+
+      // Convert Set to Array and sort alphabetically
+      return Array.from(vendorSet).sort();
+    } catch (error) {
+      console.error('Error parsing accommodation vendors:', error);
+      return [];
+    }
+  };
 
   // Check login status
   useEffect(() => {
@@ -856,7 +936,7 @@ export default function TripDetailsScreen() {
       {activeTab === 'Food' && renderFoodTab()}
       {activeTab === 'Events' && renderEventsTab()}
 
-      {/* Back and Apply Buttons */}
+      {/* Back and Apply/Feedback Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -875,6 +955,14 @@ export default function TripDetailsScreen() {
             </TouchableOpacity>
           </>
         )}
+        {isLoggedIn && fromMyTrips === 'true' && (
+          <TouchableOpacity 
+            style={styles.feedbackButton}
+            onPress={() => setFeedbackModalVisible(true)}
+          >
+            <Text style={styles.feedbackButtonText}>Feedback</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Fixed Footer */}
@@ -885,6 +973,184 @@ export default function TripDetailsScreen() {
 
       {/* Food Modal */}
       {renderFoodModal()}
+
+      {/* Feedback Modal */}
+      <Modal
+        visible={feedbackModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setFeedbackModalVisible(false)}
+      >
+        <View style={styles.feedbackModalOverlay}>
+          <View style={styles.feedbackModalContainer}>
+            {/* Modal Header */}
+            <View style={styles.feedbackModalHeader}>
+              <Text style={styles.feedbackModalTitle}>Trip Feedback</Text>
+              <TouchableOpacity onPress={() => setFeedbackModalVisible(false)}>
+                <Ionicons name="close" size={28} color="#000" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Scrollable Content */}
+            <ScrollView 
+              style={styles.feedbackScrollView}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={true}
+            >
+              {/* Food Section */}
+              <TouchableOpacity 
+                style={styles.feedbackSection}
+                onPress={() => setFoodFeedbackExpanded(!foodFeedbackExpanded)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.feedbackSectionTitle}>Food</Text>
+                <Ionicons 
+                  name={foodFeedbackExpanded ? "chevron-up" : "chevron-down"} 
+                  size={24} 
+                  color="#007AFF" 
+                />
+              </TouchableOpacity>
+
+              {/* Food Vendors - Expanded */}
+              {foodFeedbackExpanded && tripDetails && (
+                <View style={styles.feedbackContent}>
+                  {getFoodVendors().length > 0 ? (
+                    getFoodVendors().map((vendorName: string, index: number) => (
+                      <View key={index} style={styles.vendorFeedbackItem}>
+                        <Text style={styles.vendorName}>{vendorName}</Text>
+                        
+                        {/* Star Rating */}
+                        <View style={styles.starRatingContainer}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <TouchableOpacity
+                              key={star}
+                              onPress={() => {
+                                const currentRating = foodVendorRatings[vendorName] || 0;
+                                // If clicking the same star, deselect (set to 0)
+                                // Otherwise, set to the clicked star value
+                                setFoodVendorRatings({
+                                  ...foodVendorRatings,
+                                  [vendorName]: currentRating === star ? 0 : star
+                                });
+                              }}
+                            >
+                              <Ionicons
+                                name={star <= (foodVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
+                                size={32}
+                                color="#FFD700"
+                                style={styles.starIcon}
+                              />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
+                        {/* Description Box */}
+                        <TextInput
+                          style={styles.feedbackDescriptionBox}
+                          placeholder="Write your feedback about the food..."
+                          placeholderTextColor="#999"
+                          multiline
+                          numberOfLines={4}
+                          value={foodVendorDescriptions[vendorName] || ''}
+                          onChangeText={(text) => {
+                            setFoodVendorDescriptions({
+                              ...foodVendorDescriptions,
+                              [vendorName]: text
+                            });
+                          }}
+                        />
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.noDataText}>No food vendors available</Text>
+                  )}
+                </View>
+              )}
+
+              {/* Accommodation Section */}
+              <TouchableOpacity 
+                style={styles.feedbackSection}
+                onPress={() => setAccommodationFeedbackExpanded(!accommodationFeedbackExpanded)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.feedbackSectionTitle}>Accommodation</Text>
+                <Ionicons 
+                  name={accommodationFeedbackExpanded ? "chevron-up" : "chevron-down"} 
+                  size={24} 
+                  color="#007AFF" 
+                />
+              </TouchableOpacity>
+
+              {/* Accommodation Vendors - Expanded */}
+              {accommodationFeedbackExpanded && tripDetails && (
+                <View style={styles.feedbackContent}>
+                  {getAccommodationVendors().length > 0 ? (
+                    getAccommodationVendors().map((vendorName: string, index: number) => (
+                      <View key={index} style={styles.vendorFeedbackItem}>
+                        <Text style={styles.vendorName}>{vendorName}</Text>
+                        
+                        {/* Star Rating */}
+                        <View style={styles.starRatingContainer}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <TouchableOpacity
+                              key={star}
+                              onPress={() => {
+                                const currentRating = accommodationVendorRatings[vendorName] || 0;
+                                // If clicking the same star, deselect (set to 0)
+                                // Otherwise, set to the clicked star value
+                                setAccommodationVendorRatings({
+                                  ...accommodationVendorRatings,
+                                  [vendorName]: currentRating === star ? 0 : star
+                                });
+                              }}
+                            >
+                              <Ionicons
+                                name={star <= (accommodationVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
+                                size={32}
+                                color="#FFD700"
+                                style={styles.starIcon}
+                              />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
+                        {/* Description Box */}
+                        <TextInput
+                          style={styles.feedbackDescriptionBox}
+                          placeholder="Write your feedback about the accommodation..."
+                          placeholderTextColor="#999"
+                          multiline
+                          numberOfLines={4}
+                          value={accommodationVendorDescriptions[vendorName] || ''}
+                          onChangeText={(text) => {
+                            setAccommodationVendorDescriptions({
+                              ...accommodationVendorDescriptions,
+                              [vendorName]: text
+                            });
+                          }}
+                        />
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.noDataText}>No accommodation vendors available</Text>
+                  )}
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Fixed Submit Button */}
+            <TouchableOpacity 
+              style={styles.submitFeedbackButton}
+              onPress={() => {
+                Alert.alert('Success', 'Feedback submitted successfully!');
+                setFeedbackModalVisible(false);
+              }}
+            >
+              <Text style={styles.submitFeedbackButtonText}>Submit Feedback</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Toast Notification */}
       {toast.visible && (
@@ -1417,5 +1683,132 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
     flex: 1,
+  },
+  // Feedback Button
+  feedbackButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 8,
+  },
+  feedbackButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Feedback Modal
+  feedbackModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  feedbackModalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '90%',
+    height: '50%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  feedbackModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  feedbackModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  feedbackScrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 0,
+  },
+  feedbackSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  feedbackSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+  feedbackContent: {
+    padding: 8,
+    marginBottom: 16,
+  },
+  vendorFeedbackItem: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  vendorName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 12,
+  },
+  starRatingContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    justifyContent: 'center',
+  },
+  starIcon: {
+    marginHorizontal: 4,
+  },
+  feedbackDescriptionBox: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#000',
+    minHeight: 100,
+    textAlignVertical: 'top',
+    backgroundColor: '#f8f9fa',
+  },
+  submitFeedbackButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+    marginBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingTop: 20,
+  },
+  submitFeedbackButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
