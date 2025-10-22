@@ -150,6 +150,7 @@ export default function MyTripsScreen() {
           onPress: async () => {
             // Clear credentials from AsyncStorage
             await AsyncStorage.removeItem('userEmail');
+            await AsyncStorage.removeItem('userPhone');
             await AsyncStorage.removeItem('userPassword');
             console.log('Credentials cleared, redirecting to index page');
             // Redirect to index page (All Trips)
@@ -293,7 +294,10 @@ export default function MyTripsScreen() {
                   style={styles.sidebarItem}
                   onPress={() => {
                     setSidebarVisible(false);
-                    router.push('/');
+                    router.push({
+                      pathname: '/',
+                      params: { fromMyTrips: 'true' }
+                    } as any);
                   }}
                 >
                   <Ionicons name="globe-outline" size={24} color="#007AFF" />

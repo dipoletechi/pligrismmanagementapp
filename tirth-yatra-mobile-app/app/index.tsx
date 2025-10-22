@@ -61,6 +61,7 @@ export default function HomeScreen() {
   useEffect(() => {
     console.log('Index page params received:', params);
     console.log('fromDashboard param:', params.fromDashboard);
+    console.log('fromMyTrips param:', params.fromMyTrips);
     if (params.loginSuccess === 'true') {
       console.log('Setting login status to true from loginSuccess');
       setIsLoggedIn(true);
@@ -69,8 +70,8 @@ export default function HomeScreen() {
       console.log('Setting login status to false from loginError:', params.loginError);
       setIsLoggedIn(false);
       setLoginError(params.loginError as string);
-    } else if (params.fromDashboard === 'true') {
-      console.log('Setting login status to true from fromDashboard');
+    } else if (params.fromDashboard === 'true' || params.fromMyTrips === 'true') {
+      console.log('Setting login status to true from fromDashboard or fromMyTrips');
       setIsLoggedIn(true);
       setLoginError(null);
     } else {
@@ -79,9 +80,10 @@ export default function HomeScreen() {
       const checkLoginStatus = async () => {
         try {
           const userEmail = await AsyncStorage.getItem('userEmail');
+          const userPhone = await AsyncStorage.getItem('userPhone');
           const userPassword = await AsyncStorage.getItem('userPassword');
-          const hasCredentials = !!(userEmail && userPassword);
-          console.log('AsyncStorage login check:', { userEmail: !!userEmail, userPassword: !!userPassword, hasCredentials });
+          const hasCredentials = !!((userEmail || userPhone) && userPassword);
+          console.log('AsyncStorage login check:', { userEmail: !!userEmail, userPhone: !!userPhone, userPassword: !!userPassword, hasCredentials });
           setIsLoggedIn(hasCredentials);
         } catch (error) {
           console.error('Error checking login status:', error);
@@ -102,18 +104,27 @@ export default function HomeScreen() {
   const checkAccountStatus = async () => {
     try {
       const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPhone = await AsyncStorage.getItem('userPhone');
       const storedPassword = await AsyncStorage.getItem('userPassword');
       
-      if (storedEmail && storedPassword) {
+      if ((storedEmail || storedPhone) && storedPassword) {
+        const requestBody: any = {
+          password: storedPassword
+        };
+        
+        if (storedEmail) {
+          requestBody.email = storedEmail;
+        }
+        if (storedPhone) {
+          requestBody.phone = storedPhone;
+        }
+        
         const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            email: storedEmail,
-            password: storedPassword
-          }),
+          body: JSON.stringify(requestBody),
         });
         
         const data = await response.json();
@@ -137,10 +148,23 @@ export default function HomeScreen() {
   const fetchUserApplications = async () => {
     try {
       const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPhone = await AsyncStorage.getItem('userPhone');
       const storedPassword = await AsyncStorage.getItem('userPassword');
       
-      if (!storedEmail || !storedPassword) {
+      if (!(storedEmail || storedPhone) || !storedPassword) {
         return;
+      }
+
+      const requestBody: any = {
+        password: storedPassword,
+        language: language // Send language preference
+      };
+      
+      if (storedEmail) {
+        requestBody.email = storedEmail;
+      }
+      if (storedPhone) {
+        requestBody.phone = storedPhone;
       }
 
       // Get user ID by calling login API
@@ -149,11 +173,7 @@ export default function HomeScreen() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: storedEmail,
-          password: storedPassword,
-          language: language // Send language preference
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const loginData = await loginResponse.json();
@@ -190,103 +210,23 @@ export default function HomeScreen() {
 
   // Check login status and navigate to dashboard
   const navigateToDashboard = async () => {
-    try {
-      setSidebarVisible(false);
-      console.log('navigateToDashboard called');
-      
-      // Get stored login credentials from AsyncStorage
-      const storedEmail = await AsyncStorage.getItem('userEmail');
-      const storedPassword = await AsyncStorage.getItem('userPassword');
-      
-      console.log('Using stored credentials:', { email: storedEmail, password: storedPassword ? '***' : 'null' });
-      
-      if (!storedEmail || !storedPassword) {
-        console.log('No stored credentials found, using default');
-        // If no stored credentials, use default ones
-        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: storedEmail,
-            password: storedPassword
-          }),
-        });
-        
-        const data = await response.json();
-        console.log('Login API Response:', data);
-        console.log('Response OK:', response.ok);
-        console.log('Data Success:', data.success);
-        
-        if (response.ok && data.success === true) {
-          console.log('Login successful - navigating to dashboard with success');
-          router.push({
-            pathname: '/dashboard',
-            params: { loginSuccess: 'true' }
-          });
-        } else {
-          console.log('Login failed - navigating to dashboard with error:', data.message);
-          router.push({
-            pathname: '/dashboard',
-            params: { 
-              error: data.message || 'Login failed. Please try again.',
-              loginError: 'true'
-            }
-          });
-        }
-        return;
-      }
-      
-      // Call login API with stored credentials
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: storedEmail,
-          password: storedPassword,
-          language: language // Send language preference
-        }),
-      });
-
-      const data = await response.json();
-      
-      console.log('Login API Response:', data);
-      console.log('Response OK:', response.ok);
-      console.log('Data Success:', data.success);
-      
-      // Check both response.ok AND data.success
-      if (response.ok && data.success === true) {
-        console.log('Login successful - navigating to dashboard with success');
-        // Login successful - navigate to dashboard with success parameter
-        router.push({
-          pathname: '/dashboard',
-          params: { loginSuccess: 'true' }
-        });
-      } else {
-        console.log('Login failed - navigating to dashboard with error:', data.message);
-        // Login failed or account in review - navigate to dashboard with error
-        router.push({
-          pathname: '/dashboard',
-          params: { 
-            error: data.message || 'Login failed. Please try again.',
-            loginError: 'true'
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Login check error:', error);
-      // Navigate to dashboard with error
+    setSidebarVisible(false);
+    console.log('navigateToDashboard called');
+    
+    // If user is already logged in on this page, just navigate with fromTrips param
+    // Dashboard will check account status itself
+    if (isLoggedIn) {
+      console.log('User already logged in, navigating with fromTrips param');
       router.push({
         pathname: '/dashboard',
-        params: { 
-          error: 'Network error. Please check your connection.',
-          loginError: 'true'
-        }
+        params: { fromTrips: 'true' }
       });
+      return;
     }
+    
+    // If not logged in, redirect to login page
+    console.log('User not logged in, redirecting to login');
+    router.push('/login');
   };
 
   const fetchTrips = async () => {
@@ -615,6 +555,7 @@ export default function HomeScreen() {
                           console.log('Sign out pressed in index page');
                           // Clear credentials from AsyncStorage
                           await AsyncStorage.removeItem('userEmail');
+                          await AsyncStorage.removeItem('userPhone');
                           await AsyncStorage.removeItem('userPassword');
                           console.log('Credentials cleared from AsyncStorage');
                           

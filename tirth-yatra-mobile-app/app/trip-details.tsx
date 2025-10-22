@@ -742,7 +742,7 @@ export default function TripDetailsScreen() {
           }]
         );
       } else {
-        Alert.alert('Error', t('failedToSubmitApplication'));
+        //Alert.alert('Error', t('failedToSubmitApplication'));
       }
 
     } catch (error) {

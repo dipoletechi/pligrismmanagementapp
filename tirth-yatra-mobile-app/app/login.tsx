@@ -22,7 +22,9 @@ export default function LoginScreen() {
   const { t, language } = useLanguage();
   
   // Form states
+  const [loginType, setLoginType] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,12 @@ export default function LoginScreen() {
     return emailRegex.test(email);
   };
 
+  // Validate phone
+  const validatePhone = (phone: string) => {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone);
+  };
+
   // Validate password
   const validatePassword = (password: string) => {
     return password.length >= 6;
@@ -56,6 +64,10 @@ export default function LoginScreen() {
         if (!value.trim()) error = t('emailRequired');
         else if (!validateEmail(value)) error = t('validEmailRequired');
         break;
+      case 'phone':
+        if (!value.trim()) error = 'Phone number is required';
+        else if (!validatePhone(value)) error = 'Please enter a valid 10-digit phone number';
+        break;
       case 'password':
         if (!value.trim()) error = t('passwordRequired');
         else if (!validatePassword(value)) error = t('passwordMinLength');
@@ -69,7 +81,12 @@ export default function LoginScreen() {
   const handleFieldBlur = (field: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
     
-    const error = validateField(field, field === 'email' ? email : password);
+    let value = '';
+    if (field === 'email') value = email;
+    else if (field === 'phone') value = phone;
+    else if (field === 'password') value = password;
+    
+    const error = validateField(field, value);
     setErrors(prev => ({ ...prev, [field]: error }));
   };
 
@@ -79,13 +96,21 @@ export default function LoginScreen() {
       setLoading(true);
       setLoginError(null); // Clear any previous errors
       
-      const requestData = {
-        email: email,
+      const requestData: any = {
         password: password
       };
 
-      // Store credentials for later use
-      await AsyncStorage.setItem('userEmail', email);
+      // Add email or phone based on login type
+      if (loginType === 'email') {
+        requestData.email = email;
+        // Store credentials for later use
+        await AsyncStorage.setItem('userEmail', email);
+      } else {
+        requestData.phone = phone;
+        // Store credentials for later use
+        await AsyncStorage.setItem('userPhone', phone);
+      }
+
       await AsyncStorage.setItem('userPassword', password);
 
       const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
@@ -171,22 +196,36 @@ export default function LoginScreen() {
 
   // Handle login
   const handleLogin = () => {
-    // Validate all fields
-    const emailError = validateField('email', email);
+    // Validate all fields based on login type
+    let emailError = '';
+    let phoneError = '';
+    
+    if (loginType === 'email') {
+      emailError = validateField('email', email);
+    } else {
+      phoneError = validateField('phone', phone);
+    }
+    
     const passwordError = validateField('password', password);
     
     setErrors({
       email: emailError,
+      phone: phoneError,
       password: passwordError
     });
     
     setTouched({
-      email: true,
+      email: loginType === 'email',
+      phone: loginType === 'phone',
       password: true
     });
 
     // If no errors, proceed with login
-    if (!emailError && !passwordError) {
+    const hasErrors = loginType === 'email' 
+      ? (emailError || passwordError) 
+      : (phoneError || passwordError);
+      
+    if (!hasErrors) {
       callLoginAPI();
     } else {
       Alert.alert(t('validationError'), t('pleaseFixErrors'));
@@ -228,35 +267,107 @@ export default function LoginScreen() {
               <Text style={styles.formTitle}>{t('welcomeBack')}</Text>
               <Text style={styles.formSubtitle}>{t('signInToAccount')}</Text>
 
-              {/* Email Input */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>{t('email')} *</Text>
-                <View style={[
-                  styles.inputWrapper,
-                  errors.email && touched.email && styles.inputError
-                ]}>
+              {/* Login Type Toggle */}
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.toggleButton, 
+                    loginType === 'email' && styles.toggleButtonActive
+                  ]}
+                  onPress={() => setLoginType('email')}
+                >
                   <Ionicons 
                     name="mail-outline" 
                     size={20} 
-                    color={errors.email && touched.email ? "#ff4444" : "#666"} 
-                    style={styles.inputIcon} 
+                    color={loginType === 'email' ? '#fff' : '#666'} 
                   />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={t('enterYourEmail')}
-                    placeholderTextColor="#999"
-                    value={email}
-                    onChangeText={setEmail}
-                    onBlur={() => handleFieldBlur('email')}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
+                  <Text style={[
+                    styles.toggleText,
+                    loginType === 'email' && styles.toggleTextActive
+                  ]}>
+                    {t('email')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[
+                    styles.toggleButton, 
+                    loginType === 'phone' && styles.toggleButtonActive
+                  ]}
+                  onPress={() => setLoginType('phone')}
+                >
+                  <Ionicons 
+                    name="call-outline" 
+                    size={20} 
+                    color={loginType === 'phone' ? '#fff' : '#666'} 
                   />
-                </View>
-                {errors.email && touched.email && (
-                  <Text style={styles.errorText}>{errors.email}</Text>
-                )}
+                  <Text style={[
+                    styles.toggleText,
+                    loginType === 'phone' && styles.toggleTextActive
+                  ]}>
+                    {t('phone')}
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              {/* Email or Phone Input - Based on Login Type */}
+              {loginType === 'email' ? (
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>{t('email')} *</Text>
+                  <View style={[
+                    styles.inputWrapper,
+                    errors.email && touched.email && styles.inputError
+                  ]}>
+                    <Ionicons 
+                      name="mail-outline" 
+                      size={20} 
+                      color={errors.email && touched.email ? "#ff4444" : "#666"} 
+                      style={styles.inputIcon} 
+                    />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={t('enterYourEmail')}
+                      placeholderTextColor="#999"
+                      value={email}
+                      onChangeText={setEmail}
+                      onBlur={() => handleFieldBlur('email')}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                  {errors.email && touched.email && (
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  )}
+                </View>
+              ) : (
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>{t('phone')} *</Text>
+                  <View style={[
+                    styles.inputWrapper,
+                    errors.phone && touched.phone && styles.inputError
+                  ]}>
+                    <Ionicons 
+                      name="call-outline" 
+                      size={20} 
+                      color={errors.phone && touched.phone ? "#ff4444" : "#666"} 
+                      style={styles.inputIcon} 
+                    />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={t('enterYourPhone')}
+                      placeholderTextColor="#999"
+                      value={phone}
+                      onChangeText={setPhone}
+                      onBlur={() => handleFieldBlur('phone')}
+                      keyboardType="phone-pad"
+                      maxLength={10}
+                    />
+                  </View>
+                  {errors.phone && touched.phone && (
+                    <Text style={styles.errorText}>{errors.phone}</Text>
+                  )}
+                </View>
+              )}
 
               {/* Password Input */}
               <View style={styles.inputContainer}>
@@ -408,6 +519,41 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginBottom: 40,
+  },
+  // Toggle container
+  toggleContainer: {
+    flexDirection: 'row',
+    marginBottom: 30,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    padding: 4,
+  },
+  toggleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#007AFF',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  toggleText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
+  },
+  toggleTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
   inputContainer: {
     marginBottom: 20,

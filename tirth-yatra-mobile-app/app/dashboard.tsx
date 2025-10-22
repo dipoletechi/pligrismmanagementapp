@@ -60,6 +60,7 @@ export default function DashboardScreen() {
   const checkAccountStatus = async () => {
     try {
       const storedEmail = await AsyncStorage.getItem('userEmail');
+      const storedPhone = await AsyncStorage.getItem('userPhone');
       const storedPassword = await AsyncStorage.getItem('userPassword');
       const storedUserId = await AsyncStorage.getItem('userId');
       
@@ -68,16 +69,24 @@ export default function DashboardScreen() {
         setUserId(parseInt(storedUserId));
       }
       
-      if (storedEmail && storedPassword) {
+      if ((storedEmail || storedPhone) && storedPassword) {
+        const requestBody: any = {
+          password: storedPassword
+        };
+        
+        if (storedEmail) {
+          requestBody.email = storedEmail;
+        }
+        if (storedPhone) {
+          requestBody.phone = storedPhone;
+        }
+        
         const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            email: storedEmail,
-            password: storedPassword
-          }),
+          body: JSON.stringify(requestBody),
         });
         
         const data = await response.json();
@@ -222,6 +231,7 @@ export default function DashboardScreen() {
           onPress: async () => {
             // Clear credentials from AsyncStorage
             await AsyncStorage.removeItem('userEmail');
+            await AsyncStorage.removeItem('userPhone');
             await AsyncStorage.removeItem('userPassword');
             // Redirect to index page (All Trips)
             router.replace('/');
@@ -341,7 +351,21 @@ export default function DashboardScreen() {
             <>
               {/* My Trip Stats */}
               <View style={styles.statsContainer}>
-                <Text style={styles.sectionTitle}>{t('myTrip')}</Text>
+                <View style={styles.sectionTitleContainer}>
+                  <Text style={styles.sectionTitle}>{t('myTrip')}</Text>
+                  {/* Show My QR Button - Positioned in corner */}
+                  <TouchableOpacity 
+                    style={styles.qrButtonCorner}
+                    onPress={generateQRCode}
+                    disabled={qrLoading}
+                  >
+                    {qrLoading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Ionicons name="qr-code-outline" size={24} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                </View>
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="airplane" size={24} color="#007AFF" />
@@ -375,25 +399,11 @@ export default function DashboardScreen() {
                 </View>
               </View>
 
-              {/* Show My QR Button */}
-              <TouchableOpacity 
-                style={styles.qrButton}
-                onPress={generateQRCode}
-                disabled={qrLoading}
-              >
-                {qrLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="qr-code-outline" size={24} color="#fff" />
-                    <Text style={styles.qrButtonText}>{t('showMyQR')}</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-
               {/* General Trip Stats */}
               <View style={styles.statsContainer}>
-                <Text style={styles.sectionTitle}>{t('generalTripStatistics')}</Text>
+                <View style={styles.sectionTitleContainer}>
+                  <Text style={styles.sectionTitle}>{t('generalTripStatistics')}</Text>
+                </View>
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="globe" size={24} color="#007AFF" />
@@ -516,23 +526,30 @@ const styles = StyleSheet.create({
     padding: 0,
     marginHorizontal: 0,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-    textAlign: 'center',
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#007AFF',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 0,
     marginHorizontal: -20,
     marginTop: -20,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+    position: 'relative',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    flex: 1,
   },
   statsRow: {
     flexDirection: 'row',
@@ -739,6 +756,22 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  qrButtonCorner: {
+    position: 'absolute',
+    right: 15,
+    top: '40%',
+    transform: [{ translateY: -8 }],
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   qrButton: {
     backgroundColor: '#007AFF',

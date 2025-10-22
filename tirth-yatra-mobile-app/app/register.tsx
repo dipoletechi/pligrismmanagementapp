@@ -53,6 +53,8 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Registration response data
   const [userId, setUserId] = useState<number | null>(null);
@@ -190,7 +192,37 @@ export default function RegisterScreen() {
   };
 
   const validatePassword = (password: string) => {
-    return password.length >= 6;
+    if (password.length < 8) return false;
+    
+    // At least one uppercase letter
+    if (!/[A-Z]/.test(password)) return false;
+    
+    // At least one lowercase letter
+    if (!/[a-z]/.test(password)) return false;
+    
+    // At least one number
+    if (!/[0-9]/.test(password)) return false;
+    
+    // At least one special character
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return false;
+    
+    return true;
+  };
+
+  const getPasswordStrength = (password: string) => {
+    if (password.length === 0) return { strength: 'none', color: '#ccc', text: '' };
+    
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
+    
+    if (score <= 2) return { strength: 'weak', color: '#ff4444', text: 'Weak' };
+    if (score <= 3) return { strength: 'fair', color: '#ff9800', text: 'Fair' };
+    if (score <= 4) return { strength: 'good', color: '#2196F3', text: 'Good' };
+    return { strength: 'strong', color: '#4CAF50', text: 'Strong' };
   };
 
   const validateOTP = (otp: string) => {
@@ -212,7 +244,11 @@ export default function RegisterScreen() {
         break;
       case 'password':
         if (!value.trim()) error = 'Password is required';
-        else if (!validatePassword(value)) error = 'Password must be at least 6 characters';
+        else if (value.length < 8) error = 'Password must be at least 8 characters';
+        else if (!/[A-Z]/.test(value)) error = 'Password must contain at least 1 uppercase letter';
+        else if (!/[a-z]/.test(value)) error = 'Password must contain at least 1 lowercase letter';
+        else if (!/[0-9]/.test(value)) error = 'Password must contain at least 1 number';
+        else if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)) error = 'Password must contain at least 1 special character';
         break;
       case 'confirmPassword':
         if (!value.trim()) error = 'Confirm password is required';
@@ -1121,9 +1157,47 @@ export default function RegisterScreen() {
                         value={password}
                         onChangeText={setPassword}
                         onBlur={() => handleFieldBlur('password')}
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                       />
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.eyeIcon}
+                      >
+                        <Ionicons 
+                          name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                          size={20} 
+                          color="#666" 
+                        />
+                      </TouchableOpacity>
                     </View>
+                    {password.length > 0 && (
+                      <View style={styles.passwordStrengthContainer}>
+                        <View style={[styles.passwordStrengthBar, { backgroundColor: getPasswordStrength(password).color, width: `${(password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) ? 100 : 20}%` }]} />
+                        <Text style={[styles.passwordStrengthText, { color: getPasswordStrength(password).color }]}>
+                          {getPasswordStrength(password).text}
+                        </Text>
+                      </View>
+                    )}
+                    {password.length > 0 && !validatePassword(password) && (
+                      <View style={styles.passwordRequirements}>
+                        <Text style={styles.requirementsTitle}>Password must contain:</Text>
+                        <Text style={[styles.requirementItem, password.length >= 8 && styles.requirementMet]}>
+                          {password.length >= 8 ? '✓' : '○'} At least 8 characters
+                        </Text>
+                        <Text style={[styles.requirementItem, /[A-Z]/.test(password) && styles.requirementMet]}>
+                          {/[A-Z]/.test(password) ? '✓' : '○'} One uppercase letter (A-Z)
+                        </Text>
+                        <Text style={[styles.requirementItem, /[a-z]/.test(password) && styles.requirementMet]}>
+                          {/[a-z]/.test(password) ? '✓' : '○'} One lowercase letter (a-z)
+                        </Text>
+                        <Text style={[styles.requirementItem, /[0-9]/.test(password) && styles.requirementMet]}>
+                          {/[0-9]/.test(password) ? '✓' : '○'} One number (0-9)
+                        </Text>
+                        <Text style={[styles.requirementItem, /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) && styles.requirementMet]}>
+                          {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '✓' : '○'} One special character (!@#$%^&*)
+                        </Text>
+                      </View>
+                    )}
                     {errors.password && touched.password && (
                       <Text style={styles.errorText}>{errors.password}</Text>
                     )}
@@ -1148,8 +1222,18 @@ export default function RegisterScreen() {
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         onBlur={() => handleFieldBlur('confirmPassword')}
-                        secureTextEntry
+                        secureTextEntry={!showConfirmPassword}
                       />
+                      <TouchableOpacity
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={styles.eyeIcon}
+                      >
+                        <Ionicons 
+                          name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} 
+                          size={20} 
+                          color="#666" 
+                        />
+                      </TouchableOpacity>
                     </View>
                     {errors.confirmPassword && touched.confirmPassword && (
                       <Text style={styles.errorText}>{errors.confirmPassword}</Text>
@@ -1853,5 +1937,49 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     fontStyle: 'italic',
+  },
+  // Password visibility toggle
+  eyeIcon: {
+    padding: 8,
+  },
+  // Password strength indicator
+  passwordStrengthContainer: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  passwordStrengthBar: {
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 4,
+  },
+  passwordStrengthText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'right',
+  },
+  // Password requirements
+  passwordRequirements: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  requirementsTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  requirementItem: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    paddingLeft: 4,
+  },
+  requirementMet: {
+    color: '#4CAF50',
+    fontWeight: '500',
   },
 });
