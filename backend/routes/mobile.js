@@ -22,6 +22,30 @@ const Event = require('../models/Event');
 const SupportTicket = require('../models/SupportTicket');
 const User = require('../models/User');
 
+// Middleware to authenticate token
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'Access token required'
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+    if (err) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+    req.user = user;
+    next();
+  });
+};
+
 // Mobile API - Read-only endpoints for all users
 
 // Get all destinations
@@ -270,6 +294,11 @@ router.get('/trips/:id', async (req, res) => {
       attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
+    // Get all amenities
+    const allAmenities = await Amenity.findAll({
+      attributes: ['id', 'title', 'description']
+    });
+    
     // Get all food-related data for reference
     const allFoodSchedules = await FoodSchedule.findAll({
       attributes: ['id', 'title', 'start_time', 'end_time']
@@ -338,6 +367,7 @@ router.get('/trips/:id', async (req, res) => {
         Object.keys(accommodationsData).forEach(day => {
           enhancedAccommodationsByDay[day] = accommodationsData[day].map(item => ({
             ...item,
+            vendorId: item.vendor, // Keep the original vendor ID
             vendor: getVendorName(item.vendor, allAccommodationVendors), // Replace ID with name
             vendorName: getVendorName(item.vendor, allAccommodationVendors)
           }));
@@ -354,6 +384,7 @@ router.get('/trips/:id', async (req, res) => {
         Object.keys(foodData).forEach(day => {
           enhancedFoodVendorsByDay[day] = foodData[day].map(item => ({
             ...item,
+            vendorIds: item.vendors, // Keep the original vendor IDs array
             vendors: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)), // Replace IDs with names
             vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)),
             schedules: item.schedules.map(scheduleId => getScheduleName(scheduleId)), // Replace IDs with names
@@ -366,6 +397,109 @@ router.get('/trips/:id', async (req, res) => {
         });
       } catch (e) {
         enhancedFoodVendorsByDay = trip.food_vendors_by_day;
+      }
+    }
+    
+    // Parse and enhance drivers_by_day
+    let enhancedDriversByDay = {};
+    if (trip.drivers_by_day) {
+      try {
+        const driversData = JSON.parse(trip.drivers_by_day);
+        Object.keys(driversData).forEach(day => {
+          if (Array.isArray(driversData[day])) {
+            enhancedDriversByDay[day] = driversData[day].map(driverId => {
+              const driver = allDrivers.find(d => d.id === driverId);
+              return driver ? {
+                id: driver.id,
+                driverId: driver.id,
+                name: `${driver.first_name} ${driver.last_name}`,
+                firstName: driver.first_name,
+                lastName: driver.last_name,
+                phone: driver.phone_number,
+                license: driver.driving_license_no,
+                vendor: driver.vendor ? driver.vendor.title : 'Unknown Vendor'
+              } : null;
+            }).filter(driver => driver !== null);
+          }
+        });
+      } catch (e) {
+        enhancedDriversByDay = {};
+      }
+    }
+    
+    // Parse and enhance conductors_by_day
+    let enhancedConductorsByDay = {};
+    if (trip.conductors_by_day) {
+      try {
+        const conductorsData = JSON.parse(trip.conductors_by_day);
+        Object.keys(conductorsData).forEach(day => {
+          if (Array.isArray(conductorsData[day])) {
+            enhancedConductorsByDay[day] = conductorsData[day].map(conductorId => {
+              const conductor = allConductors.find(c => c.id === conductorId);
+              return conductor ? {
+                id: conductor.id,
+                conductorId: conductor.id,
+                name: `${conductor.first_name} ${conductor.last_name}`,
+                firstName: conductor.first_name,
+                lastName: conductor.last_name,
+                phone: conductor.phone_number,
+                vendor: conductor.vendor ? conductor.vendor.title : 'Unknown Vendor'
+              } : null;
+            }).filter(conductor => conductor !== null);
+          }
+        });
+      } catch (e) {
+        enhancedConductorsByDay = {};
+      }
+    }
+    
+    // Parse and enhance buses_by_day
+    let enhancedBusesByDay = {};
+    if (trip.buses_by_day) {
+      try {
+        const busesData = JSON.parse(trip.buses_by_day);
+        Object.keys(busesData).forEach(day => {
+          if (Array.isArray(busesData[day])) {
+            enhancedBusesByDay[day] = busesData[day].map(busId => {
+              const bus = allBuses.find(b => b.id === busId);
+              return bus ? {
+                id: bus.id,
+                busId: bus.id,
+                title: bus.title,
+                model: bus.model,
+                make: bus.make,
+                seats: bus.no_of_sittings,
+                rcNumber: bus.rc_no
+              } : null;
+            }).filter(bus => bus !== null);
+          }
+        });
+      } catch (e) {
+        enhancedBusesByDay = {};
+      }
+    }
+    
+    // Parse and enhance vendors_by_day (convert any IDs to names if needed)
+    let enhancedVendorsByDay = {};
+    if (trip.vendors_by_day) {
+      try {
+        const vendorsData = typeof trip.vendors_by_day === 'string' 
+          ? JSON.parse(trip.vendors_by_day) 
+          : trip.vendors_by_day;
+        
+        Object.keys(vendorsData).forEach(day => {
+          const vendorValue = vendorsData[day];
+          // Check if it's an ID (number) or already a name (string)
+          if (typeof vendorValue === 'number') {
+            // It's an ID, convert to name
+            enhancedVendorsByDay[day] = getVendorName(vendorValue, allTransportVendors);
+          } else {
+            // Already a name or string, keep as is
+            enhancedVendorsByDay[day] = vendorValue;
+          }
+        });
+      } catch (e) {
+        enhancedVendorsByDay = trip.vendors_by_day;
       }
     }
     
@@ -439,8 +573,30 @@ router.get('/trips/:id', async (req, res) => {
       }
     }
     
-    // Create filtered trip object without id
+    // Parse and enhance selected buses (for all days selection)
+    let enhancedSelectedBuses = [];
+    if (trip.selected_buses) {
+      try {
+        const busIds = JSON.parse(trip.selected_buses);
+        enhancedSelectedBuses = busIds.map(busId => {
+          const bus = allBuses.find(b => b.id === busId);
+          return bus ? {
+            id: bus.id,
+            title: bus.title,
+            model: bus.model,
+            make: bus.make,
+            seats: bus.no_of_sittings,
+            rcNumber: bus.rc_no
+          } : null;
+        }).filter(Boolean);
+      } catch (e) {
+        enhancedSelectedBuses = [];
+      }
+    }
+    
+    // Create filtered trip object with id
     const filteredTrip = {
+      id: trip.id,
       title: trip.title,
       description: trip.description,
       destination: trip.destination,
@@ -462,10 +618,11 @@ router.get('/trips/:id', async (req, res) => {
       selected_drivers_details: enhancedSelectedDrivers,
       selected_conductors_details: enhancedSelectedConductors,
       selected_buses: trip.selected_buses,
-      drivers_by_day: trip.drivers_by_day,
-      conductors_by_day: trip.conductors_by_day,
-      buses_by_day: trip.buses_by_day,
-      vendors_by_day: trip.vendors_by_day,
+      selected_buses_details: enhancedSelectedBuses,
+      drivers_by_day: enhancedDriversByDay,
+      conductors_by_day: enhancedConductorsByDay,
+      buses_by_day: enhancedBusesByDay,
+      vendors_by_day: enhancedVendorsByDay,
       time_by_day: trip.time_by_day,
       accommodations_by_day: enhancedAccommodationsByDay,
       selected_accommodation_vendor: trip.selected_accommodation_vendor,
@@ -501,9 +658,12 @@ router.get('/trips/:id', async (req, res) => {
       allAccommodationVendors: allAccommodationVendors,
       allTransportVendors: allTransportVendors,
       allFoodVendors: allFoodVendors,
+      allFoodCategories: allFoodCategories,
+      allFoodItems: allFoodItems,
       allDrivers: allDrivers,
       allBuses: allBuses,
-      allConductors: allConductors
+      allConductors: allConductors,
+      allAmenities: allAmenities
     };
     
     res.json({
@@ -643,6 +803,11 @@ router.get('/trips/:id/details', async (req, res) => {
       attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
+    // Get all amenities
+    const allAmenities = await Amenity.findAll({
+      attributes: ['id', 'title', 'description']
+    });
+    
     // Get all food-related data for reference
     const allFoodSchedules = await FoodSchedule.findAll({
       attributes: ['id', 'title', 'start_time', 'end_time']
@@ -734,6 +899,7 @@ router.get('/trips/:id/details', async (req, res) => {
         Object.keys(accommodationsData).forEach(day => {
           enhancedAccommodationsByDay[day] = accommodationsData[day].map(item => ({
             ...item,
+            vendorId: item.vendor, // Keep the original vendor ID
             vendor: getVendorName(item.vendor, allAccommodationVendors), // Replace ID with name
             vendorName: getVendorName(item.vendor, allAccommodationVendors)
           }));
@@ -750,6 +916,7 @@ router.get('/trips/:id/details', async (req, res) => {
         Object.keys(foodData).forEach(day => {
           enhancedFoodVendorsByDay[day] = foodData[day].map(item => ({
             ...item,
+            vendorIds: item.vendors, // Keep the original vendor IDs array
             vendors: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)), // Replace IDs with names
             vendorNames: item.vendors.map(vendorId => getVendorName(vendorId, allFoodVendors)),
             schedules: item.schedules.map(scheduleId => getScheduleName(scheduleId)), // Replace IDs with names
@@ -762,6 +929,109 @@ router.get('/trips/:id/details', async (req, res) => {
         });
       } catch (e) {
         enhancedFoodVendorsByDay = trip.food_vendors_by_day;
+      }
+    }
+    
+    // Parse and enhance drivers_by_day
+    let enhancedDriversByDay = {};
+    if (trip.drivers_by_day) {
+      try {
+        const driversData = JSON.parse(trip.drivers_by_day);
+        Object.keys(driversData).forEach(day => {
+          if (Array.isArray(driversData[day])) {
+            enhancedDriversByDay[day] = driversData[day].map(driverId => {
+              const driver = allDrivers.find(d => d.id === driverId);
+              return driver ? {
+                id: driver.id,
+                driverId: driver.id,
+                name: `${driver.first_name} ${driver.last_name}`,
+                firstName: driver.first_name,
+                lastName: driver.last_name,
+                phone: driver.phone_number,
+                license: driver.driving_license_no,
+                vendor: driver.vendor ? driver.vendor.title : 'Unknown Vendor'
+              } : null;
+            }).filter(driver => driver !== null);
+          }
+        });
+      } catch (e) {
+        enhancedDriversByDay = {};
+      }
+    }
+    
+    // Parse and enhance conductors_by_day
+    let enhancedConductorsByDay = {};
+    if (trip.conductors_by_day) {
+      try {
+        const conductorsData = JSON.parse(trip.conductors_by_day);
+        Object.keys(conductorsData).forEach(day => {
+          if (Array.isArray(conductorsData[day])) {
+            enhancedConductorsByDay[day] = conductorsData[day].map(conductorId => {
+              const conductor = allConductors.find(c => c.id === conductorId);
+              return conductor ? {
+                id: conductor.id,
+                conductorId: conductor.id,
+                name: `${conductor.first_name} ${conductor.last_name}`,
+                firstName: conductor.first_name,
+                lastName: conductor.last_name,
+                phone: conductor.phone_number,
+                vendor: conductor.vendor ? conductor.vendor.title : 'Unknown Vendor'
+              } : null;
+            }).filter(conductor => conductor !== null);
+          }
+        });
+      } catch (e) {
+        enhancedConductorsByDay = {};
+      }
+    }
+    
+    // Parse and enhance buses_by_day
+    let enhancedBusesByDay = {};
+    if (trip.buses_by_day) {
+      try {
+        const busesData = JSON.parse(trip.buses_by_day);
+        Object.keys(busesData).forEach(day => {
+          if (Array.isArray(busesData[day])) {
+            enhancedBusesByDay[day] = busesData[day].map(busId => {
+              const bus = allBuses.find(b => b.id === busId);
+              return bus ? {
+                id: bus.id,
+                busId: bus.id,
+                title: bus.title,
+                model: bus.model,
+                make: bus.make,
+                seats: bus.no_of_sittings,
+                rcNumber: bus.rc_no
+              } : null;
+            }).filter(bus => bus !== null);
+          }
+        });
+      } catch (e) {
+        enhancedBusesByDay = {};
+      }
+    }
+    
+    // Parse and enhance vendors_by_day (convert any IDs to names if needed)
+    let enhancedVendorsByDay = {};
+    if (trip.vendors_by_day) {
+      try {
+        const vendorsData = typeof trip.vendors_by_day === 'string' 
+          ? JSON.parse(trip.vendors_by_day) 
+          : trip.vendors_by_day;
+        
+        Object.keys(vendorsData).forEach(day => {
+          const vendorValue = vendorsData[day];
+          // Check if it's an ID (number) or already a name (string)
+          if (typeof vendorValue === 'number') {
+            // It's an ID, convert to name
+            enhancedVendorsByDay[day] = getVendorName(vendorValue, allTransportVendors);
+          } else {
+            // Already a name or string, keep as is
+            enhancedVendorsByDay[day] = vendorValue;
+          }
+        });
+      } catch (e) {
+        enhancedVendorsByDay = trip.vendors_by_day;
       }
     }
     
@@ -811,8 +1081,30 @@ router.get('/trips/:id/details', async (req, res) => {
       }
     }
     
-    // Create filtered trip object without id
+    // Parse and enhance selected buses (for all days selection)
+    let enhancedSelectedBuses = [];
+    if (trip.selected_buses) {
+      try {
+        const busIds = JSON.parse(trip.selected_buses);
+        enhancedSelectedBuses = busIds.map(busId => {
+          const bus = allBuses.find(b => b.id === busId);
+          return bus ? {
+            id: bus.id,
+            title: bus.title,
+            model: bus.model,
+            make: bus.make,
+            seats: bus.no_of_sittings,
+            rcNumber: bus.rc_no
+          } : null;
+        }).filter(Boolean);
+      } catch (e) {
+        enhancedSelectedBuses = [];
+      }
+    }
+    
+    // Create filtered trip object with id
     const filteredTrip = {
+      id: trip.id,
       title: trip.title,
       description: trip.description,
       destination: trip.destination,
@@ -834,10 +1126,11 @@ router.get('/trips/:id/details', async (req, res) => {
       selected_drivers_details: enhancedSelectedDrivers,
       selected_conductors_details: enhancedSelectedConductors,
       selected_buses: trip.selected_buses,
-      drivers_by_day: trip.drivers_by_day,
-      conductors_by_day: trip.conductors_by_day,
-      buses_by_day: trip.buses_by_day,
-      vendors_by_day: trip.vendors_by_day,
+      selected_buses_details: enhancedSelectedBuses,
+      drivers_by_day: enhancedDriversByDay,
+      conductors_by_day: enhancedConductorsByDay,
+      buses_by_day: enhancedBusesByDay,
+      vendors_by_day: enhancedVendorsByDay,
       time_by_day: trip.time_by_day,
       accommodations_by_day: enhancedAccommodationsByDay,
       selected_accommodation_vendor: trip.selected_accommodation_vendor,
@@ -873,9 +1166,12 @@ router.get('/trips/:id/details', async (req, res) => {
       allAccommodationVendors: allAccommodationVendors,
       allTransportVendors: allTransportVendors,
       allFoodVendors: allFoodVendors,
+      allFoodCategories: allFoodCategories,
+      allFoodItems: allFoodItems,
       allDrivers: allDrivers,
       allBuses: allBuses,
-      allConductors: allConductors
+      allConductors: allConductors,
+      allAmenities: allAmenities
     };
 
     res.json({
@@ -2914,6 +3210,329 @@ router.get('/check-account-status', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error checking account status',
+      error: error.message
+    });
+  }
+});
+
+// Get user's feedback for a trip
+router.get('/feedback/trip/:tripId/user/:userId', async (req, res) => {
+  try {
+    const { tripId, userId } = req.params;
+
+    // Get overall trip feedback
+    const [tripFeedback] = await sequelize.query(
+      `SELECT * FROM trip_feedback WHERE trip_id = ? AND user_id = ? LIMIT 1`,
+      {
+        replacements: [tripId, userId],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    // Get vendor feedback
+    const vendorFeedback = await sequelize.query(
+      `SELECT * FROM vendor_feedback WHERE tripid = ? AND userId = ?`,
+      {
+        replacements: [tripId, userId],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    // Get all vendors for name mapping
+    const allTransportVendors = await TransportVendor.findAll({
+      attributes: ['id', 'title']
+    });
+    const allAccommodationVendors = await AccommodationVendor.findAll({
+      attributes: ['id', 'title']
+    });
+    const allFoodVendors = await FoodVendor.findAll({
+      attributes: ['id', 'title']
+    });
+
+    // Helper to get vendor name by ID
+    const getVendorNameById = (vendorId, vendors) => {
+      const vendor = vendors.find(v => v.id === vendorId);
+      return vendor ? vendor.title : null;
+    };
+
+    // Helper to determine vendor type
+    const getVendorType = (vendorId) => {
+      if (allTransportVendors.find(v => v.id === vendorId)) return 'transport';
+      if (allAccommodationVendors.find(v => v.id === vendorId)) return 'accommodation';
+      if (allFoodVendors.find(v => v.id === vendorId)) return 'food';
+      return 'unknown';
+    };
+
+    // Group vendor feedback by type
+    const groupedVendorFeedback = {
+      food: [],
+      accommodation: [],
+      transport: []
+    };
+
+    vendorFeedback.forEach(feedback => {
+      const type = getVendorType(feedback.vendorid);
+      const vendorName = getVendorNameById(
+        feedback.vendorid,
+        type === 'transport' ? allTransportVendors :
+        type === 'accommodation' ? allAccommodationVendors :
+        allFoodVendors
+      );
+
+      if (vendorName) {
+        groupedVendorFeedback[type].push({
+          vendor: vendorName,
+          rating: feedback.ratings,
+          description: feedback.comment || ''
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      hasSubmitted: !!tripFeedback || vendorFeedback.length > 0,
+      data: {
+        overall: tripFeedback ? {
+          rating: tripFeedback.overall_rating || 0,
+          comment: tripFeedback.comments || ''
+        } : null,
+        food: groupedVendorFeedback.food,
+        accommodation: groupedVendorFeedback.accommodation,
+        transport: groupedVendorFeedback.transport
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching feedback',
+      error: error.message
+    });
+  }
+});
+
+// Submit trip feedback
+router.post('/feedback/submit', async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { tripId, userId, overall, food, accommodation, transport } = req.body;
+
+    // Validate required data
+    if (!tripId || !userId) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Trip ID and User ID are required'
+      });
+    }
+
+    // Get trip details with vendor data to fetch vendor IDs
+    const trip = await Trip.findByPk(tripId, {
+      include: [
+        {
+          model: TransportVendor,
+          as: 'transportVendor',
+          attributes: ['id', 'title']
+        },
+        {
+          model: AccommodationVendor,
+          as: 'accommodationVendor',
+          attributes: ['id', 'title']
+        },
+        {
+          model: FoodVendor,
+          as: 'foodVendor',
+          attributes: ['id', 'title']
+        }
+      ]
+    });
+
+    if (!trip) {
+      await transaction.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Trip not found'
+      });
+    }
+
+    // Get all vendors for name-to-id mapping
+    const allTransportVendors = await TransportVendor.findAll({
+      attributes: ['id', 'title']
+    });
+    const allAccommodationVendors = await AccommodationVendor.findAll({
+      attributes: ['id', 'title']
+    });
+    const allFoodVendors = await FoodVendor.findAll({
+      attributes: ['id', 'title']
+    });
+
+    // 1. Insert overall trip feedback into trip_feedback table
+    let tripFeedbackId = null;
+    if (overall && (overall.rating || overall.comment)) {
+      const [result] = await sequelize.query(
+        `INSERT INTO trip_feedback (trip_id, user_id, overall_rating, comments, created_at) 
+         VALUES (?, ?, ?, ?, NOW())`,
+        {
+          replacements: [tripId, userId, overall.rating || null, overall.comment || null],
+          transaction
+        }
+      );
+      tripFeedbackId = result;
+    }
+
+    // 2. Prepare vendor feedback bulk insert
+    const vendorFeedbackData = [];
+
+    // Debug: Log received feedback data
+    console.log('=== FEEDBACK SUBMISSION DEBUG ===');
+    console.log('Food feedback:', JSON.stringify(food, null, 2));
+    console.log('Accommodation feedback:', JSON.stringify(accommodation, null, 2));
+    console.log('Transport feedback:', JSON.stringify(transport, null, 2));
+    console.log('Available Food Vendors:', allFoodVendors.map(v => ({ id: v.id, title: v.title })));
+    console.log('Available Accommodation Vendors:', allAccommodationVendors.map(v => ({ id: v.id, title: v.title })));
+    console.log('Available Transport Vendors:', allTransportVendors.map(v => ({ id: v.id, title: v.title })));
+
+    // Helper function to get vendor ID from vendor name
+    const getVendorIdFromName = (vendorName, vendorType) => {
+      if (!vendorName) return null;
+      
+      try {
+        // Get all vendors of specific type
+        let allVendors = [];
+        if (vendorType === 'food') {
+          allVendors = allFoodVendors;
+        } else if (vendorType === 'accommodation') {
+          allVendors = allAccommodationVendors;
+        } else if (vendorType === 'transport') {
+          allVendors = allTransportVendors;
+        }
+        
+        // Find vendor by name
+        const vendor = allVendors.find(v => v.title === vendorName);
+        console.log(`Looking for ${vendorType} vendor "${vendorName}":`, vendor ? `Found ID ${vendor.id}` : 'NOT FOUND');
+        return vendor ? vendor.id : null;
+      } catch (error) {
+        console.error('Error getting vendor ID:', error);
+        return null;
+      }
+    };
+
+    // Process food vendor feedback
+    if (food && Array.isArray(food)) {
+      console.log('Processing food feedback, array length:', food.length);
+      food.forEach((item, index) => {
+        console.log(`Food item ${index}:`, item);
+        const vendorId = getVendorIdFromName(item.vendor, 'food');
+        console.log(`Food item ${index} - vendorId: ${vendorId}, rating: ${item.rating}`);
+        if (vendorId && item.rating) {
+          vendorFeedbackData.push([
+            tripId,
+            userId,
+            item.rating,
+            new Date(),
+            vendorId,
+            item.description || null
+          ]);
+          console.log(`Added food vendor feedback for vendor ID ${vendorId}`);
+        } else {
+          console.log(`Skipped food item ${index} - vendorId: ${vendorId}, rating: ${item.rating}`);
+        }
+      });
+    } else {
+      console.log('Food feedback is empty or not an array');
+    }
+
+    // Process accommodation vendor feedback
+    if (accommodation && Array.isArray(accommodation)) {
+      console.log('Processing accommodation feedback, array length:', accommodation.length);
+      accommodation.forEach((item, index) => {
+        console.log(`Accommodation item ${index}:`, item);
+        const vendorId = getVendorIdFromName(item.vendor, 'accommodation');
+        console.log(`Accommodation item ${index} - vendorId: ${vendorId}, rating: ${item.rating}`);
+        if (vendorId && item.rating) {
+          vendorFeedbackData.push([
+            tripId,
+            userId,
+            item.rating,
+            new Date(),
+            vendorId,
+            item.description || null
+          ]);
+          console.log(`Added accommodation vendor feedback for vendor ID ${vendorId}`);
+        } else {
+          console.log(`Skipped accommodation item ${index} - vendorId: ${vendorId}, rating: ${item.rating}`);
+        }
+      });
+    } else {
+      console.log('Accommodation feedback is empty or not an array');
+    }
+
+    // Process transport vendor feedback
+    if (transport && Array.isArray(transport)) {
+      console.log('Processing transport feedback, array length:', transport.length);
+      transport.forEach((item, index) => {
+        console.log(`Transport item ${index}:`, item);
+        const vendorId = getVendorIdFromName(item.vendor, 'transport');
+        console.log(`Transport item ${index} - vendorId: ${vendorId}, rating: ${item.rating}`);
+        if (vendorId && item.rating) {
+          vendorFeedbackData.push([
+            tripId,
+            userId,
+            item.rating,
+            new Date(),
+            vendorId,
+            item.description || null
+          ]);
+          console.log(`Added transport vendor feedback for vendor ID ${vendorId}`);
+        } else {
+          console.log(`Skipped transport item ${index} - vendorId: ${vendorId}, rating: ${item.rating}`);
+        }
+      });
+    } else {
+      console.log('Transport feedback is empty or not an array');
+    }
+
+    console.log('Total vendor feedback items prepared:', vendorFeedbackData.length);
+    console.log('=== END DEBUG ===');
+
+    // 3. Bulk insert vendor feedback
+    let vendorFeedbackCount = 0;
+    if (vendorFeedbackData.length > 0) {
+      const placeholders = vendorFeedbackData.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+      const flatData = vendorFeedbackData.flat();
+      
+      const [result] = await sequelize.query(
+        `INSERT INTO vendor_feedback 
+         (tripid, userId, ratings, datetime, vendorid, comment) 
+         VALUES ${placeholders}`,
+        {
+          replacements: flatData,
+          transaction
+        }
+      );
+      vendorFeedbackCount = vendorFeedbackData.length;
+    }
+
+    // Commit transaction
+    await transaction.commit();
+
+    res.json({
+      success: true,
+      message: 'Feedback submitted successfully',
+      data: {
+        tripFeedbackId: tripFeedbackId,
+        vendorFeedbackCount: vendorFeedbackCount
+      }
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error submitting feedback:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting feedback',
       error: error.message
     });
   }
