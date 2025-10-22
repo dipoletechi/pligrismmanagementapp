@@ -556,13 +556,11 @@ export default function RegisterScreen() {
       const data = await response.json();
       console.log('User status check response:', data);
 
-      // Save token and userId if available
+      // Save token if available
       if (data.data && data.data.token) {
         await AsyncStorage.setItem('userToken', data.data.token);
       }
-      if (data.data && data.data.userId) {
-        await AsyncStorage.setItem('userId', data.data.userId.toString());
-      }
+      // Note: userId is no longer saved - we use JWT token for user identification
 
       if (response.ok && data.success) {
         // Check if user is active and approved

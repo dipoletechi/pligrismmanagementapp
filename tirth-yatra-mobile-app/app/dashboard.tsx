@@ -32,7 +32,6 @@ export default function DashboardScreen() {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [qrData, setQrData] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
-  const [userId, setUserId] = useState<number | null>(null);
 
   // Helper function to translate error messages
   const translateMessage = (message: string | null): string => {
@@ -62,12 +61,6 @@ export default function DashboardScreen() {
       const storedEmail = await AsyncStorage.getItem('userEmail');
       const storedPhone = await AsyncStorage.getItem('userPhone');
       const storedPassword = await AsyncStorage.getItem('userPassword');
-      const storedUserId = await AsyncStorage.getItem('userId');
-      
-      // Set userId from AsyncStorage if available
-      if (storedUserId) {
-        setUserId(parseInt(storedUserId));
-      }
       
       if ((storedEmail || storedPhone) && storedPassword) {
         const requestBody: any = {
@@ -94,12 +87,10 @@ export default function DashboardScreen() {
           setLoginError(null);
           setIsLoggedIn(true);
           setIsAccountVerified(true);
-          setUserId(data.data.userId || null);
         } else if (response.ok && data.success) {
           setLoginError(data.message);
           setIsLoggedIn(true);
           setIsAccountVerified(false);
-          setUserId(data.data.userId || null);
         } else {
           setLoginError(data.message || 'Please login to access dashboard');
           setIsLoggedIn(false);
@@ -119,21 +110,6 @@ export default function DashboardScreen() {
 
   // Generate QR Code
   const generateQRCode = async () => {
-    // Get userId from state or AsyncStorage
-    let currentUserId = userId;
-    if (!currentUserId) {
-      const storedUserId = await AsyncStorage.getItem('userId');
-      if (storedUserId) {
-        currentUserId = parseInt(storedUserId);
-        setUserId(currentUserId);
-      }
-    }
-
-    if (!currentUserId) {
-      Alert.alert(t('error'), 'User ID not found. Please login again.');
-      return;
-    }
-
     setQrLoading(true);
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -149,10 +125,7 @@ export default function DashboardScreen() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: currentUserId
-        }),
+        }
       });
 
       const data = await response.json();
@@ -198,7 +171,19 @@ export default function DashboardScreen() {
   const fetchTripData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/user-trips-comprehensive?userId=70'); // Updated to correct user ID
+      // Get JWT token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (!token) {
+        console.log('No token found');
+        return;
+      }
+      
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/user-trips-comprehensive', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
       
       if (data.success) {

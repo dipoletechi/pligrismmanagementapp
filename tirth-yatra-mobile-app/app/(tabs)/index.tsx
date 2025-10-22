@@ -162,37 +162,24 @@ export default function HomeScreen() {
   // Fetch user trip applications
   const fetchUserApplications = async () => {
     try {
-      const storedEmail = await AsyncStorage.getItem('userEmail');
-      const storedPassword = await AsyncStorage.getItem('userPassword');
+      // Get JWT token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
       
-      if (!storedEmail || !storedPassword) {
+      if (!token) {
         return;
       }
 
-      // Get user ID by calling login API
-      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
-        method: 'POST',
+      // Call API with JWT token
+      const response = await fetch('http://192.168.1.3:5000/api/mobile/user-trips-comprehensive', {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: storedEmail,
-          password: storedPassword
-        }),
-      });
-
-      const loginData = await loginResponse.json();
-      
-      if (loginResponse.ok && loginData.success) {
-        const userId = loginData.data.userId;
-        console.log('Fetching user applications for user ID:', userId);
-        
-        const response = await fetch(`http://192.168.1.3:5000/api/mobile/user-trips-comprehensive?userId=${userId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-          setUserApplications(data.data.myTrips.applications || []);
+          'Authorization': `Bearer ${token}`
         }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setUserApplications(data.data.myTrips.applications || []);
+        console.log('User applications fetched:', data.data.myTrips.applications.length);
       }
     } catch (error) {
       console.error('Error fetching user applications:', error);

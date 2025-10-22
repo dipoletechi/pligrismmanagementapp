@@ -137,34 +137,8 @@ export default function TripDetailsScreen() {
 
   // Check if user has already applied for this trip
   const checkExistingApplication = async () => {
-    try {
-      const userEmail = await AsyncStorage.getItem('userEmail');
-      const userPassword = await AsyncStorage.getItem('userPassword');
-      
-      if (!userEmail || !userPassword || !id) return;
-
-      // Login to get user ID
-      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, password: userPassword }),
-      });
-
-      const loginData = await loginResponse.json();
-      if (loginResponse.ok && loginData.success) {
-        const userId = loginData.data.userId;
-        
-        // Check if application exists
-        const checkResponse = await fetch(`http://192.168.1.3:5000/api/mobile/check-application?userId=${userId}&tripId=${id}`);
-        const checkData = await checkResponse.json();
-        
-        if (checkResponse.ok && checkData.exists) {
-          setHasAlreadyApplied(true);
-        }
-      }
-    } catch (error) {
-      // Silent fail
-    }
+    // Note: The actual check is now done when submitting application
+    // Backend will return error if application already exists
   };
 
   // Fetch trip details from API
@@ -1306,69 +1280,23 @@ export default function TripDetailsScreen() {
     try {
       console.log('Apply button clicked for trip:', id);
       
-      // Get user credentials from AsyncStorage
-      const userEmail = await AsyncStorage.getItem('userEmail');
-      const userPassword = await AsyncStorage.getItem('userPassword');
+      // Get JWT token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
       
-      if (!userEmail || !userPassword) {
+      if (!token) {
         Alert.alert('Error', t('pleaseLoginToApply'));
         return;
       }
 
-      // First, get user ID by calling login API
-      const loginResponse = await fetch('http://192.168.1.3:5000/api/mobile/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          password: userPassword
-        }),
-      });
-
-      const loginData = await loginResponse.json();
-      console.log('Login response:', loginData);
-      
-      // Check if login was successful
-      if (!loginResponse.ok || !loginData.success) {
-        // If account is in review, show message and return
-        if (loginData.data?.accountStatus === 'in_verification') {
-          Alert.alert(
-            'Account Under Review', 
-            t('accountUnderReview'),
-            [{ text: 'OK' }]
-          );
-          return;
-        }
-        
-        Alert.alert('Error', t('unableToVerifyUserTryAgain'));
-        return;
-      }
-
-      const userId = loginData.data.userId;
-      const accountStatus = loginData.data.accountStatus;
-      console.log('User ID for application:', userId, 'Account Status:', accountStatus);
-
-      // Check if account is approved
-      if (accountStatus !== 'approved') {
-        Alert.alert(
-          'Account Not Approved', 
-          t('accountNotApproved'),
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      // Account is approved, create trip application
+      // Create trip application with JWT token
       const applicationResponse = await fetch('http://192.168.1.3:5000/api/trip-pligrim', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           tripid: id,
-          userid: userId,
           status: 'Pending'
         }),
       });

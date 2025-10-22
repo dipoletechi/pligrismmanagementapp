@@ -128,10 +128,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('userToken', data.data.token);
       }
 
-      // Save userId if available
-      if (data.data && data.data.userId) {
-        await AsyncStorage.setItem('userId', data.data.userId.toString());
-      }
+      // Note: userId is no longer saved - we use JWT token for user identification
 
       // Check for 401 status first (registration incomplete)
       if (response.status === 401 && data.data && data.data.requiresVerification) {

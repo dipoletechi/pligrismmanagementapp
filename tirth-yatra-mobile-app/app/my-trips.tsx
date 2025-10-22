@@ -70,38 +70,20 @@ export default function MyTripsScreen() {
       setLoading(true);
       setError(null);
       
-      // Get user credentials from AsyncStorage
-      const userEmail = await AsyncStorage.getItem('userEmail');
-      const userPassword = await AsyncStorage.getItem('userPassword');
+      // Get JWT token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
       
-      if (!userEmail || !userPassword) {
+      if (!token) {
         setError('Please login to view your trips');
         return;
       }
 
-      // First, get user ID by calling login API
-      const loginResponse = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST',
+      // Call API with JWT token
+      const response = await fetch(`${API_BASE_URL}/user-trips-comprehensive`, {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          password: userPassword
-        }),
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      const loginData = await loginResponse.json();
-      
-      if (!loginResponse.ok || !loginData.success) {
-        setError('Unable to verify user. Please login again.');
-        return;
-      }
-
-      const userId = loginData.data.userId;
-      console.log('Fetching trips for user ID:', userId);
-      
-      const response = await fetch(`${API_BASE_URL}/user-trips-comprehensive?userId=${userId}`);
       const data = await response.json();
       
       if (data.success) {

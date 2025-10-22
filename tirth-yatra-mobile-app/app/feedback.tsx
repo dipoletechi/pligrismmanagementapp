@@ -103,12 +103,16 @@ export default function FeedbackScreen() {
       if (!params.tripId) return;
 
       try {
-        const userIdStr = await AsyncStorage.getItem('userId');
-        const userId = userIdStr ? parseInt(userIdStr) : null;
+        // Get JWT token from AsyncStorage
+        const token = await AsyncStorage.getItem('userToken');
 
-        if (!userId) return;
+        if (!token) return;
 
-        const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/trip/${params.tripId}/user/${userId}`);
+        const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/trip/${params.tripId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const result = await response.json();
 
         if (result.success && result.hasSubmitted) {
@@ -302,14 +306,12 @@ export default function FeedbackScreen() {
         return;
       }
       
-      // Get user ID from AsyncStorage
-      const userIdStr = await AsyncStorage.getItem('userId');
-      const userId = userIdStr ? parseInt(userIdStr) : null;
+      // Get JWT token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
 
-      console.log('User ID:', userId);
       console.log('Trip ID:', tripDetails.id);
       
-      if (!userId) {
+      if (!token) {
         Alert.alert('Error', 'Please login to submit feedback');
         return;
       }
@@ -322,7 +324,6 @@ export default function FeedbackScreen() {
       
       const feedbackData = {
         tripId: tripDetails.id,  // Already checked above
-        userId: userId,
         overall: {
           rating: overallRating,
           comment: overallComment
@@ -353,7 +354,8 @@ export default function FeedbackScreen() {
       const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/submit`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(feedbackData)
       });
