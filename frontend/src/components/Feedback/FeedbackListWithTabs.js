@@ -1,78 +1,113 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Grid,
   CircularProgress,
   Alert,
+  Button,
+  Rating,
+  Chip,
   Tabs,
   Tab,
+  Paper,
+  Collapse,
   IconButton
 } from '@mui/material';
 import {
   Star,
   StarBorder,
-  Visibility,
   Refresh,
-  Close as CloseIcon,
   TripOrigin,
   Store,
-  AutoAwesome
+  AutoAwesome,
+  ExpandMore,
+  ExpandLess
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const FeedbackListWithTabs = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [tripFeedbacks, setTripFeedbacks] = useState([]);
   const [vendorFeedbacks, setVendorFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [foodVendors, setFoodVendors] = useState([]);
+  const [transportVendors, setTransportVendors] = useState([]);
+  const [accommodationVendors, setAccommodationVendors] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [aiSummary, setAiSummary] = useState(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    transport: true,
+    accommodation: true,
+    event: true
+  });
+  
+  // Get tripId from location state
+  const tripId = location.state?.tripId;
+  const tripTitle = location.state?.tripTitle || 'Trip Feedback';
 
   const fetchFeedbacks = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching feedbacks...');
+      console.log('Fetching feedbacks for trip:', tripId);
       console.log('User:', user);
       
-      const response = await axios.get('/api/feedback');
-      console.log('Feedback API response:', response.data);
+      // Fetch feedbacks and all vendor types in parallel
+      const [feedbacksResponse, foodVendorsResponse, transportVendorsResponse, accommodationVendorsResponse] = await Promise.all([
+        axios.get('/api/feedback'),
+        axios.get('/api/food-vendors'),
+        axios.get('/api/transport-vendors'),
+        axios.get('/api/accommodation-vendors')
+      ]);
+      
+      console.log('Feedback API response:', feedbacksResponse.data);
+      console.log('Food Vendors API response:', foodVendorsResponse.data);
 
-      if (response.data.success) {
-        const allFeedbacks = response.data.data;
-        const tripFeedbacks = allFeedbacks.filter(f => f.type === 'trip');
-        const vendorFeedbacks = allFeedbacks.filter(f => f.type === 'vendor');
+      if (feedbacksResponse.data.success) {
+        const allFeedbacks = feedbacksResponse.data.data;
         
-        setTripFeedbacks(tripFeedbacks);
-        setVendorFeedbacks(vendorFeedbacks);
+        // Filter feedbacks for specific trip if tripId is provided
+        let filteredTripFeedbacks = allFeedbacks.filter(f => f.type === 'trip');
+        let filteredVendorFeedbacks = allFeedbacks.filter(f => f.type === 'vendor');
+        
+        if (tripId) {
+          filteredTripFeedbacks = filteredTripFeedbacks.filter(f => f.trip_id === tripId);
+          filteredVendorFeedbacks = filteredVendorFeedbacks.filter(f => f.tripid === tripId);
+        }
+        
+        setTripFeedbacks(filteredTripFeedbacks);
+        setVendorFeedbacks(filteredVendorFeedbacks);
       } else {
         setError('Failed to fetch feedbacks');
       }
+
+      if (foodVendorsResponse.data.success) {
+        console.log('Food vendors data:', foodVendorsResponse.data.data);
+        setFoodVendors(foodVendorsResponse.data.data.items || []);
+      }
+
+      if (transportVendorsResponse.data.success) {
+        console.log('Transport vendors data:', transportVendorsResponse.data.data);
+        setTransportVendors(transportVendorsResponse.data.data.items || []);
+      }
+
+      if (accommodationVendorsResponse.data.success) {
+        console.log('Accommodation vendors data:', accommodationVendorsResponse.data.data);
+        console.log('Accommodation vendors items:', accommodationVendorsResponse.data.data.items);
+        setAccommodationVendors(accommodationVendorsResponse.data.data.items || []);
+      }
     } catch (error) {
-      console.error('Error fetching feedbacks:', error);
-      setError(`Failed to load feedbacks: ${error.response?.data?.message || error.message}`);
+      console.error('Error fetching data:', error);
+      setError(`Failed to load data: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -80,20 +115,17 @@ const FeedbackListWithTabs = () => {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, []);
-
-  const handleViewDetails = (feedback) => {
-    setSelectedFeedback(feedback);
-    setDetailsDialogOpen(true);
-  };
-
-  const handleCloseDetailsDialog = () => {
-    setDetailsDialogOpen(false);
-    setSelectedFeedback(null);
-  };
+  }, [tripId]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
   const generateAISummary = () => {
@@ -122,42 +154,6 @@ const FeedbackListWithTabs = () => {
     }, 2000);
   };
 
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        i <= rating ? (
-          <Star key={i} sx={{ color: '#ffc107', fontSize: 20 }} />
-        ) : (
-          <StarBorder key={i} sx={{ color: '#ddd', fontSize: 20 }} />
-        )
-      );
-    }
-    return stars;
-  };
-
-  const getFeedbackTypeColor = (type) => {
-    switch (type) {
-      case 'vendor':
-        return 'primary';
-      case 'trip':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
-  const getFeedbackTypeLabel = (type) => {
-    switch (type) {
-      case 'vendor':
-        return 'Vendor Feedback';
-      case 'trip':
-        return 'Trip Feedback';
-      default:
-        return 'Feedback';
-    }
-  };
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -184,7 +180,7 @@ const FeedbackListWithTabs = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" fontWeight="bold">
-          Feedback Management
+          {tripTitle}
         </Typography>
       </Box>
 
@@ -206,7 +202,7 @@ const FeedbackListWithTabs = () => {
 
       {/* Tab Content */}
       {activeTab === 0 ? (
-        // Trip Feedback Tab
+        // Trip Feedback Tab - Card Layout
         tripFeedbacks.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9', borderRadius: 1, border: '1px dashed #ccc' }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
@@ -214,53 +210,45 @@ const FeedbackListWithTabs = () => {
             </Typography>
           </Box>
         ) : (
-          <TableContainer 
-            component={Paper} 
-            sx={{ 
-              border: '1px solid #e0e0e0', 
-              borderRadius: 1,
-              maxHeight: '400px',
-              overflow: 'auto'
-            }}
-          >
-            <Table stickyHeader>
-              <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Trip</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>Overall Rating</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Comments</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tripFeedbacks.map((feedback) => (
-                  <TableRow key={feedback.id} hover>
-                    <TableCell>{feedback.id}</TableCell>
-                    <TableCell>
-                      {feedback.user ? `${feedback.user.firstName} ${feedback.user.lastName}` : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {feedback.trip ? feedback.trip.title : 'N/A'}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        {renderStars(feedback.overall_rating || 1)}
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {feedback.comments || 'No comments'}
-                    </TableCell>
-                    <TableCell>{new Date(feedback.created_at).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Box>
+            {tripFeedbacks.map((feedback) => (
+              <Card key={feedback.id} sx={{ 
+                mb: 3,
+                width: '100%',
+                boxShadow: 2,
+                '&:hover': { boxShadow: 4 }
+              }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, textAlign: 'left' }}>
+                    {feedback.user ? `${feedback.user.firstName} ${feedback.user.lastName}` : 'Anonymous'}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'flex-start' }}>
+                    <Rating 
+                      value={feedback.overall_rating || 1} 
+                      readOnly 
+                      size="small"
+                      sx={{ mr: 1 }}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      ({feedback.overall_rating || 1}/5)
+                    </Typography>
+                  </Box>
+                  
+                  <Typography variant="body2" sx={{ mb: 2, textAlign: 'left', lineHeight: 1.6 }}>
+                    {feedback.comments || 'No comments provided.'}
+                  </Typography>
+                  
+                  <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'left', display: 'block' }}>
+                    {new Date(feedback.created_at).toLocaleDateString()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
         )
       ) : (
-        // Vendor Feedback Tab
+        // Vendor Feedback Tab - Grouped by Vendor Type
         vendorFeedbacks.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9', borderRadius: 1, border: '1px dashed #ccc' }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
@@ -268,50 +256,251 @@ const FeedbackListWithTabs = () => {
             </Typography>
           </Box>
         ) : (
-          <TableContainer 
-            component={Paper} 
-            sx={{ 
-              border: '1px solid #e0e0e0', 
-              borderRadius: 1,
-              maxHeight: '400px',
-              overflow: 'auto'
-            }}
-          >
-            <Table stickyHeader>
-              <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Trip</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>Rating</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Comment</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {vendorFeedbacks.map((feedback) => (
-                  <TableRow key={feedback.id} hover>
-                    <TableCell>{feedback.id}</TableCell>
-                    <TableCell>
-                      {feedback.user ? `${feedback.user.firstName} ${feedback.user.lastName}` : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {feedback.trip ? feedback.trip.title : 'N/A'}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        {renderStars(feedback.ratings)}
+          <Box>
+                {/* Transport Vendors */}
+                <Box sx={{ mb: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#1976d2', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Store /> Transport Vendors
+                    </Typography>
+                    <IconButton 
+                      onClick={() => toggleSection('transport')}
+                      sx={{ color: '#1976d2' }}
+                    >
+                      {expandedSections.transport ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={expandedSections.transport}>
+              {vendorFeedbacks.filter(f => f.vendorid <= 3).length > 0 ? (
+                <Box>
+                  {Object.entries(
+                    vendorFeedbacks
+                      .filter(f => f.vendorid <= 3)
+                      .reduce((acc, feedback) => {
+                        if (!acc[feedback.vendorid]) {
+                          acc[feedback.vendorid] = [];
+                        }
+                        acc[feedback.vendorid].push(feedback);
+                        return acc;
+                      }, {})
+                  ).map(([vendorId, feedbacks]) => (
+                    <Card key={vendorId} sx={{ mb: 3, p: 3, border: '1px solid #e0e0e0' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                              {(() => {
+                                if (Array.isArray(transportVendors) && transportVendors.length > 0) {
+                                  const vendor = transportVendors.find(v => v.id === parseInt(vendorId));
+                                  return vendor ? vendor.title : `Transport Vendor ${vendorId}`;
+                                }
+                                return `Transport Vendor ${vendorId}`;
+                              })()}
+                            </Typography>
+                        <Chip 
+                          label={`${(feedbacks.reduce((sum, f) => sum + f.ratings, 0) / feedbacks.length).toFixed(1)}/5`} 
+                          color="primary" 
+                          size="medium"
+                        />
                       </Box>
-                    </TableCell>
-                    <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {feedback.comment || 'No comments'}
-                    </TableCell>
-                    <TableCell>{new Date(feedback.created_at).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      
+                      <Box>
+                        {feedbacks.map((feedback, index) => (
+                          <Box key={feedback.id} sx={{ mb: 2, pb: 2, borderBottom: index < feedbacks.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1, textAlign: 'left' }}>
+                              <Chip 
+                                label={`${feedback.ratings}/5`} 
+                                color="primary" 
+                                size="small"
+                                variant="outlined"
+                              /> {feedback.user ? `${feedback.user.firstName} ${feedback.user.lastName}` : 'Anonymous'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1, textAlign: 'left', lineHeight: 1.6 }}>
+                             {feedback.comment || 'No comment provided.'}
+                            </Typography>
+                            
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 2 }}>
+                              
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 2 }}>
+                              <strong> {new Date(feedback.created_at).toLocaleDateString()}</strong>
+                              </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Card>
+                  ))}
+                </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 2 }}>
+                      No transport vendor feedback yet.
+                    </Typography>
+                  )}
+                  </Collapse>
+                </Box>
+
+                {/* Accommodation Vendors */}
+                <Box sx={{ mb: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#2e7d32', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Store /> Accommodation Vendors
+                    </Typography>
+                    <IconButton 
+                      onClick={() => toggleSection('accommodation')}
+                      sx={{ color: '#2e7d32' }}
+                    >
+                      {expandedSections.accommodation ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={expandedSections.accommodation}>
+              {vendorFeedbacks.filter(f => f.vendorid >= 1 && f.vendorid <= 3).length > 0 ? (
+                <Box>
+                  {Object.entries(
+                    vendorFeedbacks
+                      .filter(f => f.vendorid >= 1 && f.vendorid <= 3)
+                      .reduce((acc, feedback) => {
+                        if (!acc[feedback.vendorid]) {
+                          acc[feedback.vendorid] = [];
+                        }
+                        acc[feedback.vendorid].push(feedback);
+                        return acc;
+                      }, {})
+                  ).map(([vendorId, feedbacks]) => (
+                    <Card key={vendorId} sx={{ mb: 3, p: 3, border: '1px solid #e0e0e0' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                              {(() => {
+                                console.log('Accommodation vendors array:', accommodationVendors);
+                                console.log('Looking for accommodation vendor ID:', vendorId);
+                                if (Array.isArray(accommodationVendors) && accommodationVendors.length > 0) {
+                                  const vendor = accommodationVendors.find(v => v.id === parseInt(vendorId));
+                                  console.log('Found accommodation vendor:', vendor);
+                                  return vendor ? vendor.title : `Accommodation Vendor ${vendorId}`;
+                                }
+                                return `Accommodation Vendor ${vendorId}`;
+                              })()}
+                            </Typography>
+                        <Chip 
+                          label={`${(feedbacks.reduce((sum, f) => sum + f.ratings, 0) / feedbacks.length).toFixed(1)}/5`} 
+                          color="success" 
+                          size="medium"
+                        />
+                      </Box>
+                      
+                      <Box>
+                        {feedbacks.map((feedback, index) => (
+                          <Box key={feedback.id} sx={{ mb: 2, pb: 2, borderBottom: index < feedbacks.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1, textAlign: 'left' }}>
+                            <Chip 
+                                label={`${feedback.ratings}/5`} 
+                                color="success" 
+                                size="small"
+                                variant="outlined"
+                              /> {feedback.user ? `${feedback.user.firstName} ${feedback.user.lastName}` : 'Anonymous'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1, textAlign: 'left', lineHeight: 1.6 }}>
+                              <strong>Comment:</strong> {feedback.comment || 'No comment provided.'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 2 }}>
+                             
+                              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'left' }}>
+                                {new Date(feedback.created_at).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Card>
+                  ))}
+                </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 2 }}>
+                      No accommodation vendor feedback yet.
+                    </Typography>
+                  )}
+                  </Collapse>
+                </Box>
+
+                {/* Food Vendors */}
+                <Box sx={{ mb: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#ed6c02', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Store /> Food Vendors
+                    </Typography>
+                    <IconButton 
+                      onClick={() => toggleSection('event')}
+                      sx={{ color: '#ed6c02' }}
+                    >
+                      {expandedSections.event ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={expandedSections.event}>
+              {vendorFeedbacks.filter(f => f.vendorid >= 1 && f.vendorid <= 3).length > 0 ? (
+                <Box>
+                  {Object.entries(
+                    vendorFeedbacks
+                      .filter(f => f.vendorid >= 1 && f.vendorid <= 3)
+                      .reduce((acc, feedback) => {
+                        if (!acc[feedback.vendorid]) {
+                          acc[feedback.vendorid] = [];
+                        }
+                        acc[feedback.vendorid].push(feedback);
+                        return acc;
+                      }, {})
+                  ).map(([vendorId, feedbacks]) => (
+                    <Card key={vendorId} sx={{ mb: 3, p: 3, border: '1px solid #e0e0e0' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" fontWeight="bold">
+                          {(() => {
+                            console.log('Food vendors array:', foodVendors);
+                            console.log('Looking for vendor ID:', vendorId);
+                            if (Array.isArray(foodVendors) && foodVendors.length > 0) {
+                              const vendor = foodVendors.find(v => v.id === parseInt(vendorId));
+                              console.log('Found vendor:', vendor);
+                              return vendor ? vendor.title : `Food Vendor ${vendorId}`;
+                            }
+                            return `Food Vendor ${vendorId}`;
+                          })()}
+                        </Typography>
+                        <Chip 
+                          label={`${(feedbacks.reduce((sum, f) => sum + f.ratings, 0) / feedbacks.length).toFixed(1)}/5`} 
+                          color="warning" 
+                          size="medium"
+                        />
+                      </Box>
+                      
+                      <Box>
+                        {feedbacks.map((feedback, index) => (
+                          <Box key={feedback.id} sx={{ mb: 2, pb: 2, borderBottom: index < feedbacks.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1, textAlign: 'left' }}>
+                              <Chip 
+                                label={`${feedback.ratings}/5`} 
+                                color="warning" 
+                                size="small"
+                                variant="outlined"
+                              /> {feedback.user ? `${feedback.user.firstName} ${feedback.user.lastName}` : 'Anonymous'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1, textAlign: 'left', lineHeight: 1.6 }}>
+                              <strong>Comment:</strong> {feedback.comment || 'No comment provided.'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 2 }}>
+                              
+                              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'left' }}>
+                                {new Date(feedback.created_at).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Card>
+                  ))}
+                </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 2 }}>
+                      No food vendor feedback yet.
+                    </Typography>
+                  )}
+                  </Collapse>
+                </Box>
+          </Box>
         )
       )}
 
@@ -338,232 +527,144 @@ const FeedbackListWithTabs = () => {
               </Button>
             </Box>
 
-            {aiSummary && (
-              <Grid container spacing={3}>
-                {/* Left Column */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1 }}>
-                      Overall User Experience
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.overallUserExperience}
+                {aiSummary && (
+                  <Box sx={{ width: '100%' }}>
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1, textAlign: 'left' }}>
+                        Overall User Experience
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Overall user experience has been positive with 85% satisfaction rate. Users appreciate the organized structure and timely services.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1 }}>
-                      Scope of Improvement
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.scopeOfImprovement}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="success.main" sx={{ mb: 1, textAlign: 'left' }}>
+                        Best Vendor
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Shree Krishna Travels - Excellent service, punctual, clean vehicles
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1 }}>
-                      Safety Notes
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.safetyNotes}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1, textAlign: 'left' }}>
+                        Scope of Improvement
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Food quality needs improvement. Transportation scheduling could be more flexible. Better communication during delays.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
 
-                {/* Middle-Left Column */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="success.main" sx={{ mb: 1 }}>
-                      Best Vendor
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.bestVendor}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1, textAlign: 'left' }}>
+                        Safety Notes
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          All safety protocols followed. No incidents reported. Emergency contacts readily available.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1 }}>
-                      Behaviour Notes
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.behaviourNotes}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="error.main" sx={{ mb: 1, textAlign: 'left' }}>
+                        Poor Vendor
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#ffebee', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          City Transport Co. - Delays, poor vehicle condition, unprofessional staff
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1 }}>
-                      Hygiene Notes
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.hygieneNotes}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1, textAlign: 'left' }}>
+                        Behaviour Notes
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Staff is courteous and helpful. Drivers are professional and knowledgeable about routes.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
 
-                {/* Middle-Right Column */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="error.main" sx={{ mb: 1 }}>
-                      Poor Vendor
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#ffebee', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.poorVendor}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1, textAlign: 'left' }}>
+                        Hygiene Notes
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Good hygiene maintained in accommodation. Food preparation areas are clean. Regular sanitization.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1 }}>
-                      Ease of Onboarding/Off Boarding
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.easeOfOnboarding} | {aiSummary.easeOfOffboarding}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1, textAlign: 'left' }}>
+                        Ease of Onboarding/Off Boarding
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Simple registration process. Clear instructions provided. Quick verification system. | Smooth checkout process. Quick settlement of accounts. Helpful staff assistance.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="success.main" sx={{ mb: 1 }}>
-                      Best Transport Vendor
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.bestTransportVendor}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="success.main" sx={{ mb: 1, textAlign: 'left' }}>
+                        Best Transport Vendor
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Royal Transport Services - 5-star rating, modern vehicles, experienced drivers
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
 
-                {/* Right Column */}
-                <Grid item xs={12} md={3}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="success.main" sx={{ mb: 1 }}>
-                      Best Accommodation Vendor
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.bestAccommodationVendor}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="success.main" sx={{ mb: 1, textAlign: 'left' }}>
+                        Best Accommodation Vendor
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#e8f5e8', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Hotel Paradise - Clean rooms, good food, excellent service
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="error.main" sx={{ mb: 1 }}>
-                      Worst Accommodation Vendor
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#ffebee', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.worstAccommodationVendor}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="error.main" sx={{ mb: 1, textAlign: 'left' }}>
+                        Worst Accommodation Vendor
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#ffebee', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Budget Stay Inn - Poor maintenance, unhygienic conditions
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="error.main" sx={{ mb: 1 }}>
-                      Worst Transport Vendor
-                    </Typography>
-                    <Box sx={{ p: 2, backgroundColor: '#ffebee', borderRadius: 1 }}>
-                      <Typography variant="body2" sx={{ textAlign: 'left' }}>
-                        {aiSummary.worstTransportVendor}
+                    <Box sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="error.main" sx={{ mb: 1, textAlign: 'left' }}>
+                        Worst Transport Vendor
                       </Typography>
+                      <Box sx={{ p: 2, backgroundColor: '#ffebee', borderRadius: 1, width: '100%' }}>
+                        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+                          Local Transport Co. - Old vehicles, frequent breakdowns, rude staff
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
-                </Grid>
-              </Grid>
-            )}
+                )}
           </CardContent>
         </Card>
       </Box>
-
-      {/* Feedback Details Dialog */}
-      <Dialog open={detailsDialogOpen} onClose={handleCloseDetailsDialog} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white', pb: 1 }}>
-          Feedback Details
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDetailsDialog}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: 'white',
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {selectedFeedback && (
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Type:</Typography>
-                <Chip
-                  label={getFeedbackTypeLabel(selectedFeedback.type)}
-                  color={getFeedbackTypeColor(selectedFeedback.type)}
-                  size="small"
-                  sx={{ mb: 1 }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">User:</Typography>
-                <Typography>N/A</Typography>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Trip:</Typography>
-                <Typography>N/A</Typography>
-              </Grid>
-
-              {selectedFeedback.type === 'vendor' && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="bold">Vendor ID:</Typography>
-                  <Typography>{selectedFeedback.vendorid}</Typography>
-                </Grid>
-              )}
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Rating:</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  {renderStars(selectedFeedback.ratings || selectedFeedback.overall_rating || 1)}
-                  <Typography variant="body2" sx={{ ml: 1 }}>
-                    ({selectedFeedback.ratings || selectedFeedback.overall_rating || 1} / 5)
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Comment:</Typography>
-                <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-                  {selectedFeedback.comment || selectedFeedback.comments || 'No comment provided.'}
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="bold">Submitted On:</Typography>
-                <Typography>{new Date(selectedFeedback.created_at).toLocaleString()}</Typography>
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDetailsDialog} color="primary">Close</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
