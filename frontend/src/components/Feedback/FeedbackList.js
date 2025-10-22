@@ -20,24 +20,30 @@ import {
   DialogActions,
   Grid,
   CircularProgress,
-  Alert
+  Alert,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Star,
   StarBorder,
   Visibility,
   Refresh,
-  Close as CloseIcon
+  Close as CloseIcon,
+  TripOrigin,
+  Store
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const FeedbackList = () => {
   const { user } = useAuth();
-  const [feedbacks, setFeedbacks] = useState([]);
+  const [tripFeedbacks, setTripFeedbacks] = useState([]);
+  const [vendorFeedbacks, setVendorFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const fetchFeedbacks = async () => {
     try {
@@ -51,7 +57,12 @@ const FeedbackList = () => {
       console.log('Feedback API response:', response.data);
 
       if (response.data.success) {
-        setFeedbacks(response.data.data);
+        const allFeedbacks = response.data.data;
+        const tripFeedbacks = allFeedbacks.filter(f => f.type === 'trip');
+        const vendorFeedbacks = allFeedbacks.filter(f => f.type === 'vendor');
+        
+        setTripFeedbacks(tripFeedbacks);
+        setVendorFeedbacks(vendorFeedbacks);
       } else {
         setError('Failed to fetch feedbacks');
       }
@@ -75,6 +86,10 @@ const FeedbackList = () => {
   const handleCloseDetailsDialog = () => {
     setDetailsDialogOpen(false);
     setSelectedFeedback(null);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
 

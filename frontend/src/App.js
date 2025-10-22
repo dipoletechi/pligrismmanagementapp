@@ -24,7 +24,7 @@ import TripTracking from './components/Trip/TripTracking';
 import ScannerPage from './components/Scanner/ScannerPage';
 import PilgrimManagement from './components/Pilgrim/PilgrimManagement';
 import TripApplicants from './components/Pilgrim/TripApplicants';
-import FeedbackList from './components/Feedback/FeedbackList';
+import FeedbackListWithTabs from './components/Feedback/FeedbackListWithTabs';
 import Settings from './components/Settings';
 import './App.css';
 
@@ -265,16 +265,16 @@ function App() {
               />
 
               {/* Feedback Management - Superadmin, Admin, Trip Manager, Transport */}
-              <Route 
-                path="/feedback" 
-                element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport']}>
-                    <MainLayout>
-                      <FeedbackList />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
+                  <Route 
+                    path="/feedback" 
+                    element={
+                      <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport']}>
+                        <MainLayout>
+                          <FeedbackListWithTabs />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } 
+                  />
               <Route 
                 path="/trips" 
                 element={

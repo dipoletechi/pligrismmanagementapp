@@ -22,10 +22,70 @@ router.get('/',
       const tripFeedbacks = await TripFeedback.findAll();
       console.log('Trip feedbacks found:', tripFeedbacks.length);
 
+      // Get user and trip data separately for trip feedbacks
+      const tripFeedbacksWithDetails = await Promise.all(
+        tripFeedbacks.map(async (feedback) => {
+          try {
+            const user = await User.findByPk(feedback.user_id);
+            const trip = await Trip.findByPk(feedback.trip_id);
+            return {
+              ...feedback.toJSON(),
+              user: user ? {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email
+              } : null,
+              trip: trip ? {
+                id: trip.id,
+                title: trip.title
+              } : null
+            };
+          } catch (error) {
+            console.error('Error fetching details for trip feedback:', error);
+            return {
+              ...feedback.toJSON(),
+              user: null,
+              trip: null
+            };
+          }
+        })
+      );
+
+      // Get user and trip data separately for vendor feedbacks
+      const vendorFeedbacksWithDetails = await Promise.all(
+        vendorFeedbacks.map(async (feedback) => {
+          try {
+            const user = await User.findByPk(feedback.userId);
+            const trip = await Trip.findByPk(feedback.tripid);
+            return {
+              ...feedback.toJSON(),
+              user: user ? {
+                id: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email
+              } : null,
+              trip: trip ? {
+                id: trip.id,
+                title: trip.title
+              } : null
+            };
+          } catch (error) {
+            console.error('Error fetching details for vendor feedback:', error);
+            return {
+              ...feedback.toJSON(),
+              user: null,
+              trip: null
+            };
+          }
+        })
+      );
+
       // Combine and sort feedbacks
       const allFeedbacks = [
-        ...vendorFeedbacks.map(f => ({ ...f.toJSON(), type: 'vendor' })),
-        ...tripFeedbacks.map(f => ({ ...f.toJSON(), type: 'trip' }))
+        ...vendorFeedbacksWithDetails.map(f => ({ ...f, type: 'vendor' })),
+        ...tripFeedbacksWithDetails.map(f => ({ ...f, type: 'trip' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Newest first
 
       console.log('Total feedbacks:', allFeedbacks.length);
