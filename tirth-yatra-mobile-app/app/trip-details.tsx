@@ -35,12 +35,23 @@ interface TripDetails {
   accommodation_vendor_id: number | null;
   food_vendor_id: number | null;
   transport_vendor_id: number | null;
+  transport_vendor_name?: string;
+  accommodationVendor?: { title: string; address?: string; phone?: string };
+  foodVendor?: { title: string; address?: string; phone?: string };
+  transportVendor?: { title: string; address?: string; phone?: string };
+  allFoodVendors?: Array<{ id: number; title: string; address?: string; phone?: string }>;
+  allFoodCategories?: Array<{ id: number; title: string }>;
+  allFoodItems?: Array<{ id: number; title: string }>;
+  allAccommodationVendors?: Array<{ id: number; title: string }>;
   selected_drivers: string;
   selected_conductors: string;
   selected_buses: string;
-  drivers_by_day: string;
-  conductors_by_day: string;
-  buses_by_day: string;
+  selected_drivers_details?: any[];
+  selected_conductors_details?: any[];
+  selected_buses_details?: any[];
+  drivers_by_day: string | any;
+  conductors_by_day: string | any;
+  buses_by_day: string | any;
   vendors_by_day: string;
   time_by_day: string;
   accommodations_by_day: string;
@@ -102,86 +113,6 @@ export default function TripDetailsScreen() {
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasAlreadyApplied, setHasAlreadyApplied] = useState(false);
-  
-  // Feedback modal states
-  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
-  const [foodFeedbackExpanded, setFoodFeedbackExpanded] = useState(false);
-  const [foodVendorRatings, setFoodVendorRatings] = useState<{[key: string]: number}>({});
-  const [foodVendorDescriptions, setFoodVendorDescriptions] = useState<{[key: string]: string}>({});
-  const [accommodationFeedbackExpanded, setAccommodationFeedbackExpanded] = useState(false);
-  const [accommodationVendorRatings, setAccommodationVendorRatings] = useState<{[key: string]: number}>({});
-  const [accommodationVendorDescriptions, setAccommodationVendorDescriptions] = useState<{[key: string]: string}>({});
-
-  // Extract unique food vendors from food_vendors_by_day
-  const getFoodVendors = (): string[] => {
-    if (!tripDetails?.food_vendors_by_day) return [];
-    
-    try {
-      const foodVendorsByDay = typeof tripDetails.food_vendors_by_day === 'string'
-        ? JSON.parse(tripDetails.food_vendors_by_day)
-        : tripDetails.food_vendors_by_day;
-
-      const vendorSet = new Set<string>();
-      
-      // Iterate through all days
-      Object.values(foodVendorsByDay).forEach((dayData: any) => {
-        if (Array.isArray(dayData)) {
-          dayData.forEach((item: any) => {
-            if (item.vendors && Array.isArray(item.vendors)) {
-              item.vendors.forEach((vendor: string) => {
-                // Trim vendor name and only add if not empty
-                const trimmedVendor = vendor?.trim();
-                if (trimmedVendor) {
-                  vendorSet.add(trimmedVendor);
-                }
-              });
-            }
-          });
-        }
-      });
-
-      // Convert Set to Array and sort alphabetically
-      return Array.from(vendorSet).sort();
-    } catch (error) {
-      console.error('Error parsing food vendors:', error);
-      return [];
-    }
-  };
-
-  // Extract unique accommodation vendors from accommodations_by_day
-  const getAccommodationVendors = (): string[] => {
-    if (!tripDetails?.accommodations_by_day) return [];
-    
-    try {
-      const accommodationsByDay = typeof tripDetails.accommodations_by_day === 'string'
-        ? JSON.parse(tripDetails.accommodations_by_day)
-        : tripDetails.accommodations_by_day;
-
-      const vendorSet = new Set<string>();
-      
-      // Iterate through all days
-      Object.values(accommodationsByDay).forEach((dayData: any) => {
-        if (Array.isArray(dayData)) {
-          dayData.forEach((accommodation: any) => {
-            // Get vendor name from either vendorName or vendor field
-            const vendorName = accommodation.vendorName || accommodation.vendor;
-            if (vendorName) {
-              const trimmedVendor = String(vendorName).trim();
-              if (trimmedVendor) {
-                vendorSet.add(trimmedVendor);
-              }
-            }
-          });
-        }
-      });
-
-      // Convert Set to Array and sort alphabetically
-      return Array.from(vendorSet).sort();
-    } catch (error) {
-      console.error('Error parsing accommodation vendors:', error);
-      return [];
-    }
-  };
 
   // Check login status
   useEffect(() => {
@@ -437,19 +368,77 @@ export default function TripDetailsScreen() {
     const accommodationsByDay = parseAccommodationsByDay();
     const days = Object.keys(accommodationsByDay).sort();
 
+    // Check for all-days accommodation data
+    const hasAllDaysAccommodation = tripDetails?.selected_accommodation_vendor || 
+                                    tripDetails?.accommodation_vendor_id;
+    
+    // Smart fallback: if no day-wise data but has all-days data, show all-days
+    const hasDayWiseAccommodation = days.length > 0;
+    const showAllDays = !hasDayWiseAccommodation && hasAllDaysAccommodation;
+
     return (
       <ScrollView style={styles.tabContent}>
         <View style={styles.accommodationContainer}>
-          <Text style={styles.instructionText}>
-            {t('selectAccommodation')}
-          </Text>
-          
-          {days.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="bed-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>{t('noAccommodationData')}</Text>
-            </View>
+          {showAllDays ? (
+            <>
+              <Text style={styles.instructionText}>
+                {t('allDaysTransport').replace('transport', 'accommodation')}
+              </Text>
+              
+              <View style={styles.transportSection}>
+                <Text style={styles.sectionTitle}>{t('accommodation')}</Text>
+                <View style={styles.accommodationBox}>
+                  <View style={styles.tagsContainer}>
+                    <View style={[styles.tag, styles.vendorTag]}>
+                      <Text style={styles.tagText}>
+                        {(() => {
+                          // Try to get vendor name from accommodationVendor object first
+                          if (tripDetails?.accommodationVendor?.title) {
+                            return tripDetails.accommodationVendor.title;
+                          }
+                          // If selected_accommodation_vendor is an ID, convert to name
+                          if (tripDetails?.selected_accommodation_vendor) {
+                            const vendorId = parseInt(tripDetails.selected_accommodation_vendor);
+                            if (!isNaN(vendorId)) {
+                              const vendor = tripDetails?.allAccommodationVendors?.find((v: any) => v.id === vendorId);
+                              return vendor?.title || tripDetails.selected_accommodation_vendor;
+                            }
+                            return tripDetails.selected_accommodation_vendor;
+                          }
+                          return 'N/A';
+                        })()}
+                      </Text>
+                    </View>
+                    {tripDetails?.selected_accommodation_start_time && (
+                      <View style={[styles.tag, styles.timeTag]}>
+                        <Text style={styles.tagText}>
+                          {tripDetails.selected_accommodation_start_time}
+                        </Text>
+                      </View>
+                    )}
+                    {tripDetails?.selected_accommodation_end_time && (
+                      <View style={[styles.tag, styles.timeTag]}>
+                        <Text style={styles.tagText}>
+                          {tripDetails.selected_accommodation_end_time}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </>
           ) : (
+            <>
+              <Text style={styles.instructionText}>
+                {t('selectAccommodation')}
+              </Text>
+              
+              {days.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="bed-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>{t('noAccommodationData')}</Text>
+                </View>
+              ) : (
             <View style={styles.daysContainer}>
               {days.map((day, index) => {
                 const dayNumber = index + 1;
@@ -502,6 +491,8 @@ export default function TripDetailsScreen() {
                 );
               })}
             </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -512,19 +503,136 @@ export default function TripDetailsScreen() {
     const foodVendorsByDay = parseFoodVendorsByDay();
     const days = Object.keys(foodVendorsByDay).sort();
 
+    // Check for all-days food data
+    const hasAllDaysFood = tripDetails?.selected_food_vendors || 
+                          tripDetails?.food_vendor_id ||
+                          (tripDetails?.all_days_food_entries && 
+                           tripDetails.all_days_food_entries !== '[]' &&
+                           tripDetails.all_days_food_entries !== '');
+    
+    // Smart fallback: if no day-wise data but has all-days data, show all-days
+    const hasDayWiseFood = days.length > 0;
+    const showAllDays = !hasDayWiseFood && hasAllDaysFood;
+
     return (
       <ScrollView style={styles.tabContent}>
         <View style={styles.foodContainer}>
-          <Text style={styles.instructionText}>
-            {t('selectFood')}
-          </Text>
-          
-          {days.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="restaurant-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>{t('noFoodData')}</Text>
-            </View>
+          {showAllDays ? (
+            <>
+              <Text style={styles.instructionText}>
+                {t('allDaysTransport').replace('transport', 'food')}
+              </Text>
+              
+              <View style={styles.transportSection}>
+                <Text style={styles.sectionTitle}>{t('food')}</Text>
+                
+                {/* Parse and display all_days_food_entries */}
+                {(() => {
+                  try {
+                    let allDaysFoodEntries = [];
+                    if (tripDetails?.all_days_food_entries) {
+                      allDaysFoodEntries = typeof tripDetails.all_days_food_entries === 'string' 
+                        ? JSON.parse(tripDetails.all_days_food_entries)
+                        : tripDetails.all_days_food_entries;
+                    }
+                    
+                    if (Array.isArray(allDaysFoodEntries) && allDaysFoodEntries.length > 0) {
+                      return allDaysFoodEntries.map((entry: any, index: number) => {
+                        // Get vendor names from IDs
+                        const vendorNames = entry.vendors?.map((vendorId: number) => {
+                          const vendor = tripDetails?.allFoodVendors?.find((v: any) => v.id === vendorId);
+                          return vendor?.title || `Vendor ${vendorId}`;
+                        }) || [];
+                        
+                        // Get schedule names
+                        const scheduleNames = entry.schedules?.map((scheduleId: number) => {
+                          const scheduleMap: any = { 1: t('breakfast'), 2: t('lunch'), 3: t('dinner') };
+                          return scheduleMap[scheduleId] || `Schedule ${scheduleId}`;
+                        }) || [];
+                        
+                        // Get category names from IDs
+                        const categoryNames = entry.categories?.map((categoryId: number) => {
+                          const category = tripDetails?.allFoodCategories?.find((c: any) => c.id === categoryId);
+                          return category?.title || `Category ${categoryId}`;
+                        }) || [];
+                        
+                        // Get item names from IDs
+                        const itemNames = entry.items?.map((itemId: number) => {
+                          const item = tripDetails?.allFoodItems?.find((i: any) => i.id === itemId);
+                          return item?.title || `Item ${itemId}`;
+                        }) || [];
+                        
+                        return (
+                          <TouchableOpacity 
+                            key={index}
+                            style={styles.foodButton}
+                            onPress={() => {
+                              const foodData = {
+                                ...entry,
+                                vendorNames,
+                                scheduleNames,
+                                categoryNames,
+                                itemNames
+                              };
+                              console.log('Selected Food Item:', foodData);
+                              setSelectedFoodItem(foodData);
+                              setFoodModalVisible(true);
+                            }}
+                          >
+                            <Text style={styles.foodButtonText}>
+                              {scheduleNames.join(', ') || t('food')}
+                            </Text>
+                            <Text style={styles.foodButtonSubtext}>
+                              {t('vendor')} {vendorNames.join(', ')}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      });
+                    }
+                    
+                    // Fallback to simple vendor display
+                    if (tripDetails?.foodVendor?.title) {
+                      return (
+                        <View style={styles.infoCard}>
+                          <Text style={styles.infoValue}>
+                            {t('vendor')}: {tripDetails.foodVendor.title}
+                          </Text>
+                        </View>
+                      );
+                    }
+                    
+                    return (
+                      <View style={styles.infoCard}>
+                        <Text style={styles.infoValue}>
+                          {t('food')} configured for all days
+                        </Text>
+                      </View>
+                    );
+                  } catch (e) {
+                    console.error('Error parsing all_days_food_entries:', e);
+                    return (
+                      <View style={styles.infoCard}>
+                        <Text style={styles.infoValue}>
+                          {t('food')} data available
+                        </Text>
+                      </View>
+                    );
+                  }
+                })()}
+              </View>
+            </>
           ) : (
+            <>
+              <Text style={styles.instructionText}>
+                {t('selectFood')}
+              </Text>
+              
+              {days.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="restaurant-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>{t('noFoodData')}</Text>
+                </View>
+              ) : (
             <View style={styles.daysContainer}>
               {days.map((day, index) => {
                 const dayNumber = index + 1;
@@ -566,6 +674,8 @@ export default function TripDetailsScreen() {
                 );
               })}
             </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -576,19 +686,133 @@ export default function TripDetailsScreen() {
     const eventsByDay = parseEventsByDay();
     const days = Object.keys(eventsByDay).sort();
 
+    // Check for all-days events data
+    const hasAllDaysEvents = tripDetails?.selected_event_title || 
+                            (tripDetails?.all_days_events && 
+                             tripDetails.all_days_events !== '[]' &&
+                             tripDetails.all_days_events !== '');
+    
+    // Smart fallback: if no day-wise data but has all-days data, show all-days
+    const hasDayWiseEvents = days.length > 0;
+    const showAllDays = !hasDayWiseEvents && hasAllDaysEvents;
+
     return (
       <ScrollView style={styles.tabContent}>
         <View style={styles.eventsContainer}>
-          <Text style={styles.instructionText}>
-            {t('selectEvents')}
-          </Text>
-          
-          {days.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>{t('noEventsData')}</Text>
-            </View>
+          {showAllDays ? (
+            <>
+              <Text style={styles.instructionText}>
+                {t('allDaysTransport').replace('transport', 'events')}
+              </Text>
+              
+              <View style={styles.transportSection}>
+                <Text style={styles.sectionTitle}>{t('events')}</Text>
+                
+                {/* Parse and display all_days_events */}
+                {(() => {
+                  try {
+                    let allDaysEvents = [];
+                    if (tripDetails?.all_days_events) {
+                      allDaysEvents = typeof tripDetails.all_days_events === 'string' 
+                        ? JSON.parse(tripDetails.all_days_events)
+                        : tripDetails.all_days_events;
+                    }
+                    
+                    if (Array.isArray(allDaysEvents) && allDaysEvents.length > 0) {
+                      return allDaysEvents.map((event: any, index: number) => (
+                        <View key={index} style={styles.eventCard}>
+                          <View style={styles.eventHeader}>
+                            <Text style={styles.eventTitle}>
+                              {translateEventTitle(event.title)}
+                            </Text>
+                          </View>
+                          
+                          {event.description && (
+                            <Text style={styles.eventDescription}>
+                              {event.description}
+                            </Text>
+                          )}
+                          
+                          <View style={styles.eventTimes}>
+                            {event.startTime && (
+                              <View style={styles.timeItem}>
+                                <Text style={styles.timeLabel}>{t('startTime')}</Text>
+                                <Text style={styles.timeValue}>
+                                  {formatTime(event.startTime)}
+                                </Text>
+                              </View>
+                            )}
+                            {event.endTime && (
+                              <View style={styles.timeItem}>
+                                <Text style={styles.timeLabel}>{t('endTime')}</Text>
+                                <Text style={styles.timeValue}>
+                                  {formatTime(event.endTime)}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                      ));
+                    }
+                    
+                    // Fallback to single event display
+                    if (tripDetails?.selected_event_title) {
+                      return (
+                        <View style={styles.eventCard}>
+                          <View style={styles.eventHeader}>
+                            <Text style={styles.eventTitle}>
+                              {translateEventTitle(tripDetails.selected_event_title)}
+                            </Text>
+                          </View>
+                          
+                          {tripDetails.selected_event_description && (
+                            <Text style={styles.eventDescription}>
+                              {tripDetails.selected_event_description}
+                            </Text>
+                          )}
+                          
+                          <View style={styles.eventTimes}>
+                            {tripDetails.selected_event_start_time && (
+                              <View style={styles.timeItem}>
+                                <Text style={styles.timeLabel}>{t('startTime')}</Text>
+                                <Text style={styles.timeValue}>
+                                  {formatTime(tripDetails.selected_event_start_time)}
+                                </Text>
+                              </View>
+                            )}
+                            {tripDetails.selected_event_end_time && (
+                              <View style={styles.timeItem}>
+                                <Text style={styles.timeLabel}>{t('endTime')}</Text>
+                                <Text style={styles.timeValue}>
+                                  {formatTime(tripDetails.selected_event_end_time)}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    }
+                    
+                    return null;
+                  } catch (e) {
+                    console.error('Error parsing all_days_events:', e);
+                    return null;
+                  }
+                })()}
+              </View>
+            </>
           ) : (
+            <>
+              <Text style={styles.instructionText}>
+                {t('selectEvents')}
+              </Text>
+              
+              {days.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="calendar-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>{t('noEventsData')}</Text>
+                </View>
+              ) : (
             <View style={styles.daysContainer}>
               {days.map((day, index) => {
                 const dayNumber = index + 1;
@@ -632,6 +856,348 @@ export default function TripDetailsScreen() {
                 );
               })}
             </View>
+              )}
+            </>
+          )}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const renderTransportTab = () => {
+    if (!tripDetails) return null;
+
+    // Parse transport data
+    let driversByDay: any = {};
+    let conductorsByDay: any = {};
+    let busesByDay: any = {};
+    let vendorsByDay: any = {};
+    let timeByDay: any = {};
+    let selectedDrivers: any[] = [];
+    let selectedConductors: any[] = [];
+    let selectedBuses: any[] = [];
+
+    try {
+      // Always parse all-days data
+      selectedDrivers = tripDetails.selected_drivers_details || [];
+      selectedConductors = tripDetails.selected_conductors_details || [];
+      selectedBuses = tripDetails.selected_buses_details || [];
+      
+      // Always parse day-wise data
+      driversByDay = tripDetails.drivers_by_day || {};
+      conductorsByDay = tripDetails.conductors_by_day || {};
+      busesByDay = tripDetails.buses_by_day || {};
+      
+      if (typeof tripDetails.vendors_by_day === 'string') {
+        vendorsByDay = JSON.parse(tripDetails.vendors_by_day);
+      } else {
+        vendorsByDay = tripDetails.vendors_by_day || {};
+      }
+      
+      if (typeof tripDetails.time_by_day === 'string') {
+        timeByDay = JSON.parse(tripDetails.time_by_day);
+      } else {
+        timeByDay = tripDetails.time_by_day || {};
+      }
+    } catch (e) {
+      console.error('Error parsing transport data:', e);
+    }
+
+    // Smart detection: If use_all_days_selection is false but day-wise data is empty
+    // and all-days data exists, then show all-days data (fallback)
+    const hasDayWiseData = Object.keys(driversByDay).length > 0 || 
+                           Object.keys(conductorsByDay).length > 0 || 
+                           Object.keys(busesByDay).length > 0 ||
+                           Object.keys(vendorsByDay).length > 0;
+    
+    const hasAllDaysData = selectedDrivers.length > 0 || 
+                           selectedConductors.length > 0 || 
+                           selectedBuses.length > 0 ||
+                           tripDetails.transport_vendor_name;
+    
+    // Use all days display if:
+    // 1. Explicitly set to use_all_days_selection, OR
+    // 2. No day-wise data but has all-days data (fallback)
+    const useAllDays = tripDetails.use_all_days_selection || (!hasDayWiseData && hasAllDaysData);
+
+    // Generate days array based on actual day-wise data
+    const days: string[] = [];
+    if (!useAllDays && hasDayWiseData && Object.keys(driversByDay).length > 0) {
+      const dayKeys = Object.keys(driversByDay);
+      dayKeys.forEach(key => days.push(key));
+    } else if (tripDetails.start_date && tripDetails.end_date) {
+      const start = new Date(tripDetails.start_date);
+      const end = new Date(tripDetails.end_date);
+      let current = new Date(start);
+      let dayNum = 1;
+      
+      while (current <= end) {
+        days.push(`Day ${dayNum}`);
+        current.setDate(current.getDate() + 1);
+        dayNum++;
+      }
+    }
+
+    return (
+      <ScrollView style={styles.tabContent}>
+        <View style={styles.transportContainer}>
+          {useAllDays ? (
+            <>
+              <Text style={styles.instructionText}>
+                {t('allDaysTransport')}
+              </Text>
+              
+              {/* Transport Vendor */}
+              {tripDetails.transport_vendor_name && (
+                <View style={styles.transportSection}>
+                  <Text style={styles.sectionTitle}>{t('transportVendor')}</Text>
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoValue}>{tripDetails.transport_vendor_name}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* All Days Drivers */}
+              {selectedDrivers && selectedDrivers.length > 0 && (
+                <View style={styles.transportSection}>
+                  <Text style={styles.sectionTitle}>{t('driver')}</Text>
+                  {selectedDrivers.map((driver: any, index: number) => (
+                    <View key={index} style={styles.transportCard}>
+                      <View style={styles.transportHeader}>
+                        <Ionicons name="person" size={20} color="#2196F3" />
+                        <Text style={styles.transportName}>{driver.name}</Text>
+                      </View>
+                      <View style={styles.transportDetails}>
+                        <Text style={styles.transportDetailText}>
+                          {t('phone')}: {driver.phone || 'N/A'}
+                        </Text>
+                        <Text style={styles.transportDetailText}>
+                          {t('license')}: {driver.license || 'N/A'}
+                        </Text>
+                        {driver.vendor && (
+                          <Text style={styles.transportDetailText}>
+                            {t('vendor')}: {driver.vendor}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* All Days Conductors */}
+              {selectedConductors && selectedConductors.length > 0 && (
+                <View style={styles.transportSection}>
+                  <Text style={styles.sectionTitle}>{t('conductor')}</Text>
+                  {selectedConductors.map((conductor: any, index: number) => (
+                    <View key={index} style={styles.transportCard}>
+                      <View style={styles.transportHeader}>
+                        <Ionicons name="person-outline" size={20} color="#4CAF50" />
+                        <Text style={styles.transportName}>{conductor.name}</Text>
+                      </View>
+                      <View style={styles.transportDetails}>
+                        <Text style={styles.transportDetailText}>
+                          {t('phone')}: {conductor.phone || 'N/A'}
+                        </Text>
+                        {conductor.vendor && (
+                          <Text style={styles.transportDetailText}>
+                            {t('vendor')}: {conductor.vendor}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* All Days Buses */}
+              {selectedBuses && selectedBuses.length > 0 && (
+                <View style={styles.transportSection}>
+                  <Text style={styles.sectionTitle}>{t('bus')}</Text>
+                  {selectedBuses.map((bus: any, index: number) => (
+                    <View key={index} style={styles.transportCard}>
+                      <View style={styles.transportHeader}>
+                        <Ionicons name="bus" size={20} color="#FF9800" />
+                        <Text style={styles.transportName}>{bus.title || `Bus ${bus.id}`}</Text>
+                      </View>
+                      <View style={styles.transportDetails}>
+                        {bus.model && (
+                          <Text style={styles.transportDetailText}>
+                            {t('model')}: {bus.model} {bus.make || ''}
+                          </Text>
+                        )}
+                        {bus.seats && (
+                          <Text style={styles.transportDetailText}>
+                            {t('seats')}: {bus.seats}
+                          </Text>
+                        )}
+                        {bus.rcNumber && (
+                          <Text style={styles.transportDetailText}>
+                            {t('rcNumber')}: {bus.rcNumber}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Empty state for all days */}
+              {!tripDetails.transport_vendor_name && 
+               selectedDrivers.length === 0 && 
+               selectedConductors.length === 0 && 
+               selectedBuses.length === 0 && (
+                <View style={styles.emptyState}>
+                  <Ionicons name="bus-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>{t('noTransportData')}</Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={styles.instructionText}>
+                {t('selectTransport')}
+              </Text>
+              
+              {days.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="bus-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyText}>{t('noTransportData')}</Text>
+                </View>
+              ) : (
+                <View style={styles.daysContainer}>
+                  {days.map((day, index) => {
+                    const drivers = driversByDay[day] || [];
+                    const conductors = conductorsByDay[day] || [];
+                    const buses = busesByDay[day] || [];
+                    const vendor = vendorsByDay[day];
+                    const timing = timeByDay[day];
+
+                    return (
+                      <View key={day} style={styles.daySection}>
+                        <Text style={styles.dayTitle}>{day}</Text>
+                        
+                        {/* Vendor */}
+                        {vendor && (
+                          <View style={styles.dayInfoRow}>
+                            <Text style={styles.dayInfoLabel}>{t('transportVendor')}:</Text>
+                            <Text style={styles.dayInfoValue}>{vendor}</Text>
+                          </View>
+                        )}
+
+                        {/* Timing */}
+                        {timing && (
+                          <View style={styles.timingRow}>
+                            <View style={styles.timeItem}>
+                              <Text style={styles.timeLabel}>{t('startTime')}</Text>
+                              <Text style={styles.timeValue}>{timing.startTime || 'N/A'}</Text>
+                            </View>
+                            <View style={styles.timeItem}>
+                              <Text style={styles.timeLabel}>{t('endTime')}</Text>
+                              <Text style={styles.timeValue}>{timing.endTime || 'N/A'}</Text>
+                            </View>
+                          </View>
+                        )}
+
+                        {/* Drivers */}
+                        {drivers.length > 0 && (
+                          <View style={styles.transportSubSection}>
+                            <Text style={styles.subSectionTitle}>{t('driver')}</Text>
+                            {drivers.map((driver: any, idx: number) => (
+                              <View key={idx} style={styles.transportCard}>
+                                <View style={styles.transportHeader}>
+                                  <Ionicons name="person" size={20} color="#2196F3" />
+                                  <Text style={styles.transportName}>{driver.name}</Text>
+                                </View>
+                                <View style={styles.transportDetails}>
+                                  <Text style={styles.transportDetailText}>
+                                    {t('phone')}: {driver.phone || 'N/A'}
+                                  </Text>
+                                  {driver.license && (
+                                    <Text style={styles.transportDetailText}>
+                                      {t('license')}: {driver.license}
+                                    </Text>
+                                  )}
+                                  {driver.vendor && (
+                                    <Text style={styles.transportDetailText}>
+                                      {t('vendor')}: {driver.vendor}
+                                    </Text>
+                                  )}
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* Conductors */}
+                        {conductors.length > 0 && (
+                          <View style={styles.transportSubSection}>
+                            <Text style={styles.subSectionTitle}>{t('conductor')}</Text>
+                            {conductors.map((conductor: any, idx: number) => (
+                              <View key={idx} style={styles.transportCard}>
+                                <View style={styles.transportHeader}>
+                                  <Ionicons name="person-outline" size={20} color="#4CAF50" />
+                                  <Text style={styles.transportName}>{conductor.name}</Text>
+                                </View>
+                                <View style={styles.transportDetails}>
+                                  <Text style={styles.transportDetailText}>
+                                    {t('phone')}: {conductor.phone || 'N/A'}
+                                  </Text>
+                                  {conductor.vendor && (
+                                    <Text style={styles.transportDetailText}>
+                                      {t('vendor')}: {conductor.vendor}
+                                    </Text>
+                                  )}
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* Buses */}
+                        {buses.length > 0 && (
+                          <View style={styles.transportSubSection}>
+                            <Text style={styles.subSectionTitle}>{t('bus')}</Text>
+                            {buses.map((bus: any, idx: number) => (
+                              <View key={idx} style={styles.transportCard}>
+                                <View style={styles.transportHeader}>
+                                  <Ionicons name="bus" size={20} color="#FF9800" />
+                                  <Text style={styles.transportName}>{bus.title || `Bus ${bus.id}`}</Text>
+                                </View>
+                                <View style={styles.transportDetails}>
+                                  {bus.model && (
+                                    <Text style={styles.transportDetailText}>
+                                      {t('model')}: {bus.model} {bus.make || ''}
+                                    </Text>
+                                  )}
+                                  {bus.seats && (
+                                    <Text style={styles.transportDetailText}>
+                                      {t('seats')}: {bus.seats}
+                                    </Text>
+                                  )}
+                                  {bus.rcNumber && (
+                                    <Text style={styles.transportDetailText}>
+                                      {t('rcNumber')}: {bus.rcNumber}
+                                    </Text>
+                                  )}
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* Empty state for day */}
+                        {drivers.length === 0 && conductors.length === 0 && buses.length === 0 && !vendor && (
+                          <View style={styles.emptyDayState}>
+                            <Text style={styles.emptyDayText}>{t('noTransportData')}</Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -665,6 +1231,12 @@ export default function TripDetailsScreen() {
 
   const renderFoodModal = () => {
     if (!selectedFoodItem) return null;
+    
+    // Use scheduleNames if available, otherwise fall back to schedule IDs
+    const modalTitle = selectedFoodItem.scheduleNames?.[0] || 
+                      (selectedFoodItem.schedules?.includes(1) ? t('breakfast') : 
+                       selectedFoodItem.schedules?.includes(2) ? t('lunch') : 
+                       selectedFoodItem.schedules?.includes(3) ? t('dinner') : 'Food');
 
     return (
       <Modal
@@ -676,11 +1248,7 @@ export default function TripDetailsScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {selectedFoodItem.schedules?.includes(1) ? t('breakfast') : 
-                 selectedFoodItem.schedules?.includes(2) ? t('lunch') : 
-                 selectedFoodItem.schedules?.includes(3) ? t('dinner') : 'Food'}
-              </Text>
+              <Text style={styles.modalTitle}>{modalTitle}</Text>
               <TouchableOpacity 
                 style={styles.closeButton}
                 onPress={() => setFoodModalVisible(false)}
@@ -690,39 +1258,42 @@ export default function TripDetailsScreen() {
             </View>
             
             <ScrollView style={styles.modalBody}>
-              <View style={styles.modalSection}>
-                {selectedFoodItem.categoryNames?.map((category: string, categoryIndex: number) => (
-                    <View key={categoryIndex} style={styles.categoryGroup}>
-                      <View style={styles.categoryHeader}>
-                        <Ionicons name="restaurant" size={20} color="#fff" style={styles.categoryIcon} />
-                        <Text style={styles.categoryTitle}>{category}</Text>
+              {/* Display categories as tags */}
+              {selectedFoodItem.categoryNames && selectedFoodItem.categoryNames.length > 0 && (
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>{t('categories')}</Text>
+                  <View style={styles.tagsContainer}>
+                    {selectedFoodItem.categoryNames.map((category: string, index: number) => (
+                      <View key={index} style={[styles.tag, styles.categoryTag]}>
+                        <Text style={styles.tagText}>{category}</Text>
                       </View>
-                      <View style={styles.subMenuContainer}>
-                        {selectedFoodItem.itemNames?.map((item: string, itemIndex: number) => (
-                          <View key={itemIndex} style={styles.subMenuItem}>
-                            <Ionicons name="ellipse" size={8} color="#28a745" style={styles.itemIcon} />
-                            <Text style={styles.subMenuText}>{item}</Text>
-                          </View>
-                        )) || <Text style={styles.noDataText}>No items</Text>}
+                    ))}
+                  </View>
+                </View>
+              )}
+              
+              {/* Display all items in one list */}
+              {selectedFoodItem.itemNames && selectedFoodItem.itemNames.length > 0 && (
+                <View style={styles.categoryGroup}>
+                  <View style={styles.categoryHeader}>
+                    <Ionicons name="restaurant" size={20} color="#fff" />
+                    <Text style={styles.categoryTitle}>{t('items')}</Text>
+                  </View>
+                  <View style={styles.subMenuContainer}>
+                    {selectedFoodItem.itemNames.map((item: string, itemIndex: number) => (
+                      <View key={itemIndex} style={styles.subMenuItem}>
+                        <Ionicons name="ellipse" size={8} color="#28a745" />
+                        <Text style={styles.subMenuText}>{item}</Text>
                       </View>
-                    </View>
-                )) || selectedFoodItem.categories?.map((category: any, categoryIndex: number) => (
-                    <View key={categoryIndex} style={styles.categoryGroup}>
-                      <View style={styles.categoryHeader}>
-                        <Ionicons name="restaurant" size={20} color="#fff" style={styles.categoryIcon} />
-                        <Text style={styles.categoryTitle}>{category}</Text>
-                      </View>
-                      <View style={styles.subMenuContainer}>
-                        {selectedFoodItem.items?.map((item: any, itemIndex: number) => (
-                          <View key={itemIndex} style={styles.subMenuItem}>
-                            <Ionicons name="ellipse" size={8} color="#28a745" style={styles.itemIcon} />
-                            <Text style={styles.subMenuText}>{item}</Text>
-                          </View>
-                        )) || <Text style={styles.noDataText}>No items</Text>}
-                      </View>
-                    </View>
-                )) || <Text style={styles.noDataText}>No categories</Text>}
-              </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+              
+              {(!selectedFoodItem.categoryNames || selectedFoodItem.categoryNames.length === 0) && 
+               (!selectedFoodItem.itemNames || selectedFoodItem.itemNames.length === 0) && (
+                <Text style={styles.noDataText}>No food data available</Text>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -921,6 +1492,14 @@ export default function TripDetailsScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'Transport' && styles.activeTab]}
+          onPress={() => setActiveTab('Transport')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Transport' && styles.activeTabText]}>
+            {t('transport')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'Events' && styles.activeTab]}
           onPress={() => setActiveTab('Events')}
         >
@@ -934,6 +1513,7 @@ export default function TripDetailsScreen() {
       {activeTab === 'Details' && renderDetailsTab()}
       {activeTab === 'Accommodation' && renderAccommodationTab()}
       {activeTab === 'Food' && renderFoodTab()}
+      {activeTab === 'Transport' && renderTransportTab()}
       {activeTab === 'Events' && renderEventsTab()}
 
       {/* Back and Apply/Feedback Buttons */}
@@ -958,7 +1538,14 @@ export default function TripDetailsScreen() {
         {isLoggedIn && fromMyTrips === 'true' && (
           <TouchableOpacity 
             style={styles.feedbackButton}
-            onPress={() => setFeedbackModalVisible(true)}
+            onPress={() => {
+              router.push({
+                pathname: '/feedback',
+                params: {
+                  tripDetails: JSON.stringify(tripDetails)
+                }
+              });
+            }}
           >
             <Text style={styles.feedbackButtonText}>Feedback</Text>
           </TouchableOpacity>
@@ -973,184 +1560,6 @@ export default function TripDetailsScreen() {
 
       {/* Food Modal */}
       {renderFoodModal()}
-
-      {/* Feedback Modal */}
-      <Modal
-        visible={feedbackModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setFeedbackModalVisible(false)}
-      >
-        <View style={styles.feedbackModalOverlay}>
-          <View style={styles.feedbackModalContainer}>
-            {/* Modal Header */}
-            <View style={styles.feedbackModalHeader}>
-              <Text style={styles.feedbackModalTitle}>Trip Feedback</Text>
-              <TouchableOpacity onPress={() => setFeedbackModalVisible(false)}>
-                <Ionicons name="close" size={28} color="#000" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Scrollable Content */}
-            <ScrollView 
-              style={styles.feedbackScrollView}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              showsVerticalScrollIndicator={true}
-            >
-              {/* Food Section */}
-              <TouchableOpacity 
-                style={styles.feedbackSection}
-                onPress={() => setFoodFeedbackExpanded(!foodFeedbackExpanded)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.feedbackSectionTitle}>Food</Text>
-                <Ionicons 
-                  name={foodFeedbackExpanded ? "chevron-up" : "chevron-down"} 
-                  size={24} 
-                  color="#007AFF" 
-                />
-              </TouchableOpacity>
-
-              {/* Food Vendors - Expanded */}
-              {foodFeedbackExpanded && tripDetails && (
-                <View style={styles.feedbackContent}>
-                  {getFoodVendors().length > 0 ? (
-                    getFoodVendors().map((vendorName: string, index: number) => (
-                      <View key={index} style={styles.vendorFeedbackItem}>
-                        <Text style={styles.vendorName}>{vendorName}</Text>
-                        
-                        {/* Star Rating */}
-                        <View style={styles.starRatingContainer}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <TouchableOpacity
-                              key={star}
-                              onPress={() => {
-                                const currentRating = foodVendorRatings[vendorName] || 0;
-                                // If clicking the same star, deselect (set to 0)
-                                // Otherwise, set to the clicked star value
-                                setFoodVendorRatings({
-                                  ...foodVendorRatings,
-                                  [vendorName]: currentRating === star ? 0 : star
-                                });
-                              }}
-                            >
-                              <Ionicons
-                                name={star <= (foodVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
-                                size={32}
-                                color="#FFD700"
-                                style={styles.starIcon}
-                              />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-
-                        {/* Description Box */}
-                        <TextInput
-                          style={styles.feedbackDescriptionBox}
-                          placeholder="Write your feedback about the food..."
-                          placeholderTextColor="#999"
-                          multiline
-                          numberOfLines={4}
-                          value={foodVendorDescriptions[vendorName] || ''}
-                          onChangeText={(text) => {
-                            setFoodVendorDescriptions({
-                              ...foodVendorDescriptions,
-                              [vendorName]: text
-                            });
-                          }}
-                        />
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.noDataText}>No food vendors available</Text>
-                  )}
-                </View>
-              )}
-
-              {/* Accommodation Section */}
-              <TouchableOpacity 
-                style={styles.feedbackSection}
-                onPress={() => setAccommodationFeedbackExpanded(!accommodationFeedbackExpanded)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.feedbackSectionTitle}>Accommodation</Text>
-                <Ionicons 
-                  name={accommodationFeedbackExpanded ? "chevron-up" : "chevron-down"} 
-                  size={24} 
-                  color="#007AFF" 
-                />
-              </TouchableOpacity>
-
-              {/* Accommodation Vendors - Expanded */}
-              {accommodationFeedbackExpanded && tripDetails && (
-                <View style={styles.feedbackContent}>
-                  {getAccommodationVendors().length > 0 ? (
-                    getAccommodationVendors().map((vendorName: string, index: number) => (
-                      <View key={index} style={styles.vendorFeedbackItem}>
-                        <Text style={styles.vendorName}>{vendorName}</Text>
-                        
-                        {/* Star Rating */}
-                        <View style={styles.starRatingContainer}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <TouchableOpacity
-                              key={star}
-                              onPress={() => {
-                                const currentRating = accommodationVendorRatings[vendorName] || 0;
-                                // If clicking the same star, deselect (set to 0)
-                                // Otherwise, set to the clicked star value
-                                setAccommodationVendorRatings({
-                                  ...accommodationVendorRatings,
-                                  [vendorName]: currentRating === star ? 0 : star
-                                });
-                              }}
-                            >
-                              <Ionicons
-                                name={star <= (accommodationVendorRatings[vendorName] || 0) ? "star" : "star-outline"}
-                                size={32}
-                                color="#FFD700"
-                                style={styles.starIcon}
-                              />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-
-                        {/* Description Box */}
-                        <TextInput
-                          style={styles.feedbackDescriptionBox}
-                          placeholder="Write your feedback about the accommodation..."
-                          placeholderTextColor="#999"
-                          multiline
-                          numberOfLines={4}
-                          value={accommodationVendorDescriptions[vendorName] || ''}
-                          onChangeText={(text) => {
-                            setAccommodationVendorDescriptions({
-                              ...accommodationVendorDescriptions,
-                              [vendorName]: text
-                            });
-                          }}
-                        />
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.noDataText}>No accommodation vendors available</Text>
-                  )}
-                </View>
-              )}
-            </ScrollView>
-
-            {/* Fixed Submit Button */}
-            <TouchableOpacity 
-              style={styles.submitFeedbackButton}
-              onPress={() => {
-                Alert.alert('Success', 'Feedback submitted successfully!');
-                setFeedbackModalVisible(false);
-              }}
-            >
-              <Text style={styles.submitFeedbackButtonText}>Submit Feedback</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Toast Notification */}
       {toast.visible && (
@@ -1810,5 +2219,106 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // Transport Tab Styles
+  transportContainer: {
+    padding: 16,
+  },
+  transportSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 12,
+  },
+  infoCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007bff',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#495057',
+  },
+  transportCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  transportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  transportName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212529',
+    marginLeft: 8,
+  },
+  transportDetails: {
+    marginLeft: 28,
+  },
+  transportDetailText: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginBottom: 4,
+  },
+  transportSubSection: {
+    marginTop: 12,
+  },
+  subSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+    marginBottom: 8,
+  },
+  dayInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    padding: 12,
+    backgroundColor: '#e7f3ff',
+    borderRadius: 8,
+  },
+  dayInfoLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+    marginRight: 8,
+  },
+  dayInfoValue: {
+    fontSize: 14,
+    color: '#212529',
+    flex: 1,
+  },
+  timingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    padding: 12,
+    backgroundColor: '#fff3cd',
+    borderRadius: 8,
+  },
+  emptyDayState: {
+    padding: 12,
+    alignItems: 'center',
+  },
+  emptyDayText: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
   },
 });

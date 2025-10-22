@@ -26,6 +26,7 @@ const translations = {
     'details': 'Details',
     'accommodation': 'Accommodation',
     'food': 'Food',
+    'transport': 'Transport',
     'events': 'Events',
     
     // Trip details
@@ -60,6 +61,20 @@ const translations = {
     'startTime': 'Start Time',
     'endTime': 'End Time',
     'noEventsData': 'No events data available',
+    
+    // Transport
+    'selectTransport': 'Transport details for each day',
+    'allDaysTransport': 'Same transport for all days',
+    'driver': 'Driver',
+    'conductor': 'Conductor',
+    'bus': 'Bus',
+    'busDetails': 'Bus Details',
+    'model': 'Model',
+    'seats': 'Seats',
+    'rcNumber': 'RC Number',
+    'license': 'License',
+    'noTransportData': 'No transport data available',
+    'transportVendor': 'Transport Vendor',
     
     // Event translations
     'onboardingBus': 'Onboarding Bus',
@@ -297,6 +312,7 @@ const translations = {
     'details': 'ਵੇਰਵੇ',
     'accommodation': 'ਰਿਹਾਇਸ਼',
     'food': 'ਖਾਣਾ',
+    'transport': 'ਆਵਾਜਾਈ',
     'events': 'ਇਵੈਂਟਸ',
     
     // Trip details
@@ -331,6 +347,20 @@ const translations = {
     'startTime': 'ਸ਼ੁਰੂਆਤੀ ਸਮਾਂ',
     'endTime': 'ਅੰਤਿਮ ਸਮਾਂ',
     'noEventsData': 'ਕੋਈ ਇਵੈਂਟਸ ਡੇਟਾ ਉਪਲਬਧ ਨਹੀਂ',
+    
+    // Transport
+    'selectTransport': 'ਹਰ ਦਿਨ ਲਈ ਆਵਾਜਾਈ ਵੇਰਵੇ',
+    'allDaysTransport': 'ਸਾਰੇ ਦਿਨਾਂ ਲਈ ਇੱਕੋ ਆਵਾਜਾਈ',
+    'driver': 'ਡਰਾਈਵਰ',
+    'conductor': 'ਕੰਡਕਟਰ',
+    'bus': 'ਬੱਸ',
+    'busDetails': 'ਬੱਸ ਵੇਰਵੇ',
+    'model': 'ਮਾਡਲ',
+    'seats': 'ਸੀਟਾਂ',
+    'rcNumber': 'RC ਨੰਬਰ',
+    'license': 'ਲਾਇਸੈਂਸ',
+    'noTransportData': 'ਕੋਈ ਆਵਾਜਾਈ ਡੇਟਾ ਉਪਲਬਧ ਨਹੀਂ',
+    'transportVendor': 'ਆਵਾਜਾਈ ਵਿਕਰੇਤਾ',
     
     // Event translations
     'onboardingBus': 'ਬਸ ਚੜ੍ਹਨਾ',
