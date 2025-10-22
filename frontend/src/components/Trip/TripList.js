@@ -38,7 +38,8 @@ import {
   AttachMoney as MoneyIcon,
   GpsFixed as TrackIcon,
   QrCodeScanner as ScannerIcon,
-  People as PeopleIcon
+  People as PeopleIcon,
+  Feedback as FeedbackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -211,6 +212,17 @@ const TripList = () => {
     // Navigate to trip applicants page
     navigate(`/trip-applicants/${trip.id}`, { 
       state: { 
+        tripTitle: trip.title
+      } 
+    });
+  };
+
+  const handleFeedback = (trip) => {
+    console.log('Feedback button clicked for trip:', trip);
+    // Navigate to feedback page
+    navigate('/feedback', { 
+      state: { 
+        tripId: trip.id,
         tripTitle: trip.title
       } 
     });
@@ -668,6 +680,21 @@ const TripList = () => {
                           title="View Applicants"
                         >
                           <PeopleIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleFeedback(trip)}
+                          sx={{
+                            color: '#9c27b0',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                              transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
+                          }}
+                          title="View Feedback"
+                        >
+                          <FeedbackIcon />
                         </IconButton>
                         <IconButton
                           onClick={() => handleDelete(trip.id)}

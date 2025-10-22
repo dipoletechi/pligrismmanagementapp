@@ -264,17 +264,6 @@ function App() {
                 } 
               />
 
-              {/* Feedback Management - Superadmin, Admin, Trip Manager, Transport */}
-                  <Route 
-                    path="/feedback" 
-                    element={
-                      <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport']}>
-                        <MainLayout>
-                          <FeedbackListWithTabs />
-                        </MainLayout>
-                      </ProtectedRoute>
-                    } 
-                  />
               <Route 
                 path="/trips" 
                 element={
@@ -284,6 +273,18 @@ function App() {
                   >
                     <MainLayout>
                       <div>Trip Management - Coming Soon</div>
+                    </MainLayout>
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Feedback Management - Superadmin, Admin, Trip Manager, Transport */}
+              <Route 
+                path="/feedback" 
+                element={
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport']}>
+                    <MainLayout>
+                      <FeedbackListWithTabs />
                     </MainLayout>
                   </ProtectedRoute>
                 } 
