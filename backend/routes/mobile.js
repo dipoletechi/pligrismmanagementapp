@@ -21,6 +21,7 @@ const Conductor = require('../models/Conductor');
 const Event = require('../models/Event');
 const SupportTicket = require('../models/SupportTicket');
 const User = require('../models/User');
+const UserNotification = require('../models/UserNotification');
 
 // Middleware to authenticate token
 const authenticateToken = async (req, res, next) => {
@@ -3591,6 +3592,121 @@ router.post('/feedback/submit', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error submitting feedback',
+      error: error.message
+    });
+  }
+});
+
+// Get user notifications with pagination
+router.get('/notifications', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    console.log(`Fetching notifications for user ${userId}, page ${page}, limit ${limit}`);
+
+    // Get total count
+    const totalCount = await UserNotification.count({
+      where: { user_id: userId }
+    });
+
+    // Get notifications with pagination
+    const notifications = await UserNotification.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']],
+      limit: limit,
+      offset: offset,
+      attributes: ['id', 'content', 'notification_type', 'status', 'date', 'created_at']
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).json({
+      success: true,
+      data: notifications,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalCount: totalCount,
+        limit: limit,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching notifications',
+      error: error.message
+    });
+  }
+});
+
+// Get unread notification count
+router.get('/notifications/unread-count', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const unreadCount = await UserNotification.count({
+      where: { 
+        user_id: userId,
+        status: 'pending'
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      count: unreadCount
+    });
+
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching unread count',
+      error: error.message
+    });
+  }
+});
+
+// Mark notification as read (change status to 'sent')
+router.put('/notifications/:id/mark-read', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notificationId = req.params.id;
+
+    const notification = await UserNotification.findOne({
+      where: { 
+        id: notificationId,
+        user_id: userId
+      }
+    });
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found'
+      });
+    }
+
+    notification.status = 'sent';
+    await notification.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Notification marked as read',
+      data: notification
+    });
+
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error marking notification as read',
       error: error.message
     });
   }
