@@ -21,6 +21,7 @@ const TripLog = require('./TripLog');
 const TripPligrim = require('./TripPligrim');
 const VendorFeedback = require('./VendorFeedback');
 const TripFeedback = require('./TripFeedback');
+const UserNotification = require('./UserNotification');
 
 // Associations
 FoodCategory.hasMany(FoodItem, {
@@ -278,6 +279,20 @@ TripFeedback.belongsTo(Trip, {
   onUpdate: 'CASCADE'
 });
 
+// UserNotification Associations
+User.hasMany(UserNotification, {
+  foreignKey: 'user_id',
+  as: 'notifications',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+UserNotification.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE'
+});
+
 module.exports = {
   sequelize,
   User,
@@ -299,7 +314,8 @@ module.exports = {
   TripLog,
   TripPligrim,
   VendorFeedback,
-  TripFeedback
+  TripFeedback,
+  UserNotification
 };
 
 
