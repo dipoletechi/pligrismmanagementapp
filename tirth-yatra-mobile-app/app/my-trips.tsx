@@ -173,55 +173,91 @@ export default function MyTripsScreen() {
     }
   };
 
-  const renderTripApplication = (application: TripApplication) => (
-    <TouchableOpacity 
-      key={application.id} 
-      style={styles.tripCard}
-      onPress={() => {
-        router.push({
-          pathname: '/trip-details',
-          params: { 
-            id: application.tripid.toString(),
-            fromMyTrips: 'true'
-          }
-        } as any);
-      }}
-    >
-      <View style={styles.tripHeader}>
-        <Text style={styles.tripTitle}>{application.trip_title}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(application.application_status) }]}>
-          <Text style={styles.statusText}>{application.application_status}</Text>
-        </View>
-      </View>
-      
-      <View style={styles.tripDetails}>
-        <View style={styles.dateRow}>
-          <Ionicons name="calendar-outline" size={16} color="#666" />
-          <Text style={styles.dateText}>
-            {formatDate(application.start_date)} - {formatDate(application.end_date)}
-          </Text>
+  // Check if trip is past/completed and eligible for feedback
+  const isTripEligibleForFeedback = (application: TripApplication) => {
+    // Check if application is approved
+    const isApproved = application.application_status === 'Approved';
+    
+    // Check if trip is past (end date is before or equal to today OR status is Completed)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tripEndDate = new Date(application.end_date);
+    tripEndDate.setHours(0, 0, 0, 0);
+    const isPast = tripEndDate <= today || application.trip_status_name === 'Completed';
+    
+    // Debug log to see why button is not showing
+    console.log('Feedback eligibility check:', {
+      tripTitle: application.trip_title,
+      isApproved,
+      applicationStatus: application.application_status,
+      isPast,
+      endDate: application.end_date,
+      tripEndDate: tripEndDate.toDateString(),
+      today: today.toDateString(),
+      tripStatus: application.trip_status_name,
+      eligible: isApproved && isPast
+    });
+    
+    return isApproved && isPast;
+  };
+
+  const renderTripApplication = (application: TripApplication) => {
+    return (
+      <TouchableOpacity 
+        key={application.id} 
+        style={styles.tripCard}
+        onPress={() => {
+          // Pass eligibility info to trip details page
+          const isEligible = isTripEligibleForFeedback(application);
+          router.push({
+            pathname: '/trip-details',
+            params: { 
+              id: application.tripid.toString(),
+              fromMyTrips: 'true',
+              applicationStatus: application.application_status,
+              tripEndDate: application.end_date,
+              tripStatusName: application.trip_status_name,
+              tripTitle: application.trip_title
+            }
+          } as any);
+        }}
+      >
+        <View style={styles.tripHeader}>
+          <Text style={styles.tripTitle}>{application.trip_title}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(application.application_status) }]}>
+            <Text style={styles.statusText}>{application.application_status}</Text>
+          </View>
         </View>
         
-        <View style={styles.tripStatusRow}>
-          <Ionicons name="information-circle-outline" size={16} color="#666" />
-          <Text style={styles.tripStatusText}>
-            Trip Status: {application.trip_status_name}
-          </Text>
+        <View style={styles.tripDetails}>
+          <View style={styles.dateRow}>
+            <Ionicons name="calendar-outline" size={16} color="#666" />
+            <Text style={styles.dateText}>
+              {formatDate(application.start_date)} - {formatDate(application.end_date)}
+            </Text>
+          </View>
+          
+          <View style={styles.tripStatusRow}>
+            <Ionicons name="information-circle-outline" size={16} color="#666" />
+            <Text style={styles.tripStatusText}>
+              Trip Status: {application.trip_status_name}
+            </Text>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.applicationFooter}>
-        <Text style={styles.appliedDate}>
-          Applied: {formatDate(application.created_at)}
-        </Text>
-        {application.updated_at !== application.created_at && (
-          <Text style={styles.updatedDate}>
-            Updated: {formatDate(application.updated_at)}
+        
+        <View style={styles.applicationFooter}>
+          <Text style={styles.appliedDate}>
+            Applied: {formatDate(application.created_at)}
           </Text>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+          {application.updated_at !== application.created_at && (
+            <Text style={styles.updatedDate}>
+              Updated: {formatDate(application.updated_at)}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <>

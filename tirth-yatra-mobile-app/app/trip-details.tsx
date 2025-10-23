@@ -98,7 +98,7 @@ interface AccommodationEntry {
 
 export default function TripDetailsScreen() {
   const { t } = useLanguage();
-  const { id, fromMyTrips } = useLocalSearchParams();
+  const { id, fromMyTrips, applicationStatus, tripEndDate, tripStatusName, tripTitle } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('Details');
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -113,6 +113,37 @@ export default function TripDetailsScreen() {
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasAlreadyApplied, setHasAlreadyApplied] = useState(false);
+
+  // Check if trip is eligible for feedback
+  const isTripEligibleForFeedback = () => {
+    // Must come from My Trips
+    if (fromMyTrips !== 'true') return false;
+    
+    // Check if application is approved
+    const isApproved = applicationStatus === 'Approved';
+    
+    // Check if trip is past (end date is before or equal to today OR status is Completed)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tripEnd = new Date(tripEndDate as string);
+    tripEnd.setHours(0, 0, 0, 0);
+    const isPast = tripEnd <= today || tripStatusName === 'Completed';
+    
+    // Debug log
+    console.log('Trip Details - Feedback eligibility check:', {
+      fromMyTrips,
+      isApproved,
+      applicationStatus,
+      isPast,
+      tripEndDate,
+      tripEnd: tripEnd.toDateString(),
+      today: today.toDateString(),
+      tripStatusName,
+      eligible: isApproved && isPast
+    });
+    
+    return isApproved && isPast;
+  };
 
   // Check login status
   useEffect(() => {
@@ -1452,6 +1483,8 @@ export default function TripDetailsScreen() {
         >
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
+        
+        {/* Show Apply button when NOT from My Trips */}
         {isLoggedIn && fromMyTrips !== 'true' && (
           <>
             {console.log('Showing Apply button - user is logged in and not from My Trips')}
@@ -1463,14 +1496,17 @@ export default function TripDetailsScreen() {
             </TouchableOpacity>
           </>
         )}
-        {isLoggedIn && fromMyTrips === 'true' && (
+        
+        {/* Show Feedback button when from My Trips AND trip is eligible */}
+        {fromMyTrips === 'true' && isTripEligibleForFeedback() && (
           <TouchableOpacity 
             style={styles.feedbackButton}
             onPress={() => {
               console.log('Opening feedback page...');
-              console.log('Trip ID:', tripDetails?.id);
+              console.log('Trip ID:', id);
+              console.log('Trip Title:', tripTitle);
               
-              if (!tripDetails?.id) {
+              if (!id) {
                 Alert.alert('Error', 'Trip details not available');
                 return;
               }
@@ -1478,9 +1514,10 @@ export default function TripDetailsScreen() {
               router.push({
                 pathname: '/feedback',
                 params: {
-                  tripId: tripDetails.id.toString()
+                  tripId: id.toString(),
+                  tripTitle: tripTitle || 'Trip'
                 }
-              });
+              } as any);
             }}
           >
             <Text style={styles.feedbackButtonText}>Feedback</Text>
