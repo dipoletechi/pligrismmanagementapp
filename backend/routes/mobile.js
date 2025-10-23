@@ -2574,11 +2574,17 @@ router.get('/account-status', authenticateToken, async (req, res) => {
 });
 
 // Mobile Aadhaar Image Upload API
-router.post('/upload-aadhaar-image', authenticateToken, async (req, res) => {
+router.post('/upload-aadhaar-image', async (req, res) => {
   try {
-    // Get userId from JWT token
-    const userId = req.user.id;
-    const { imageType, imageData } = req.body; // imageType: 'front' or 'back'
+    // Get userId from request body (for registration flow)
+    const { userId, imageType, imageData } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
 
     if (!imageType || !imageData) {
       return res.status(400).json({
@@ -2992,10 +2998,11 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
 });
 
 // Mobile Manual Aadhaar Data Entry API (if OCR fails)
-router.post('/submit-aadhaar-data', authenticateToken, async (req, res) => {
+router.post('/submit-aadhaar-data', async (req, res) => {
   try {
-    // Get userId from JWT token
-    const userId = req.user.id;
+    // Get userId from request body (for registration flow)
+    const { userId: userIdFromBody } = req.body;
+    const userId = userIdFromBody;
     const { 
       aadhaarNumber, 
       fullName, 
@@ -3004,6 +3011,13 @@ router.post('/submit-aadhaar-data', authenticateToken, async (req, res) => {
       fatherName,
       dob
     } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
 
     if (!aadhaarNumber) {
       return res.status(400).json({
