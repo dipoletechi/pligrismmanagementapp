@@ -6,8 +6,8 @@ const Driver = sequelize.define('Driver', {
   first_name: { type: DataTypes.STRING(50), allowNull: false },
   last_name: { type: DataTypes.STRING(50), allowNull: false },
   phone_number: { type: DataTypes.STRING(15), allowNull: true },
-  driving_license_no: { type: DataTypes.STRING(20), allowNull: true },
-  aadhar_no: { type: DataTypes.STRING(12), allowNull: true },
+  driving_license_no: { type: DataTypes.STRING(20), allowNull: true, unique: false },
+  aadhar_no: { type: DataTypes.STRING(12), allowNull: true, unique: false },
   transport_vendor_id: { type: DataTypes.INTEGER, allowNull: true }
 }, {
   tableName: 'drivers',
