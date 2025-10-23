@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const API_BASE_URL = 'http://192.168.1.3:5000/api';
 
@@ -39,6 +40,7 @@ interface TripDetails {
 export default function FeedbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { t } = useLanguage();
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReadOnly, setIsReadOnly] = useState(false);
@@ -89,7 +91,7 @@ export default function FeedbackScreen() {
           setTripDetails(result.data);
         } else {
           console.error('Failed to fetch trip details:', result.message);
-          Alert.alert('Error', 'Failed to load trip details');
+          Alert.alert(t('error'), t('failedToLoadTripDetails'));
         }
       } catch (error) {
         console.error('Error fetching trip details:', error);
@@ -412,7 +414,7 @@ export default function FeedbackScreen() {
       
       // Check if tripDetails is loaded
       if (!tripDetails || !tripDetails.id) {
-        Alert.alert('Error', 'Trip details not loaded. Please try again.');
+        Alert.alert(t('error'), t('failedToLoadTripDetails'));
         return;
       }
       
@@ -422,7 +424,7 @@ export default function FeedbackScreen() {
       console.log('Trip ID:', tripDetails.id);
       
       if (!token) {
-        Alert.alert('Error', 'Please login to submit feedback');
+        Alert.alert(t('error'), t('pleaseLoginToApply'));
         return;
       }
 
@@ -473,19 +475,19 @@ export default function FeedbackScreen() {
       const result = await response.json();
 
       if (result.success) {
-        Alert.alert('Success', 'Feedback submitted successfully!', [
+        Alert.alert(t('success'), t('feedbackSubmittedThankYou'), [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () => router.back()
           }
         ]);
       } else {
-        Alert.alert('Error', result.message || 'Failed to submit feedback');
+        Alert.alert(t('error'), result.message || t('feedbackSubmitFailed'));
       }
 
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      Alert.alert('Error', 'Failed to submit feedback. Please try again.');
+      Alert.alert(t('error'), t('pleaseCheckConnectionRetry'));
     }
   };
 
@@ -499,7 +501,7 @@ export default function FeedbackScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <SafeAreaView style={styles.container}>
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading trip details...</Text>
+            <Text style={styles.loadingText}>{t('loadingTripDetails')}</Text>
           </View>
         </SafeAreaView>
       </>
@@ -512,12 +514,12 @@ export default function FeedbackScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <SafeAreaView style={styles.container}>
           <View style={styles.loadingContainer}>
-            <Text style={styles.errorText}>Trip details not found</Text>
+            <Text style={styles.errorText}>{t('tripDetailsNotFound')}</Text>
             <TouchableOpacity 
               style={styles.backButtonStyle}
               onPress={() => router.back()}
             >
-              <Text style={styles.backButtonText}>Go Back</Text>
+              <Text style={styles.backButtonText}>{t('goBack')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -532,7 +534,7 @@ export default function FeedbackScreen() {
         <SafeAreaView style={styles.container}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading feedback data...</Text>
+            <Text style={styles.loadingText}>{t('loadingFeedbackData')}</Text>
           </View>
         </SafeAreaView>
       </>
@@ -579,8 +581,8 @@ export default function FeedbackScreen() {
           <View style={styles.submittedMessageBox}>
             <Ionicons name="checkmark-circle" size={40} color="#28a745" />
             <View style={styles.submittedMessageContent}>
-              <Text style={styles.submittedMessageTitle}>Feedback Already Submitted</Text>
-              <Text style={styles.submittedMessageText}>You have already submitted feedback for this trip. All fields are now read-only.</Text>
+              <Text style={styles.submittedMessageTitle}>{t('feedbackAlreadySubmitted')}</Text>
+              <Text style={styles.submittedMessageText}>{t('feedbackSubmittedMessage')}</Text>
             </View>
           </View>
         )}
@@ -588,7 +590,7 @@ export default function FeedbackScreen() {
         {/* Overall Rating Section */}
         <View style={styles.overallRatingContainer}>
           <Text style={styles.overallRatingTitle}>
-            Overall Trip Rating {isReadOnly && <Text style={styles.readOnlyBadge}>(Submitted)</Text>}
+            {t('overallRating')} {isReadOnly && <Text style={styles.readOnlyBadge}>({t('feedbackAlreadySubmitted')})</Text>}
           </Text>
           
           {/* Star Rating */}
@@ -616,7 +618,7 @@ export default function FeedbackScreen() {
           {/* Overall Comment Box */}
           <TextInput
             style={[styles.overallCommentBox, isReadOnly && styles.readOnlyInput]}
-            placeholder="Write your overall feedback about the trip..."
+            placeholder={t('shareThoughts')}
             placeholderTextColor="#999"
             multiline
             numberOfLines={6}
@@ -632,7 +634,7 @@ export default function FeedbackScreen() {
           onPress={() => setFoodFeedbackExpanded(!foodFeedbackExpanded)}
           activeOpacity={0.7}
         >
-          <Text style={styles.feedbackSectionTitle}>Food</Text>
+          <Text style={styles.feedbackSectionTitle}>{t('foodVendorFeedback')}</Text>
           <Ionicons 
             name={foodFeedbackExpanded ? "chevron-up" : "chevron-down"} 
             size={24} 
@@ -677,7 +679,7 @@ export default function FeedbackScreen() {
                   {/* Description Box */}
                   <TextInput
                     style={[styles.feedbackDescriptionBox, isReadOnly && styles.readOnlyInput]}
-                    placeholder="Write your feedback about the food..."
+                    placeholder={t('descriptionOptional')}
                     placeholderTextColor="#999"
                     multiline
                     numberOfLines={4}
@@ -693,7 +695,7 @@ export default function FeedbackScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.noDataText}>No food vendors available</Text>
+              <Text style={styles.noDataText}>{t('noVendorsAvailable')}</Text>
             )}
           </View>
         )}
@@ -704,7 +706,7 @@ export default function FeedbackScreen() {
           onPress={() => setAccommodationFeedbackExpanded(!accommodationFeedbackExpanded)}
           activeOpacity={0.7}
         >
-          <Text style={styles.feedbackSectionTitle}>Accommodation</Text>
+          <Text style={styles.feedbackSectionTitle}>{t('accommodationVendorFeedback')}</Text>
           <Ionicons 
             name={accommodationFeedbackExpanded ? "chevron-up" : "chevron-down"} 
             size={24} 
@@ -749,7 +751,7 @@ export default function FeedbackScreen() {
                   {/* Description Box */}
                   <TextInput
                     style={[styles.feedbackDescriptionBox, isReadOnly && styles.readOnlyInput]}
-                    placeholder="Write your feedback about the accommodation..."
+                    placeholder={t('descriptionOptional')}
                     placeholderTextColor="#999"
                     multiline
                     numberOfLines={4}
@@ -765,7 +767,7 @@ export default function FeedbackScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.noDataText}>No accommodation vendors available</Text>
+              <Text style={styles.noDataText}>{t('noVendorsAvailable')}</Text>
             )}
           </View>
         )}
@@ -776,7 +778,7 @@ export default function FeedbackScreen() {
           onPress={() => setTransportFeedbackExpanded(!transportFeedbackExpanded)}
           activeOpacity={0.7}
         >
-          <Text style={styles.feedbackSectionTitle}>Transport</Text>
+          <Text style={styles.feedbackSectionTitle}>{t('transportVendorFeedback')}</Text>
           <Ionicons 
             name={transportFeedbackExpanded ? "chevron-up" : "chevron-down"} 
             size={24} 
@@ -821,7 +823,7 @@ export default function FeedbackScreen() {
                   {/* Description Box */}
                   <TextInput
                     style={[styles.feedbackDescriptionBox, isReadOnly && styles.readOnlyInput]}
-                    placeholder="Write your feedback about the transport..."
+                    placeholder={t('descriptionOptional')}
                     placeholderTextColor="#999"
                     multiline
                     numberOfLines={4}
@@ -837,7 +839,7 @@ export default function FeedbackScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.noDataText}>No transport vendors available</Text>
+              <Text style={styles.noDataText}>{t('noVendorsAvailable')}</Text>
             )}
           </View>
         )}
@@ -853,7 +855,7 @@ export default function FeedbackScreen() {
             style={styles.backButtonStyle}
             onPress={handleBack}
           >
-            <Text style={styles.backButtonText}>Back</Text>
+            <Text style={styles.backButtonText}>{t('back')}</Text>
           </TouchableOpacity>
         )}
         
@@ -862,14 +864,14 @@ export default function FeedbackScreen() {
             style={styles.fullWidthBackButton}
             onPress={handleBack}
           >
-            <Text style={styles.backButtonText}>Back</Text>
+            <Text style={styles.backButtonText}>{t('back')}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity 
             style={styles.submitButton}
             onPress={handleSubmitFeedback}
           >
-            <Text style={styles.submitButtonText}>Submit Feedback</Text>
+            <Text style={styles.submitButtonText}>{t('submitButton')}</Text>
           </TouchableOpacity>
         )}
       </View>

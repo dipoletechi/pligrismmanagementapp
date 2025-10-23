@@ -1520,7 +1520,7 @@ export default function TripDetailsScreen() {
               } as any);
             }}
           >
-            <Text style={styles.feedbackButtonText}>Feedback</Text>
+            <Text style={styles.feedbackButtonText}>{t('feedback')}</Text>
           </TouchableOpacity>
         )}
       </View>
