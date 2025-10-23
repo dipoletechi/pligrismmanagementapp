@@ -654,6 +654,33 @@ const CreateTrip = () => {
     }
   }, [isEditMode, isViewMode]);
 
+  // Helper function to get filtered food items based on selected categories
+  const getFilteredFoodItems = () => {
+    if (newFoodEntry.categories.length === 0) {
+      return foodItems;
+    }
+    return foodItems.filter(item => 
+      newFoodEntry.categories.includes(item.food_category_id)
+    );
+  };
+
+  // Reset food items when categories change
+  useEffect(() => {
+    if (newFoodEntry.categories.length > 0) {
+      // Filter food items based on selected categories
+      const filteredItems = getFilteredFoodItems();
+      
+      // Remove items that are not in the filtered list
+      const validItems = newFoodEntry.items.filter(itemId => 
+        filteredItems.some(item => item.id === itemId)
+      );
+      
+      if (validItems.length !== newFoodEntry.items.length) {
+        setNewFoodEntry(prev => ({ ...prev, items: validItems }));
+      }
+    }
+  }, [newFoodEntry.categories, foodItems]);
+
   // Reset form for fresh component load
   useEffect(() => {
     if (!isEditMode && !isViewMode) {
@@ -5497,13 +5524,15 @@ const CreateTrip = () => {
               </FormControl>
               
               <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel id="food-items-label">Food Items</InputLabel>
+                <InputLabel id="food-items-label">
+                  Food Items {newFoodEntry.categories.length > 0 ? `(Filtered by ${newFoodEntry.categories.length} category${newFoodEntry.categories.length > 1 ? 'ies' : 'y'})` : ''}
+                </InputLabel>
                 <Select
                   labelId="food-items-label"
                   multiple
                   value={newFoodEntry.items}
                   onChange={(e) => setNewFoodEntry(prev => ({ ...prev, items: e.target.value }))}
-                  label="Food Items"
+                  label={`Food Items ${newFoodEntry.categories.length > 0 ? `(Filtered by ${newFoodEntry.categories.length} category${newFoodEntry.categories.length > 1 ? 'ies' : 'y'})` : ''}`}
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {selected.map((itemId) => {
@@ -5519,10 +5548,16 @@ const CreateTrip = () => {
                     </Box>
                   )}
                 >
-                  {foodItems.map((item) => (
+                  {getFilteredFoodItems().map((item) => (
                     <MenuItem key={item.id} value={item.id}>
                       <Checkbox checked={newFoodEntry.items.includes(item.id)} />
-                      <ListItemText primary={item.title || item.name || `Item ${item.id}`} />
+                      <ListItemText 
+                        primary={item.title || item.name || `Item ${item.id}`}
+                        secondary={(() => {
+                          const category = foodCategories.find(c => c.id === item.food_category_id);
+                          return category ? (category.title || category.name) : '';
+                        })()}
+                      />
                     </MenuItem>
                   ))}
                 </Select>
