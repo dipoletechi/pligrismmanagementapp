@@ -22,6 +22,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '@/constants/config';
 // import Tesseract from 'tesseract.js'; // Disabled due to React Native Worker compatibility issues
 
 
@@ -327,7 +328,7 @@ export default function RegisterScreen() {
 
       console.log('Registration API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/register', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -384,7 +385,7 @@ export default function RegisterScreen() {
 
       console.log('OTP Verification API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/verify-otp', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -433,7 +434,7 @@ export default function RegisterScreen() {
 
       console.log('Resend OTP API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/resend-otp', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/resend-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -494,7 +495,7 @@ export default function RegisterScreen() {
 
       console.log('Calling complete step 6 API for userId:', userId);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/complete-step6', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/complete-step6`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -545,7 +546,7 @@ export default function RegisterScreen() {
 
       console.log('Checking user status with login API:', loginData);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -659,7 +660,7 @@ export default function RegisterScreen() {
         imageData: `${base64Data.substring(0, 50)}...` // Log only first 50 chars
       });
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/upload-aadhaar-image', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/upload-aadhaar-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -707,7 +708,7 @@ export default function RegisterScreen() {
 
       console.log('OCR Processing API call with data:', requestData);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/process-aadhaar-ocr', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/process-aadhaar-ocr`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

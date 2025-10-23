@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import { API_ENDPOINTS } from '@/constants/config';
 
 // Trip details interface based on API response
 interface TripDetails {
@@ -181,7 +182,7 @@ export default function TripDetailsScreen() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://192.168.1.3:5000/api/mobile/trips/${id}/details`, {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/trips/${id}/details`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -1320,7 +1321,7 @@ export default function TripDetailsScreen() {
       }
 
       // Create trip application with JWT token
-      const applicationResponse = await fetch('http://192.168.1.3:5000/api/trip-pligrim', {
+      const applicationResponse = await fetch(`${API_ENDPOINTS.TRIP_PLIGRIM}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

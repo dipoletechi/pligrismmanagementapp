@@ -16,8 +16,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LanguageDropdown from '@/components/LanguageDropdown';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-const API_BASE_URL = 'http://192.168.1.3:5000/api';
+import { API_BASE_URL, API_ENDPOINTS } from '@/constants/config';
 
 interface TripDetails {
   id?: number;
@@ -82,7 +81,7 @@ export default function FeedbackScreen() {
       }
       
       try {
-        const response = await fetch(`http://192.168.1.3:5000/api/mobile/trips/${params.tripId}/details`);
+        const response = await fetch(`${API_ENDPOINTS.MOBILE}/trips/${params.tripId}/details`);
         const result = await response.json();
         
         if (result.success) {
@@ -122,7 +121,7 @@ export default function FeedbackScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/trip/${params.tripId}`, {
+        const response = await fetch(`${API_ENDPOINTS.MOBILE}/feedback/trip/${params.tripId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -463,7 +462,7 @@ export default function FeedbackScreen() {
       console.log('Transport array length:', feedbackData.transport.length);
 
       // Submit feedback to API
-      const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/submit`, {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/feedback/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

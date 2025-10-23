@@ -16,10 +16,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import { API_ENDPOINTS } from '@/constants/config';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-const API_BASE_URL = 'http://192.168.1.3:5000/api/mobile/trips';
+const API_BASE_URL = `${API_ENDPOINTS.MOBILE}/trips`;
 
 interface Trip {
   id: number;
@@ -119,7 +120,7 @@ export default function HomeScreen() {
           requestBody.phone = storedPhone;
         }
         
-        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+        const response = await fetch(`${API_ENDPOINTS.MOBILE}/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ export default function HomeScreen() {
       }
 
       // Call API with JWT token
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/user-trips-comprehensive', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/user-trips-comprehensive`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

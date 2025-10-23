@@ -16,6 +16,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
 import QRCode from 'react-native-qrcode-svg';
+import { API_ENDPOINTS } from '@/constants/config';
 
 export default function DashboardScreen() {
   const { t, language } = useLanguage();
@@ -74,7 +75,7 @@ export default function DashboardScreen() {
           requestBody.phone = storedPhone;
         }
         
-        const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+        const response = await fetch(`${API_ENDPOINTS.MOBILE}/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -120,7 +121,7 @@ export default function DashboardScreen() {
         return;
       }
       
-      const response = await fetch('http://192.168.1.3:5000/api/mobile-qr/generate-qr', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE_QR}/generate-qr`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +181,7 @@ export default function DashboardScreen() {
         return;
       }
       
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/user-trips-comprehensive', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/user-trips-comprehensive`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

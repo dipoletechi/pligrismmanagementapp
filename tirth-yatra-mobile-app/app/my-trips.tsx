@@ -14,9 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import { API_ENDPOINTS } from '@/constants/config';
 
 // API endpoint
-const API_BASE_URL = 'http://192.168.1.3:5000/api/mobile';
+const API_BASE_URL = API_ENDPOINTS.MOBILE;
 
 // Trip application interface
 interface TripApplication {

@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { API_ENDPOINTS } from '@/constants/config';
 
 interface Notification {
   id: number;
@@ -60,7 +61,7 @@ export default function NotificationsScreen() {
       }
 
       const response = await fetch(
-        `http://192.168.1.3:5000/api/mobile/notifications?page=${page}&limit=10`,
+        `${API_ENDPOINTS.MOBILE}/notifications?page=${page}&limit=10`,
         {
           method: 'GET',
           headers: {

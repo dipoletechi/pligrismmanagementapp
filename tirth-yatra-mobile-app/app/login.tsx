@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageDropdown from '@/components/LanguageDropdown';
+import { API_ENDPOINTS } from '@/constants/config';
 
 export default function LoginScreen() {
   const { t, language } = useLanguage();
@@ -113,7 +114,7 @@ export default function LoginScreen() {
 
       await AsyncStorage.setItem('userPassword', password);
 
-      const response = await fetch('http://192.168.1.3:5000/api/mobile/login', {
+      const response = await fetch(`${API_ENDPOINTS.MOBILE}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
