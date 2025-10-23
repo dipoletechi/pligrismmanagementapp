@@ -587,47 +587,6 @@ export default function FeedbackScreen() {
           </View>
         )}
 
-        {/* Overall Rating Section */}
-        <View style={styles.overallRatingContainer}>
-          <Text style={styles.overallRatingTitle}>
-            {t('overallRating')} {isReadOnly && <Text style={styles.readOnlyBadge}>({t('feedbackAlreadySubmitted')})</Text>}
-          </Text>
-          
-          {/* Star Rating */}
-          <View style={styles.starRatingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity
-                key={star}
-                onPress={() => {
-                  if (!isReadOnly) {
-                    setOverallRating(overallRating === star ? 0 : star);
-                  }
-                }}
-                disabled={isReadOnly}
-              >
-                <Ionicons
-                  name={star <= overallRating ? "star" : "star-outline"}
-                  size={36}
-                  color={isReadOnly ? "#ccc" : "#FFD700"}
-                  style={styles.starIcon}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Overall Comment Box */}
-          <TextInput
-            style={[styles.overallCommentBox, isReadOnly && styles.readOnlyInput]}
-            placeholder={t('shareThoughts')}
-            placeholderTextColor="#999"
-            multiline
-            numberOfLines={6}
-            value={overallComment}
-            onChangeText={setOverallComment}
-            editable={!isReadOnly}
-          />
-        </View>
-
         {/* Food Section */}
         <TouchableOpacity 
           style={styles.feedbackSection}
@@ -843,6 +802,47 @@ export default function FeedbackScreen() {
             )}
           </View>
         )}
+
+        {/* Overall Rating Section */}
+        <View style={styles.overallRatingContainer}>
+          <Text style={styles.overallRatingTitle}>
+            {t('overallRating')} {isReadOnly && <Text style={styles.readOnlyBadge}>({t('feedbackAlreadySubmitted')})</Text>}
+          </Text>
+          
+          {/* Star Rating */}
+          <View style={styles.starRatingContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => {
+                  if (!isReadOnly) {
+                    setOverallRating(overallRating === star ? 0 : star);
+                  }
+                }}
+                disabled={isReadOnly}
+              >
+                <Ionicons
+                  name={star <= overallRating ? "star" : "star-outline"}
+                  size={36}
+                  color={isReadOnly ? "#ccc" : "#FFD700"}
+                  style={styles.starIcon}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Overall Comment Box */}
+          <TextInput
+            style={[styles.overallCommentBox, isReadOnly && styles.readOnlyInput]}
+            placeholder={t('shareThoughts')}
+            placeholderTextColor="#999"
+            multiline
+            numberOfLines={6}
+            value={overallComment}
+            onChangeText={setOverallComment}
+            editable={!isReadOnly}
+          />
+        </View>
 
         {/* Add spacing for buttons and footer */}
         <View style={{ height: 140 }} />
