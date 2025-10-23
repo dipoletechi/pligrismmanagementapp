@@ -271,11 +271,11 @@ const FeedbackListWithTabs = () => {
                     </IconButton>
                   </Box>
                   <Collapse in={expandedSections.transport}>
-              {vendorFeedbacks.filter(f => f.vendorid <= 3).length > 0 ? (
+              {vendorFeedbacks.filter(f => f.vendor_type === 'transport').length > 0 ? (
                 <Box>
                   {Object.entries(
                     vendorFeedbacks
-                      .filter(f => f.vendorid <= 3)
+                      .filter(f => f.vendor_type === 'transport')
                       .reduce((acc, feedback) => {
                         if (!acc[feedback.vendorid]) {
                           acc[feedback.vendorid] = [];
@@ -289,10 +289,10 @@ const FeedbackListWithTabs = () => {
                             <Typography variant="h6" fontWeight="bold">
                               {(() => {
                                 if (Array.isArray(transportVendors) && transportVendors.length > 0) {
-                                  const vendor = transportVendors.find(v => v.id === parseInt(vendorId));
-                                  return vendor ? vendor.title : `Transport Vendor ${vendorId}`;
+                                  const vendor = transportVendors.find(v => v.id === parseInt(feedbacks[0]?.transport_vendor_id));
+                                  return vendor ? vendor.title : `Transport Vendor ${feedbacks[0]?.transport_vendor_id}`;
                                 }
-                                return `Transport Vendor ${vendorId}`;
+                                return `Transport Vendor ${feedbacks[0]?.transport_vendor_id}`;
                               })()}
                             </Typography>
                         <Chip 
@@ -351,16 +351,17 @@ const FeedbackListWithTabs = () => {
                     </IconButton>
                   </Box>
                   <Collapse in={expandedSections.accommodation}>
-              {vendorFeedbacks.filter(f => f.vendorid >= 1 && f.vendorid <= 3).length > 0 ? (
+              {vendorFeedbacks.filter(f => f.vendor_type === 'accommodation').length > 0 ? (
                 <Box>
                   {Object.entries(
                     vendorFeedbacks
-                      .filter(f => f.vendorid >= 1 && f.vendorid <= 3)
+                      .filter(f => f.vendor_type === 'accommodation')
                       .reduce((acc, feedback) => {
-                        if (!acc[feedback.vendorid]) {
-                          acc[feedback.vendorid] = [];
+                        const vendorId = feedback.accommodation_vendor_id;
+                        if (!acc[vendorId]) {
+                          acc[vendorId] = [];
                         }
-                        acc[feedback.vendorid].push(feedback);
+                        acc[vendorId].push(feedback);
                         return acc;
                       }, {})
                   ).map(([vendorId, feedbacks]) => (
@@ -433,11 +434,11 @@ const FeedbackListWithTabs = () => {
                     </IconButton>
                   </Box>
                   <Collapse in={expandedSections.event}>
-              {vendorFeedbacks.filter(f => f.vendorid >= 1 && f.vendorid <= 3).length > 0 ? (
+              {vendorFeedbacks.filter(f => f.vendor_type === 'food').length > 0 ? (
                 <Box>
                   {Object.entries(
                     vendorFeedbacks
-                      .filter(f => f.vendorid >= 1 && f.vendorid <= 3)
+                      .filter(f => f.vendor_type === 'food')
                       .reduce((acc, feedback) => {
                         if (!acc[feedback.vendorid]) {
                           acc[feedback.vendorid] = [];
@@ -453,11 +454,11 @@ const FeedbackListWithTabs = () => {
                             console.log('Food vendors array:', foodVendors);
                             console.log('Looking for vendor ID:', vendorId);
                             if (Array.isArray(foodVendors) && foodVendors.length > 0) {
-                              const vendor = foodVendors.find(v => v.id === parseInt(vendorId));
+                              const vendor = foodVendors.find(v => v.id === parseInt(feedbacks[0]?.food_vendor_id));
                               console.log('Found vendor:', vendor);
-                              return vendor ? vendor.title : `Food Vendor ${vendorId}`;
+                              return vendor ? vendor.title : `Food Vendor ${feedbacks[0]?.food_vendor_id}`;
                             }
-                            return `Food Vendor ${vendorId}`;
+                            return `Food Vendor ${feedbacks[0]?.food_vendor_id}`;
                           })()}
                         </Typography>
                         <Chip 

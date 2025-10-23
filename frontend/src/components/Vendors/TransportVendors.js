@@ -1484,8 +1484,6 @@ const TransportVendors = () => {
                             <TableRow sx={{ backgroundColor: 'rgba(25, 118, 210, 0.05)' }}>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Name</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Phone</TableCell>
-                              <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Employee ID</TableCell>
-                              <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Aadhar No</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Actions</TableCell>
                             </TableRow>
                           </TableHead>
@@ -1503,21 +1501,6 @@ const TransportVendors = () => {
                                   {conductor.first_name} {conductor.last_name}
                                 </TableCell>
                                 <TableCell>{conductor.phone_number}</TableCell>
-                                <TableCell>
-                                  <Box sx={{ 
-                                    display: 'inline-block',
-                                    px: 1.5,
-                                    py: 0.5,
-                                    borderRadius: 1,
-                                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                    color: '#1976d2',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 500
-                                  }}>
-                                    {conductor.employee_id || 'N/A'}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>{conductor.aadhar_no || 'N/A'}</TableCell>
                                 <TableCell>
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <IconButton 

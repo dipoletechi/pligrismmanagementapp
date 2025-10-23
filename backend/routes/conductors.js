@@ -21,9 +21,9 @@ router.get('/', protect, async (req, res) => {
 
 // Create conductor
 router.post('/', protect, authorize('superadmin', 'admin'), [
-  body('first_name').trim().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
-  body('last_name').trim().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
-  body('phone_number').optional().isLength({ min: 10, max: 15 }).withMessage('Phone number must be between 10-15 characters')
+  body('first_name').trim().notEmpty().withMessage('First name is required'),
+  body('last_name').trim().notEmpty().withMessage('Last name is required'),
+  body('phone_number').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -51,10 +51,11 @@ router.post('/', protect, authorize('superadmin', 'admin'), [
     });
   } catch (error) {
     console.error('Create conductor error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
+    if (error.name === 'SequelizeValidationError') {
+      res.status(400).json({ success: false, message: 'Validation error: ' + error.message });
+    } else {
+      res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+    }
   }
 });
 

@@ -36,10 +36,34 @@ const VendorFeedback = sequelize.define('VendorFeedback', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
-  vendorid: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
+      transport_vendor_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'transport_vendors',
+          key: 'id'
+        }
+      },
+      accommodation_vendor_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'accommodation_vendors',
+          key: 'id'
+        }
+      },
+      food_vendor_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'food_vendors',
+          key: 'id'
+        }
+      },
+      vendor_type: {
+        type: DataTypes.ENUM('transport', 'accommodation', 'food'),
+        allowNull: true
+      },
   comment: {
     type: DataTypes.TEXT,
     allowNull: true

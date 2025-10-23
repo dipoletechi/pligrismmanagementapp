@@ -94,6 +94,8 @@ const FoodManagement = () => {
 
   // Food Items
   const [foodItems, setFoodItems] = useState([]);
+  const [filteredFoodItems, setFilteredFoodItems] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [foodItemOpen, setFoodItemOpen] = useState(false);
   const [editingFoodItem, setEditingFoodItem] = useState(null);
   const [foodItemForm, setFoodItemForm] = useState({
@@ -130,6 +132,7 @@ const FoodManagement = () => {
       setSchedules(schedules);
       setCategories(categories);
       setFoodItems(foodItemsWithCategory);
+      setFilteredFoodItems(foodItemsWithCategory);
       
       // Debug: Log categories
       console.log('Categories loaded:', categories);
@@ -149,8 +152,29 @@ const FoodManagement = () => {
     fetchData();
   }, []);
 
+  // Reset filter when food items change
+  useEffect(() => {
+    if (selectedCategory === '') {
+      setFilteredFoodItems(foodItems);
+    } else {
+      const filtered = foodItems.filter(item => item.food_category_id === parseInt(selectedCategory));
+      setFilteredFoodItems(filtered);
+    }
+  }, [foodItems, selectedCategory]);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  // Category filter handler
+  const handleCategoryFilter = (categoryId) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === '') {
+      setFilteredFoodItems(foodItems);
+    } else {
+      const filtered = foodItems.filter(item => item.food_category_id === parseInt(categoryId));
+      setFilteredFoodItems(filtered);
+    }
   };
 
   // Food Schedule handlers
@@ -506,15 +530,35 @@ const FoodManagement = () => {
 
         {/* Food Items Tab */}
         <TabPanel value={activeTab} index={2}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Typography variant="h6">Food Items</Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleFoodItemOpen()}
-            >
-              Add Food Item
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <FormControl sx={{ minWidth: 200 }}>
+                <InputLabel>Filter by Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => handleCategoryFilter(e.target.value)}
+                  label="Filter by Category"
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>All Categories</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleFoodItemOpen()}
+              >
+                Add Food Item
+              </Button>
+            </Box>
           </Box>
 
           <TableContainer>
@@ -528,7 +572,7 @@ const FoodManagement = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {foodItems.map((item) => (
+                {filteredFoodItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.title}</TableCell>
                     <TableCell>{item.description}</TableCell>
@@ -771,13 +815,29 @@ const FoodManagement = () => {
                  </Grid>
                  <Grid item xs={6}>
                    <FormControl fullWidth required>
-                     <InputLabel id="category-label"></InputLabel>
+                     <InputLabel id="category-label">Category</InputLabel>
                      <Select
                        labelId="category-label"
                        value={foodItemForm.categoryId}
                        onChange={(e) => setFoodItemForm({...foodItemForm, categoryId: e.target.value})}
                        label="Category"
                        displayEmpty
+                       sx={{
+                         '& .MuiOutlinedInput-root': {
+                           borderRadius: 2,
+                           '&:hover .MuiOutlinedInput-notchedOutline': {
+                             borderColor: '#1976d2',
+                             borderWidth: 2
+                           },
+                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                             borderColor: '#1976d2',
+                             borderWidth: 2
+                           }
+                         },
+                         '& .MuiInputLabel-root.Mui-focused': {
+                           color: '#1976d2'
+                         }
+                       }}
                      >
                        <MenuItem value="">
                          <em>Select Category</em>

@@ -28,7 +28,13 @@ router.post('/', protect, authorize('superadmin', 'admin'), [
     res.status(201).json({ success: true, data: driver });
   } catch (e) {
     console.error('Create driver error:', e);
-    res.status(500).json({ success: false, message: 'Server error' });
+    if (e.name === 'SequelizeUniqueConstraintError') {
+      res.status(400).json({ success: false, message: 'Driver with this license number or Aadhar number already exists' });
+    } else if (e.name === 'SequelizeValidationError') {
+      res.status(400).json({ success: false, message: 'Validation error: ' + e.message });
+    } else {
+      res.status(500).json({ success: false, message: 'Server error: ' + e.message });
+    }
   }
 });
 
