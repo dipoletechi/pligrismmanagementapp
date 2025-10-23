@@ -28,7 +28,10 @@ import {
   CircularProgress,
   Avatar,
   Tooltip,
-  Grid
+  Grid,
+  Checkbox,
+  FormControlLabel,
+  FormGroup
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -41,7 +44,8 @@ import {
   History as HistoryIcon,
   DirectionsBus as TransportIcon,
   Hotel as AccommodationIcon,
-  Event as EventIcon
+  Event as EventIcon,
+  NotificationsActive as NotificationIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -60,6 +64,15 @@ const TripApplicants = () => {
   const [userLogs, setUserLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState(null);
+  const [selectedApplicants, setSelectedApplicants] = useState([]);
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
+  const [notificationContent, setNotificationContent] = useState('');
+  const [notificationTypes, setNotificationTypes] = useState({
+    email: false,
+    mobile: true,
+    text: false
+  });
+  const [sendingNotification, setSendingNotification] = useState(false);
 
   const [tabs, setTabs] = useState([
     { label: 'All', value: 0, status: 'All', count: 0, color: 'default' },
@@ -75,6 +88,11 @@ const TripApplicants = () => {
       fetchApplicants();
     }
   }, [tripId]);
+
+  // Clear selections when status filter changes
+  useEffect(() => {
+    setSelectedApplicants([]);
+  }, [statusFilter]);
 
   const fetchApplicants = async () => {
     setLoading(true);
@@ -235,6 +253,86 @@ const TripApplicants = () => {
     return location.state?.tripTitle || 'Trip Applicants';
   };
 
+  // Checkbox handlers
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      const allIds = filteredApplicants.map(applicant => applicant.id);
+      setSelectedApplicants(allIds);
+    } else {
+      setSelectedApplicants([]);
+    }
+  };
+
+  const handleSelectOne = (applicantId) => {
+    setSelectedApplicants(prev => {
+      if (prev.includes(applicantId)) {
+        return prev.filter(id => id !== applicantId);
+      } else {
+        return [...prev, applicantId];
+      }
+    });
+  };
+
+  const isAllSelected = filteredApplicants.length > 0 && 
+    selectedApplicants.length === filteredApplicants.length;
+
+  const isSomeSelected = selectedApplicants.length > 0 && 
+    selectedApplicants.length < filteredApplicants.length;
+
+  const handleSendNotification = () => {
+    setNotificationDialogOpen(true);
+  };
+
+  const handleNotificationTypeChange = (event) => {
+    setNotificationTypes({
+      ...notificationTypes,
+      [event.target.name]: event.target.checked
+    });
+  };
+
+  const handleSendNotificationSubmit = async () => {
+    if (!notificationContent.trim()) {
+      setError('Please enter notification content');
+      return;
+    }
+
+    if (!notificationTypes.email && !notificationTypes.mobile && !notificationTypes.text) {
+      setError('Please select at least one notification type');
+      return;
+    }
+
+    setSendingNotification(true);
+    try {
+      // Get selected applicants' user IDs
+      const userIds = selectedApplicants.map(applicantId => {
+        const applicant = applicants.find(a => a.id === applicantId);
+        return applicant?.user?.id;
+      }).filter(Boolean);
+
+      const response = await axios.post('/api/notifications/send-bulk', {
+        userIds: userIds,
+        content: notificationContent,
+        types: notificationTypes
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data.success) {
+        setNotificationDialogOpen(false);
+        setNotificationContent('');
+        setSelectedApplicants([]);
+        setNotificationTypes({ email: false, mobile: true, text: false });
+      }
+    } catch (err) {
+      console.error('Error sending notification:', err);
+      setError(`Failed to send notification: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setSendingNotification(false);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -245,6 +343,17 @@ const TripApplicants = () => {
             {getTripTitle()}
           </Typography>
         </Box>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={selectedApplicants.length === 0}
+          onClick={handleSendNotification}
+          startIcon={<NotificationIcon />}
+          sx={{ minWidth: 180 }}
+        >
+          Send Notification
+          {selectedApplicants.length > 0 && ` (${selectedApplicants.length})`}
+        </Button>
       </Box>
 
       {/* Error Alert */}
@@ -295,6 +404,14 @@ const TripApplicants = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={isAllSelected}
+                        indeterminate={isSomeSelected}
+                        onChange={handleSelectAll}
+                        color="primary"
+                      />
+                    </TableCell>
                     <TableCell>Applicant</TableCell>
                     <TableCell>Contact Details</TableCell>
                     <TableCell>Status</TableCell>
@@ -304,6 +421,13 @@ const TripApplicants = () => {
                 <TableBody>
                   {filteredApplicants.map((applicant) => (
                     <TableRow key={applicant.id} hover>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedApplicants.includes(applicant.id)}
+                          onChange={() => handleSelectOne(applicant.id)}
+                          color="primary"
+                        />
+                      </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -507,6 +631,97 @@ const TripApplicants = () => {
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleSaveStatus} variant="contained" color="primary">
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Send Notification Dialog */}
+      <Dialog 
+        open={notificationDialogOpen} 
+        onClose={() => setNotificationDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <NotificationIcon color="primary" />
+            Send Notification to {selectedApplicants.length} Applicant(s)
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Notification Type
+            </Typography>
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={notificationTypes.email}
+                    onChange={handleNotificationTypeChange}
+                    name="email"
+                    color="primary"
+                  />
+                }
+                label="Email Notification"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={notificationTypes.mobile}
+                    onChange={handleNotificationTypeChange}
+                    name="mobile"
+                    color="primary"
+                  />
+                }
+                label="Mobile Notification"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={notificationTypes.text}
+                    onChange={handleNotificationTypeChange}
+                    name="text"
+                    color="primary"
+                  />
+                }
+                label="Text Notification"
+              />
+            </FormGroup>
+
+            <TextField
+              fullWidth
+              multiline
+              rows={6}
+              label="Notification Content"
+              value={notificationContent}
+              onChange={(e) => setNotificationContent(e.target.value)}
+              margin="normal"
+              variant="outlined"
+              placeholder="Enter your notification message here..."
+              sx={{ mt: 3 }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button 
+            onClick={() => {
+              setNotificationDialogOpen(false);
+              setNotificationContent('');
+              setNotificationTypes({ email: false, mobile: true, text: false });
+            }}
+            disabled={sendingNotification}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendNotificationSubmit} 
+            variant="contained" 
+            color="primary"
+            disabled={sendingNotification || !notificationContent.trim()}
+            startIcon={sendingNotification ? <CircularProgress size={20} /> : <NotificationIcon />}
+          >
+            {sendingNotification ? 'Sending...' : 'Send'}
           </Button>
         </DialogActions>
       </Dialog>
