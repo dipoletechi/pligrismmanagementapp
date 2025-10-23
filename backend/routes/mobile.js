@@ -3249,6 +3249,12 @@ router.get('/feedback/trip/:tripId', authenticateToken, async (req, res) => {
       }
     );
 
+    console.log('=== FETCH FEEDBACK DEBUG ===');
+    console.log('Trip ID:', tripId);
+    console.log('User ID:', userId);
+    console.log('Vendor feedback count:', vendorFeedback.length);
+    console.log('Vendor feedback data:', JSON.stringify(vendorFeedback, null, 2));
+
     // Get all vendors for name mapping
     const allTransportVendors = await TransportVendor.findAll({
       attributes: ['id', 'title']
@@ -3266,15 +3272,15 @@ router.get('/feedback/trip/:tripId', authenticateToken, async (req, res) => {
       return vendor ? vendor.title : null;
     };
 
-    // Helper to determine vendor type
-    const getVendorType = (vendorId) => {
+    // Helper to determine vendor type from vendorid (fallback for old data)
+    const getVendorTypeFromId = (vendorId) => {
       if (allTransportVendors.find(v => v.id === vendorId)) return 'transport';
       if (allAccommodationVendors.find(v => v.id === vendorId)) return 'accommodation';
       if (allFoodVendors.find(v => v.id === vendorId)) return 'food';
-      return 'unknown';
+      return null;
     };
 
-    // Group vendor feedback by type
+    // Group vendor feedback by type using new structure
     const groupedVendorFeedback = {
       food: [],
       accommodation: [],
@@ -3282,22 +3288,52 @@ router.get('/feedback/trip/:tripId', authenticateToken, async (req, res) => {
     };
 
     vendorFeedback.forEach(feedback => {
-      const type = getVendorType(feedback.vendorid);
-      const vendorName = getVendorNameById(
-        feedback.vendorid,
-        type === 'transport' ? allTransportVendors :
-        type === 'accommodation' ? allAccommodationVendors :
-        allFoodVendors
-      );
+      console.log('Processing feedback:', feedback);
+      
+      let type = feedback.vendor_type;
+      let vendorName = null;
+      let vendorId = null;
+      
+      // NEW DATA: Use vendor_type and specific vendor ID columns
+      if (type === 'food' && feedback.food_vendor_id) {
+        vendorId = feedback.food_vendor_id;
+        vendorName = getVendorNameById(vendorId, allFoodVendors);
+      } else if (type === 'transport' && feedback.transport_vendor_id) {
+        vendorId = feedback.transport_vendor_id;
+        vendorName = getVendorNameById(vendorId, allTransportVendors);
+      } else if (type === 'accommodation' && feedback.accommodation_vendor_id) {
+        vendorId = feedback.accommodation_vendor_id;
+        vendorName = getVendorNameById(vendorId, allAccommodationVendors);
+      }
+      // OLD DATA FALLBACK: Use vendorid column if vendor_type is NULL
+      else if (!type && feedback.vendorid) {
+        vendorId = feedback.vendorid;
+        type = getVendorTypeFromId(vendorId);
+        
+        if (type === 'food') {
+          vendorName = getVendorNameById(vendorId, allFoodVendors);
+        } else if (type === 'transport') {
+          vendorName = getVendorNameById(vendorId, allTransportVendors);
+        } else if (type === 'accommodation') {
+          vendorName = getVendorNameById(vendorId, allAccommodationVendors);
+        }
+      }
 
-      if (vendorName) {
+      console.log(`Feedback processed - Type: ${type}, Vendor: ${vendorName}, Rating: ${feedback.ratings}`);
+
+      if (vendorName && type) {
         groupedVendorFeedback[type].push({
           vendor: vendorName,
           rating: feedback.ratings,
           description: feedback.comment || ''
         });
+      } else {
+        console.log(`Skipped feedback - Type: ${type}, Vendor ID: ${vendorId}, Vendor Name: ${vendorName}`);
       }
     });
+
+    console.log('Grouped feedback:', JSON.stringify(groupedVendorFeedback, null, 2));
+    console.log('=== END DEBUG ===');
 
     res.json({
       success: true,
@@ -3444,8 +3480,11 @@ router.post('/feedback/submit', authenticateToken, async (req, res) => {
             tripId,
             userId,
             item.rating,
+            'food', // vendor_type
+            null, // transport_vendor_id
+            null, // accommodation_vendor_id
+            vendorId, // food_vendor_id
             new Date(),
-            vendorId,
             item.description || null
           ]);
           console.log(`Added food vendor feedback for vendor ID ${vendorId}`);
@@ -3469,8 +3508,11 @@ router.post('/feedback/submit', authenticateToken, async (req, res) => {
             tripId,
             userId,
             item.rating,
+            'accommodation', // vendor_type
+            null, // transport_vendor_id
+            vendorId, // accommodation_vendor_id
+            null, // food_vendor_id
             new Date(),
-            vendorId,
             item.description || null
           ]);
           console.log(`Added accommodation vendor feedback for vendor ID ${vendorId}`);
@@ -3494,8 +3536,11 @@ router.post('/feedback/submit', authenticateToken, async (req, res) => {
             tripId,
             userId,
             item.rating,
+            'transport', // vendor_type
+            vendorId, // transport_vendor_id
+            null, // accommodation_vendor_id
+            null, // food_vendor_id
             new Date(),
-            vendorId,
             item.description || null
           ]);
           console.log(`Added transport vendor feedback for vendor ID ${vendorId}`);
@@ -3513,12 +3558,12 @@ router.post('/feedback/submit', authenticateToken, async (req, res) => {
     // 3. Bulk insert vendor feedback
     let vendorFeedbackCount = 0;
     if (vendorFeedbackData.length > 0) {
-      const placeholders = vendorFeedbackData.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+      const placeholders = vendorFeedbackData.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
       const flatData = vendorFeedbackData.flat();
       
       const [result] = await sequelize.query(
         `INSERT INTO vendor_feedback 
-         (tripid, userId, ratings, datetime, vendorid, comment) 
+         (tripid, userId, ratings, vendor_type, transport_vendor_id, accommodation_vendor_id, food_vendor_id, datetime, comment) 
          VALUES ${placeholders}`,
         {
           replacements: flatData,

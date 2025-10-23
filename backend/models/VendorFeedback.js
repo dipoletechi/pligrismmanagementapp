@@ -36,7 +36,12 @@ const VendorFeedback = sequelize.define('VendorFeedback', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
-      transport_vendor_id: {
+  vendorid: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'vendorid'
+  },
+  transport_vendor_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
