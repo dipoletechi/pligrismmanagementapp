@@ -203,6 +203,65 @@ export default function DashboardScreen() {
     }
   }, [isLoggedIn, isAccountVerified]);
 
+  // Get current trip (approved and current date is between trip dates)
+  const getCurrentTrip = () => {
+    if (!tripData?.myTrips?.applications) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentTrip = tripData.myTrips.applications.find((app: any) => {
+      if (app.application_status !== 'Approved') return false;
+      
+      const startDate = new Date(app.start_date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(app.end_date);
+      endDate.setHours(0, 0, 0, 0);
+      
+      return today >= startDate && today <= endDate;
+    });
+    
+    return currentTrip || null;
+  };
+
+  // Get upcoming trip (nearest approved trip with start date > current date)
+  const getUpcomingTrip = () => {
+    if (!tripData?.myTrips?.applications) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const upcomingTrips = tripData.myTrips.applications.filter((app: any) => {
+      if (app.application_status !== 'Approved') return false;
+      
+      const startDate = new Date(app.start_date);
+      startDate.setHours(0, 0, 0, 0);
+      
+      return startDate > today;
+    });
+    
+    // Sort by start date and get the nearest one
+    if (upcomingTrips.length > 0) {
+      upcomingTrips.sort((a: any, b: any) => {
+        const dateA = new Date(a.start_date);
+        const dateB = new Date(b.start_date);
+        return dateA.getTime() - dateB.getTime();
+      });
+      return upcomingTrips[0];
+    }
+    
+    return null;
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+
   // Handle logout
   const handleLogout = async () => {
     Alert.alert(
@@ -334,7 +393,7 @@ export default function DashboardScreen() {
         >
           {isLoggedIn && isAccountVerified ? (
             <>
-              {/* My Trip Stats */}
+              {/* My Trip Section */}
               <View style={styles.statsContainer}>
                 <View style={styles.sectionTitleContainer}>
                   <Text style={styles.sectionTitle}>{t('myTrip')}</Text>
@@ -351,6 +410,84 @@ export default function DashboardScreen() {
                     )}
                   </TouchableOpacity>
                 </View>
+
+                {/* Current Trip Card */}
+                {getCurrentTrip() && (
+                  <View style={styles.tripCard}>
+                    <View style={styles.tripCardHeader}>
+                      <Ionicons name="location" size={24} color="#007AFF" />
+                      <Text style={styles.tripCardTitle}>{t('currentTrip')}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.tripCardContent}
+                      onPress={() => {
+                        const trip = getCurrentTrip();
+                        router.push({
+                          pathname: '/trip-details',
+                          params: { 
+                            id: trip.tripid.toString(),
+                            fromMyTrips: 'true',
+                            applicationStatus: trip.application_status,
+                            tripEndDate: trip.end_date,
+                            tripStatusName: trip.trip_status_name || 'Ongoing',
+                            tripTitle: trip.trip_title
+                          }
+                        } as any);
+                      }}
+                    >
+                      <Text style={styles.tripCardTripTitle}>{getCurrentTrip()?.trip_title}</Text>
+                      <View style={styles.tripCardDateRow}>
+                        <Ionicons name="calendar-outline" size={16} color="#666" />
+                        <Text style={styles.tripCardDate}>
+                          {formatDate(getCurrentTrip()!.start_date)} - {formatDate(getCurrentTrip()!.end_date)}
+                        </Text>
+                      </View>
+                      <View style={styles.tripCardBadge}>
+                        <Text style={styles.tripCardBadgeText}>Approved</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Upcoming Trip Card */}
+                {getUpcomingTrip() && (
+                  <View style={styles.tripCard}>
+                    <View style={styles.tripCardHeader}>
+                      <Ionicons name="calendar" size={24} color="#34C759" />
+                      <Text style={styles.tripCardTitle}>{t('upcomingTrip')}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.tripCardContent}
+                      onPress={() => {
+                        const trip = getUpcomingTrip();
+                        router.push({
+                          pathname: '/trip-details',
+                          params: { 
+                            id: trip.tripid.toString(),
+                            fromMyTrips: 'true',
+                            applicationStatus: trip.application_status,
+                            tripEndDate: trip.end_date,
+                            tripStatusName: trip.trip_status_name || 'Upcoming',
+                            tripTitle: trip.trip_title
+                          }
+                        } as any);
+                      }}
+                    >
+                      <Text style={styles.tripCardTripTitle}>{getUpcomingTrip()?.trip_title}</Text>
+                      <View style={styles.tripCardDateRow}>
+                        <Ionicons name="calendar-outline" size={16} color="#666" />
+                        <Text style={styles.tripCardDate}>
+                          {formatDate(getUpcomingTrip()!.start_date)} - {formatDate(getUpcomingTrip()!.end_date)}
+                        </Text>
+                      </View>
+                      <View style={styles.tripCardBadge}>
+                        <Text style={styles.tripCardBadgeText}>Approved</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* My Trip Stats - Now at bottom */}
                 <View style={styles.statsRow}>
                   <View style={styles.statCard}>
                     <Ionicons name="airplane" size={24} color="#007AFF" />
@@ -502,9 +639,67 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
-  scrollContent: { 
+  scrollContent: {
     padding: 20,
     paddingBottom: 40, // Reduce padding since container has paddingBottom
+  },
+  tripCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 0,
+    marginBottom: 12,
+    marginHorizontal: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tripCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  tripCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 8,
+    color: '#333',
+  },
+  tripCardContent: {
+    padding: 0,
+  },
+  tripCardTripTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
+  },
+  tripCardDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  tripCardDate: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 6,
+  },
+  tripCardBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#34C759',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tripCardBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   statsContainer: {
     marginBottom: 30,
