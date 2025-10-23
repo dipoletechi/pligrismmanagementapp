@@ -9,6 +9,7 @@ import {
   Alert,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -42,19 +43,23 @@ export default function FeedbackScreen() {
   const [loading, setLoading] = useState(true);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
 
   // Feedback states
   const [foodFeedbackExpanded, setFoodFeedbackExpanded] = useState(false);
   const [foodVendorRatings, setFoodVendorRatings] = useState<{[key: string]: number}>({});
   const [foodVendorDescriptions, setFoodVendorDescriptions] = useState<{[key: string]: string}>({});
+  const [submittedFoodVendors, setSubmittedFoodVendors] = useState<string[]>([]);
   
   const [accommodationFeedbackExpanded, setAccommodationFeedbackExpanded] = useState(false);
   const [accommodationVendorRatings, setAccommodationVendorRatings] = useState<{[key: string]: number}>({});
   const [accommodationVendorDescriptions, setAccommodationVendorDescriptions] = useState<{[key: string]: string}>({});
+  const [submittedAccommodationVendors, setSubmittedAccommodationVendors] = useState<string[]>([]);
   
   const [transportFeedbackExpanded, setTransportFeedbackExpanded] = useState(false);
   const [transportVendorRatings, setTransportVendorRatings] = useState<{[key: string]: number}>({});
   const [transportVendorDescriptions, setTransportVendorDescriptions] = useState<{[key: string]: string}>({});
+  const [submittedTransportVendors, setSubmittedTransportVendors] = useState<string[]>([]);
   
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
   
@@ -100,13 +105,20 @@ export default function FeedbackScreen() {
   // Check if user has already submitted feedback (without loading the data)
   useEffect(() => {
     const checkFeedbackSubmitted = async () => {
-      if (!params.tripId) return;
+      if (!params.tripId) {
+        setIsLoadingFeedback(false);
+        return;
+      }
 
       try {
+        setIsLoadingFeedback(true);
         // Get JWT token from AsyncStorage
         const token = await AsyncStorage.getItem('userToken');
 
-        if (!token) return;
+        if (!token) {
+          setIsLoadingFeedback(false);
+          return;
+        }
 
         const response = await fetch(`http://192.168.1.3:5000/api/mobile/feedback/trip/${params.tripId}`, {
           headers: {
@@ -115,15 +127,113 @@ export default function FeedbackScreen() {
         });
         const result = await response.json();
 
+        console.log('=== FRONTEND FEEDBACK DEBUG ===');
+        console.log('API Response:', JSON.stringify(result, null, 2));
+        console.log('Has Submitted:', result.hasSubmitted);
+        console.log('Result Data:', result.data);
+
         if (result.success && result.hasSubmitted) {
           console.log('Feedback already submitted for this trip');
-          // Just mark as submitted and enable read-only mode
-          // Don't populate any data - keep fields empty
+          console.log('Loading submitted feedback data:', result.data);
+          
+          // Mark as submitted and enable read-only mode
           setHasSubmitted(true);
           setIsReadOnly(true);
+          
+          // Populate overall feedback
+          if (result.data.overall) {
+            console.log('Setting overall rating:', result.data.overall.rating);
+            console.log('Setting overall comment:', result.data.overall.comment);
+            setOverallRating(result.data.overall.rating || 0);
+            setOverallComment(result.data.overall.comment || '');
+          }
+          
+          // Populate food vendor feedback
+          if (result.data.food && Array.isArray(result.data.food)) {
+            console.log('Food feedback array:', result.data.food);
+            const foodRatings: {[key: string]: number} = {};
+            const foodDescriptions: {[key: string]: string} = {};
+            const foodVendorsList: string[] = [];
+            result.data.food.forEach((item: any) => {
+              console.log('Processing food item:', item);
+              if (item.vendor) {
+                foodRatings[item.vendor] = item.rating || 0;
+                foodDescriptions[item.vendor] = item.description || '';
+                foodVendorsList.push(item.vendor);
+                console.log(`Set food vendor "${item.vendor}": rating=${item.rating}, desc="${item.description}"`);
+              }
+            });
+            console.log('Final food ratings:', foodRatings);
+            console.log('Final food descriptions:', foodDescriptions);
+            console.log('Final food vendors list:', foodVendorsList);
+            setFoodVendorRatings(foodRatings);
+            setFoodVendorDescriptions(foodDescriptions);
+            setSubmittedFoodVendors(foodVendorsList);
+          }
+          
+          // Populate accommodation vendor feedback
+          if (result.data.accommodation && Array.isArray(result.data.accommodation)) {
+            console.log('Accommodation feedback array:', result.data.accommodation);
+            const accommodationRatings: {[key: string]: number} = {};
+            const accommodationDescriptions: {[key: string]: string} = {};
+            const accommodationVendorsList: string[] = [];
+            result.data.accommodation.forEach((item: any) => {
+              console.log('Processing accommodation item:', item);
+              if (item.vendor) {
+                accommodationRatings[item.vendor] = item.rating || 0;
+                accommodationDescriptions[item.vendor] = item.description || '';
+                accommodationVendorsList.push(item.vendor);
+                console.log(`Set accommodation vendor "${item.vendor}": rating=${item.rating}`);
+              }
+            });
+            console.log('Final accommodation ratings:', accommodationRatings);
+            console.log('Final accommodation vendors list:', accommodationVendorsList);
+            setAccommodationVendorRatings(accommodationRatings);
+            setAccommodationVendorDescriptions(accommodationDescriptions);
+            setSubmittedAccommodationVendors(accommodationVendorsList);
+          }
+          
+          // Populate transport vendor feedback
+          if (result.data.transport && Array.isArray(result.data.transport)) {
+            console.log('Transport feedback array:', result.data.transport);
+            const transportRatings: {[key: string]: number} = {};
+            const transportDescriptions: {[key: string]: string} = {};
+            const transportVendorsList: string[] = [];
+            result.data.transport.forEach((item: any) => {
+              console.log('Processing transport item:', item);
+              if (item.vendor) {
+                transportRatings[item.vendor] = item.rating || 0;
+                transportDescriptions[item.vendor] = item.description || '';
+                transportVendorsList.push(item.vendor);
+                console.log(`Set transport vendor "${item.vendor}": rating=${item.rating}`);
+              }
+            });
+            console.log('Final transport ratings:', transportRatings);
+            console.log('Final transport vendors list:', transportVendorsList);
+            setTransportVendorRatings(transportRatings);
+            setTransportVendorDescriptions(transportDescriptions);
+            setSubmittedTransportVendors(transportVendorsList);
+          }
+          
+          console.log('=== END FRONTEND DEBUG ===');
+          
+          // Auto-expand sections if feedback is submitted
+          if (result.data.food && result.data.food.length > 0) {
+            setFoodFeedbackExpanded(true);
+          }
+          if (result.data.accommodation && result.data.accommodation.length > 0) {
+            setAccommodationFeedbackExpanded(true);
+          }
+          if (result.data.transport && result.data.transport.length > 0) {
+            setTransportFeedbackExpanded(true);
+          }
+        } else {
+          console.log('No feedback submitted yet or API call failed');
         }
       } catch (error) {
         console.error('Error checking feedback status:', error);
+      } finally {
+        setIsLoadingFeedback(false);
       }
     };
 
@@ -415,6 +525,20 @@ export default function FeedbackScreen() {
     );
   }
 
+  if (isLoadingFeedback) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Loading feedback data...</Text>
+          </View>
+        </SafeAreaView>
+      </>
+    );
+  }
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -519,8 +643,8 @@ export default function FeedbackScreen() {
         {/* Food Vendors - Expanded */}
         {foodFeedbackExpanded && (
           <View style={styles.feedbackContent}>
-            {getFoodVendors().length > 0 ? (
-              getFoodVendors().map((vendorName: string, index: number) => (
+            {(isReadOnly && submittedFoodVendors.length > 0 ? submittedFoodVendors : getFoodVendors()).length > 0 ? (
+              (isReadOnly && submittedFoodVendors.length > 0 ? submittedFoodVendors : getFoodVendors()).map((vendorName: string, index: number) => (
                 <View key={index} style={styles.vendorFeedbackItem}>
                   <Text style={styles.vendorName}>{vendorName}</Text>
                   
@@ -591,8 +715,8 @@ export default function FeedbackScreen() {
         {/* Accommodation Vendors - Expanded */}
         {accommodationFeedbackExpanded && (
           <View style={styles.feedbackContent}>
-            {getAccommodationVendors().length > 0 ? (
-              getAccommodationVendors().map((vendorName: string, index: number) => (
+            {(isReadOnly && submittedAccommodationVendors.length > 0 ? submittedAccommodationVendors : getAccommodationVendors()).length > 0 ? (
+              (isReadOnly && submittedAccommodationVendors.length > 0 ? submittedAccommodationVendors : getAccommodationVendors()).map((vendorName: string, index: number) => (
                 <View key={index} style={styles.vendorFeedbackItem}>
                   <Text style={styles.vendorName}>{vendorName}</Text>
                   
@@ -663,8 +787,8 @@ export default function FeedbackScreen() {
         {/* Transport Vendors - Expanded */}
         {transportFeedbackExpanded && (
           <View style={styles.feedbackContent}>
-            {getTransportVendors().length > 0 ? (
-              getTransportVendors().map((vendorName: string, index: number) => (
+            {(isReadOnly && submittedTransportVendors.length > 0 ? submittedTransportVendors : getTransportVendors()).length > 0 ? (
+              (isReadOnly && submittedTransportVendors.length > 0 ? submittedTransportVendors : getTransportVendors()).map((vendorName: string, index: number) => (
                 <View key={index} style={styles.vendorFeedbackItem}>
                   <Text style={styles.vendorName}>{vendorName}</Text>
                   

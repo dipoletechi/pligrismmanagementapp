@@ -236,13 +236,6 @@ export default function MyTripsScreen() {
               {formatDate(application.start_date)} - {formatDate(application.end_date)}
             </Text>
           </View>
-          
-          <View style={styles.tripStatusRow}>
-            <Ionicons name="information-circle-outline" size={16} color="#666" />
-            <Text style={styles.tripStatusText}>
-              Trip Status: {application.trip_status_name}
-            </Text>
-          </View>
         </View>
         
         <View style={styles.applicationFooter}>
@@ -553,15 +546,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-  },
-  tripStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tripStatusText: {
     fontSize: 14,
     color: '#666',
     marginLeft: 8,
