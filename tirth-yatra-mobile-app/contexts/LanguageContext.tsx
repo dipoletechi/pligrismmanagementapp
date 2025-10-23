@@ -111,6 +111,8 @@ const translations = {
     'apply': 'Apply',
     'retry': 'Retry',
     'useSampleData': 'Use Sample Data',
+    'previous': 'Previous',
+    'next': 'Next',
     
     // Loading/Error states
     'loadingTrips': 'Loading trips...',
@@ -301,6 +303,7 @@ const translations = {
     
     // Feedback Page
     'feedback': 'Feedback',
+    'notifications': 'Notifications',
     'submitFeedback': 'Submit Feedback',
     'feedbackAlreadySubmitted': 'Feedback Already Submitted',
     'feedbackSubmittedMessage': 'You have already submitted feedback for this trip. You can view your submitted feedback below.',
@@ -424,6 +427,8 @@ const translations = {
     'apply': 'ਲਾਗੂ ਕਰੋ',
     'retry': 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼',
     'useSampleData': 'ਨਮੂਨਾ ਡੇਟਾ ਵਰਤੋ',
+    'previous': 'ਪਿਛਲਾ',
+    'next': 'ਅਗਲਾ',
     
     // Loading/Error states
     'loadingTrips': 'ਯਾਤਰਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ...',
@@ -614,6 +619,7 @@ const translations = {
     
     // Feedback Page
     'feedback': 'ਫੀਡਬੈਕ',
+    'notifications': 'ਸੂਚਨਾਵਾਂ',
     'submitFeedback': 'ਫੀਡਬੈਕ ਜਮ੍ਹਾਂ ਕਰੋ',
     'feedbackAlreadySubmitted': 'ਫੀਡਬੈਕ ਪਹਿਲਾਂ ਹੀ ਜਮ੍ਹਾਂ ਹੋ ਗਿਆ',
     'feedbackSubmittedMessage': 'ਤੁਸੀਂ ਇਸ ਯਾਤਰਾ ਲਈ ਪਹਿਲਾਂ ਹੀ ਫੀਡਬੈਕ ਜਮ੍ਹਾਂ ਕਰ ਦਿੱਤਾ ਹੈ। ਤੁਸੀਂ ਹੇਠਾਂ ਆਪਣਾ ਜਮ੍ਹਾਂ ਕੀਤਾ ਫੀਡਬੈਕ ਦੇਖ ਸਕਦੇ ਹੋ।',

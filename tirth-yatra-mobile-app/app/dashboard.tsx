@@ -143,6 +143,7 @@ export default function DashboardScreen() {
     }
   };
 
+
   // Check for login error from params
   useEffect(() => {
     if (params.error) {
@@ -298,6 +299,12 @@ export default function DashboardScreen() {
           </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => router.push('/notifications')}
+            >
+              <Ionicons name="notifications-outline" size={24} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity 
               style={styles.sidebarButton}
               onPress={() => setSidebarVisible(!sidebarVisible)}
             >
@@ -391,7 +398,12 @@ export default function DashboardScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {isLoggedIn && isAccountVerified ? (
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4CAF50" />
+              <Text style={styles.loadingText}>Loading dashboard...</Text>
+            </View>
+          ) : isLoggedIn && isAccountVerified ? (
             <>
               {/* My Trip Section */}
               <View style={styles.statsContainer}>
@@ -552,7 +564,7 @@ export default function DashboardScreen() {
                 </View>
               </View>
             </>
-          ) : (
+          ) : loginError && !loading ? (
             /* Account Status Message */
             <View style={styles.errorContainer}>
               <View style={styles.errorCard}>
@@ -561,7 +573,7 @@ export default function DashboardScreen() {
                 </Text>
               </View>
             </View>
-          )}
+          ) : null}
         </ScrollView>
 
         {/* QR Code Modal */}
@@ -642,6 +654,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40, // Reduce padding since container has paddingBottom
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 100,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
   },
   tripCard: {
     backgroundColor: '#fff',
@@ -855,6 +878,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  notificationButton: {
+    padding: 5,
+    marginTop: -5,
   },
   sidebarButton: {
     padding: 5,

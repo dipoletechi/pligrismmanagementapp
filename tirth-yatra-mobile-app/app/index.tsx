@@ -396,18 +396,22 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.headerButtons}>
-              {/* Empty space to balance the layout */}
+              <TouchableOpacity 
+                style={styles.notificationButton}
+                onPress={() => router.push('/notifications')}
+              >
+                <Ionicons name="notifications-outline" size={24} color="#333" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.sidebarButton}
+                onPress={() => {
+                  console.log('Menu button pressed, sidebarVisible:', sidebarVisible);
+                  setSidebarVisible(!sidebarVisible);
+                }}
+              >
+                <Ionicons name="menu" size={24} color="#333" />
+              </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.sidebarButton}
-              onPress={() => {
-                console.log('Menu button pressed, sidebarVisible:', sidebarVisible);
-                setSidebarVisible(!sidebarVisible);
-              }}
-            >
-              <Ionicons name="menu" size={24} color="#333" />
-            </TouchableOpacity>
           </>
         ) : (
           // Sign Out Mode: Original design with Sign In/Sign Up options
@@ -648,7 +652,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerButtons: {
-    width: 40, // Same width as sidebar button to balance layout
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  notificationButton: {
+    padding: 5,
+    marginTop: -5,
   },
   headerMenuButton: {
     padding: 5,

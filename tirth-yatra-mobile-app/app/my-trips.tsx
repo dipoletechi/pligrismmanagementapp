@@ -264,6 +264,12 @@ export default function MyTripsScreen() {
           </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => router.push('/notifications')}
+            >
+              <Ionicons name="notifications-outline" size={24} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity 
               style={styles.sidebarButton}
               onPress={() => setSidebarVisible(!sidebarVisible)}
             >
@@ -465,6 +471,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  notificationButton: {
+    padding: 5,
+    marginTop: -5,
   },
   sidebarButton: {
     padding: 5,
