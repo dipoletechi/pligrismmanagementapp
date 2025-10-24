@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS vendor_feedback (
     userId INT NOT NULL,
     ratings INT NOT NULL CHECK (ratings >= 1 AND ratings <= 5),
     datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    vendorid INT NOT NULL,
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -29,9 +30,9 @@ CREATE TABLE IF NOT EXISTS trip_feedback (
 );
 
 -- Add indexes for better performance (if they don't exist)
-CREATE INDEX idx_vendor_feedback_tripid ON vendor_feedback(tripid);
-CREATE INDEX idx_vendor_feedback_userId ON vendor_feedback(userId);
-CREATE INDEX idx_vendor_feedback_vendorid ON vendor_feedback(vendorid);
+CREATE INDEX IF NOT EXISTS idx_vendor_feedback_tripid ON vendor_feedback(tripid);
+CREATE INDEX IF NOT EXISTS idx_vendor_feedback_userId ON vendor_feedback(userId);
+-- Note: vendorid column removed in migration 016, replaced with specific vendor type IDs
 
-CREATE INDEX idx_trip_feedback_trip_id ON trip_feedback(trip_id);
-CREATE INDEX idx_trip_feedback_user_id ON trip_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_trip_feedback_trip_id ON trip_feedback(trip_id);
+CREATE INDEX IF NOT EXISTS idx_trip_feedback_user_id ON trip_feedback(user_id);
