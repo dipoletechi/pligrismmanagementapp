@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS vendor_feedback (
     userId INT NOT NULL,
     ratings INT NOT NULL CHECK (ratings >= 1 AND ratings <= 5),
     datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
-    vendorid INT NOT NULL,
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
