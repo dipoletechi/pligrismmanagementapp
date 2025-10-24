@@ -29,6 +29,7 @@
     "express-rate-limit": "^6.10.0",
     "express-validator": "^7.0.1",
     "helmet": "^7.0.0",
+    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.0",
     "qrcode": "^1.5.4",

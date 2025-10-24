@@ -30,7 +30,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // Create transport vendor
-router.post('/', protect, authorize('superadmin', 'admin'), [
+router.post('/', protect, authorize('superadmin', 'admin', 'financial_manager'), [
   body('title').trim().notEmpty()
 ], async (req, res) => {
   const errors = validationResult(req);
@@ -45,7 +45,7 @@ router.post('/', protect, authorize('superadmin', 'admin'), [
 });
 
 // Update transport vendor
-router.put('/:id', protect, authorize('superadmin', 'admin'), async (req, res) => {
+router.put('/:id', protect, authorize('superadmin', 'admin', 'financial_manager'), async (req, res) => {
   try {
     await TransportVendor.update(req.body, { where: { id: req.params.id } });
     const vendor = await TransportVendor.findByPk(req.params.id);
@@ -101,7 +101,7 @@ router.get('/:id/details', protect, async (req, res) => {
 });
 
 // Delete transport vendor
-router.delete('/:id', protect, authorize('superadmin', 'admin'), async (req, res) => {
+router.delete('/:id', protect, authorize('superadmin', 'admin', 'financial_manager'), async (req, res) => {
   try {
     await TransportVendor.destroy({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Deleted' });

@@ -619,37 +619,41 @@ const TripList = () => {
                         >
                           <ViewIcon />
                         </IconButton>
-                        <IconButton
-                          onClick={() => handleEditTrip(trip)}
-                          sx={{
-                            color: '#1976d2',
-                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                            '&:hover': {
-                              backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                              transform: 'scale(1.1)'
-                            },
-                            transition: 'all 0.2s ease'
-                          }}
-                          title="Edit Trip"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => handleTrackTrip(trip)}
-                          sx={{
-                            color: '#ff9800',
-                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                            '&:hover': {
-                              backgroundColor: 'rgba(255, 152, 0, 0.2)',
-                              transform: 'scale(1.1)'
-                            },
-                            transition: 'all 0.2s ease'
-                          }}
-                          title="Track Trip"
-                        >
-                          <TrackIcon />
-                        </IconButton>
-                        {user?.role !== 'finance' && user?.role !== 'user' && (
+                        {user?.role !== 'financial_manager' && (
+                          <IconButton
+                            onClick={() => handleEditTrip(trip)}
+                            sx={{
+                              color: '#1976d2',
+                              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                                transform: 'scale(1.1)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                            title="Edit Trip"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        )}
+                        {user?.role !== 'financial_manager' && (
+                          <IconButton
+                            onClick={() => handleTrackTrip(trip)}
+                            sx={{
+                              color: '#ff9800',
+                              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                                transform: 'scale(1.1)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                            title="Track Trip"
+                          >
+                            <TrackIcon />
+                          </IconButton>
+                        )}
+                        {user?.role !== 'finance' && user?.role !== 'user' && user?.role !== 'financial_manager' && (
                           <IconButton
                             onClick={() => handleScannerAction(trip)}
                             sx={{
@@ -696,21 +700,23 @@ const TripList = () => {
                         >
                           <FeedbackIcon />
                         </IconButton>
-                        <IconButton
-                          onClick={() => handleDelete(trip.id)}
-                          sx={{
-                            color: '#d32f2f',
-                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                            '&:hover': {
-                              backgroundColor: 'rgba(211, 47, 47, 0.2)',
-                              transform: 'scale(1.1)'
-                            },
-                            transition: 'all 0.2s ease'
-                          }}
-                          title="Delete Trip"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        {user?.role !== 'financial_manager' && (
+                          <IconButton
+                            onClick={() => handleDelete(trip.id)}
+                            sx={{
+                              color: '#d32f2f',
+                              backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(211, 47, 47, 0.2)',
+                                transform: 'scale(1.1)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                            title="Delete Trip"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>

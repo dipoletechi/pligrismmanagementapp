@@ -191,7 +191,7 @@ router.get('/user/:userId/trip/:tripId',
       const { userId, tripId } = req.params;
       
       // Check if user has admin privileges or is accessing their own logs
-      const hasAdminRole = ['admin', 'trip_manager', 'superadmin'].includes(req.user.role);
+      const hasAdminRole = ['admin', 'trip_manager', 'superadmin', 'financial_manager'].includes(req.user.role);
       const isOwnLogs = req.user.id == userId;
       
       if (!hasAdminRole && !isOwnLogs) {

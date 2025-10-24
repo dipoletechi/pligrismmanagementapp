@@ -26,6 +26,7 @@ import PilgrimManagement from './components/Pilgrim/PilgrimManagement';
 import TripApplicants from './components/Pilgrim/TripApplicants';
 import FeedbackListWithTabs from './components/Feedback/FeedbackListWithTabs';
 import Settings from './components/Settings';
+import Reports from './components/Reports/Reports';
 import './App.css';
 
 // Configure axios base URL
@@ -94,11 +95,11 @@ function App() {
                 } 
               />
               
-              {/* Trip Applicants - Admin, Trip Manager */}
+              {/* Trip Applicants - Admin, Trip Manager, Financial Manager */}
               <Route 
                 path="/trip-applicants/:tripId" 
                 element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager']}>
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'financial_manager']}>
                     <MainLayout>
                       <TripApplicants />
                     </MainLayout>
@@ -157,7 +158,7 @@ function App() {
               <Route 
                 path="/vendors/accommodation" 
                 element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'financial_manager']}>
                     <MainLayout>
                       <AccommodationVendors />
                     </MainLayout>
@@ -168,7 +169,7 @@ function App() {
               <Route 
                 path="/vendors/food" 
                 element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'financial_manager']}>
                     <MainLayout>
                       <FoodVendors />
                     </MainLayout>
@@ -179,7 +180,7 @@ function App() {
               <Route 
                 path="/vendors/transport" 
                 element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin']}>
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'financial_manager']}>
                     <MainLayout>
                       <TransportVendors />
                     </MainLayout>
@@ -205,7 +206,7 @@ function App() {
                 path="/trips/create" 
                 element={
                   <ProtectedRoute 
-                    requiredRoles={['superadmin', 'admin', 'trip_manager']}
+                    requiredRoles={['superadmin', 'admin', 'trip_manager', 'financial_manager']}
                   >
                     <MainLayout>
                       <CreateTrip />
@@ -278,11 +279,11 @@ function App() {
                 } 
               />
 
-              {/* Feedback Management - Superadmin, Admin, Trip Manager, Transport */}
+              {/* Feedback Management - Superadmin, Admin, Trip Manager, Transport, Financial Manager */}
               <Route 
                 path="/feedback" 
                 element={
-                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport']}>
+                  <ProtectedRoute requiredRoles={['superadmin', 'admin', 'trip_manager', 'transport', 'financial_manager']}>
                     <MainLayout>
                       <FeedbackListWithTabs />
                     </MainLayout>
@@ -305,16 +306,16 @@ function App() {
                 } 
               />
               
-              {/* Reports - Admin, Trip Manager, Financial Manager */}
+              {/* Reports - Superadmin, Admin, Trip Manager, Financial Manager */}
               <Route 
                 path="/reports" 
                 element={
                   <ProtectedRoute 
-                    requiredRoles={['admin', 'trip_manager', 'financial_manager']}
+                    requiredRoles={['superadmin', 'admin', 'trip_manager', 'financial_manager']}
                     requiredPermissions={[{ module: 'reports', action: 'read' }]}
                   >
                     <MainLayout>
-                      <div>Reports - Coming Soon</div>
+                      <Reports />
                     </MainLayout>
                   </ProtectedRoute>
                 } 

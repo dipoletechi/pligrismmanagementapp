@@ -343,17 +343,19 @@ const TripApplicants = () => {
             {getTripTitle()}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={selectedApplicants.length === 0}
-          onClick={handleSendNotification}
-          startIcon={<NotificationIcon />}
-          sx={{ minWidth: 180 }}
-        >
-          Send Notification
-          {selectedApplicants.length > 0 && ` (${selectedApplicants.length})`}
-        </Button>
+        {user?.role !== 'financial_manager' && (
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={selectedApplicants.length === 0}
+            onClick={handleSendNotification}
+            startIcon={<NotificationIcon />}
+            sx={{ minWidth: 180 }}
+          >
+            Send Notification
+            {selectedApplicants.length > 0 && ` (${selectedApplicants.length})`}
+          </Button>
+        )}
       </Box>
 
       {/* Error Alert */}
@@ -404,14 +406,16 @@ const TripApplicants = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isAllSelected}
-                        indeterminate={isSomeSelected}
-                        onChange={handleSelectAll}
-                        color="primary"
-                      />
-                    </TableCell>
+                    {user?.role !== 'financial_manager' && (
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isAllSelected}
+                          indeterminate={isSomeSelected}
+                          onChange={handleSelectAll}
+                          color="primary"
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>Applicant</TableCell>
                     <TableCell>Contact Details</TableCell>
                     <TableCell>Status</TableCell>
@@ -421,13 +425,15 @@ const TripApplicants = () => {
                 <TableBody>
                   {filteredApplicants.map((applicant) => (
                     <TableRow key={applicant.id} hover>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedApplicants.includes(applicant.id)}
-                          onChange={() => handleSelectOne(applicant.id)}
-                          color="primary"
-                        />
-                      </TableCell>
+                      {user?.role !== 'financial_manager' && (
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={selectedApplicants.includes(applicant.id)}
+                            onChange={() => handleSelectOne(applicant.id)}
+                            color="primary"
+                          />
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -470,15 +476,17 @@ const TripApplicants = () => {
                               <ViewIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit Status">
-                            <IconButton
-                              onClick={() => handleEditClick(applicant)}
-                              size="small"
-                              color="secondary"
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
+                          {user?.role !== 'financial_manager' && (
+                            <Tooltip title="Edit Status">
+                              <IconButton
+                                onClick={() => handleEditClick(applicant)}
+                                size="small"
+                                color="secondary"
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </Box>
                       </TableCell>
                     </TableRow>

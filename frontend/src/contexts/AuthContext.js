@@ -261,13 +261,14 @@ const getRolePermissions = (role) => {
     financial_manager: {
       users: [],
       trips: ['read'], // Read-only access to trips
-      finance: ['create', 'read', 'update', 'delete'],
-      reports: ['create', 'read', 'update', 'delete'],
+      finance: [], // No finance management access
+      reports: ['read'], // Read-only access to reports
       settings: ['read', 'update'], // Allow financial managers to update their settings
       destinations: [],
       amenities: [],
       food: [],
-      vendors: []
+      vendors: ['create', 'read', 'update', 'delete'], // Full access to vendors
+      feedback: ['read'] // Read-only access to feedback
     },
     user: {
       users: [],
