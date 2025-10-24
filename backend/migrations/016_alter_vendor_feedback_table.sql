@@ -22,7 +22,7 @@ ADD CONSTRAINT fk_vendor_feedback_food_vendor
 FOREIGN KEY (food_vendor_id) REFERENCES food_vendors(id) ON DELETE CASCADE;
 
 -- Remove old vendorid column
-ALTER TABLE vendor_feedback DROP COLUMN vendorid;
+-- ALTER TABLE vendor_feedback DROP COLUMN vendorid;
 
 -- Add indexes for better performance
 CREATE INDEX idx_vendor_feedback_transport_vendor_id ON vendor_feedback(transport_vendor_id);
