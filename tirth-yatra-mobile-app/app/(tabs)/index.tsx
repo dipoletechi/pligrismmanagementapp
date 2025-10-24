@@ -309,8 +309,8 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.mainHeader}>
         <View>
-          <Text style={styles.headerTitle}>Tirth Yatra</Text>
-          <Text style={styles.headerSubtitle}>Pilgrimage Trips</Text>
+          <Text style={styles.headerTitle}>{t('tirthYatra')}</Text>
+          <Text style={styles.headerSubtitle}>{t('pilgrimageTrips')}</Text>
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity 
@@ -397,8 +397,16 @@ export default function HomeScreen() {
 
       {/* Sidebar Menu */}
       {sidebarVisible && (
-        <View style={styles.sidebarOverlay}>
-          <View style={styles.sidebar}>
+        <TouchableOpacity 
+          style={styles.sidebarOverlay}
+          activeOpacity={1}
+          onPress={() => setSidebarVisible(false)}
+        >
+          <TouchableOpacity 
+            style={styles.sidebar}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.sidebarHeader}>
               <Text style={styles.sidebarTitle}>Menu</Text>
               <TouchableOpacity 
@@ -471,8 +479,8 @@ export default function HomeScreen() {
                 <Text style={[styles.sidebarItemText, { color: '#FF3B30' }]}>Sign Out</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       )}
 
     </SafeAreaView>

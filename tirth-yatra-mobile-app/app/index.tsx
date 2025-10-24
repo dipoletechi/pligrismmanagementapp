@@ -393,7 +393,7 @@ export default function HomeScreen() {
           // Login Mode: Title on left, hamburger menu on right
           <>
             <View>
-              <Text style={styles.headerTitle}>Tirth Yatra - Pilgrimage Trips</Text>
+              <Text style={styles.headerTitle}>{t('tirthYatra')} - {t('pilgrimageTrips')}</Text>
             </View>
             
             <View style={styles.headerButtons}>
@@ -417,7 +417,7 @@ export default function HomeScreen() {
         ) : (
           // Sign Out Mode: Original design with Sign In/Sign Up options
           <>
-            <Text style={styles.headerTitle}>Tirth Yatra</Text>
+            <Text style={styles.headerTitle}>{t('tirthYatra')}</Text>
             <TouchableOpacity
               style={styles.headerMenuButton}
               onPress={() => setHeaderMenuVisible(!headerMenuVisible)}
@@ -430,34 +430,44 @@ export default function HomeScreen() {
 
       {/* Header Dropdown for Sign Out Mode */}
       {!isLoggedIn && headerMenuVisible && (
-        <View style={styles.headerDropdown}>
+        <TouchableOpacity
+          style={styles.headerDropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setHeaderMenuVisible(false)}
+        >
           <TouchableOpacity
-            style={styles.dropdownItem}
-            onPress={() => {
-              setHeaderMenuVisible(false);
-              router.push('/login');
-            }}>
-            <Ionicons name="log-in-outline" size={20} color="#000" />
-            <Text style={styles.dropdownItemText}>{t('signIn')}</Text>
-          </TouchableOpacity>
+            style={styles.headerDropdown}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                setHeaderMenuVisible(false);
+                router.push('/login');
+              }}>
+              <Ionicons name="log-in-outline" size={20} color="#000" />
+              <Text style={styles.dropdownItemText}>{t('signIn')}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.dropdownItem}
-            onPress={() => {
-              setHeaderMenuVisible(false);
-              router.push('/register');
-            }}>
-            <Ionicons name="person-add-outline" size={20} color="#000" />
-            <Text style={styles.dropdownItemText}>{t('signUp')}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                setHeaderMenuVisible(false);
+                router.push('/register');
+              }}>
+              <Ionicons name="person-add-outline" size={20} color="#000" />
+              <Text style={styles.dropdownItemText}>{t('signUp')}</Text>
+            </TouchableOpacity>
 
-          <View style={styles.dropdownItem}>
-            <Ionicons name="language-outline" size={20} color="#000" />
-            <View style={styles.languageDropdownContainer}>
-              <LanguageDropdown />
+            <View style={styles.dropdownItem}>
+              <Ionicons name="language-outline" size={20} color="#000" />
+              <View style={styles.languageDropdownContainer}>
+                <LanguageDropdown />
+              </View>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       )}
 
        {sidebarVisible && (
@@ -665,6 +675,14 @@ const styles = StyleSheet.create({
     padding: 5,
   },
 
+  headerDropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9998,
+  },
   headerDropdown: {
     position: 'absolute',
     top: 70,

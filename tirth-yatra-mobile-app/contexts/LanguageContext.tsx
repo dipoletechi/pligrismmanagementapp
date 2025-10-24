@@ -19,6 +19,8 @@ const translations = {
     'signIn': 'SignIn',
     'signUp': 'SignUp',
     'language': 'Language',
+    'tirthYatra': 'Tirth Yatra',
+    'pilgrimageTrips': 'Pilgrimage Trips',
     
     // Tabs
     'upcoming': 'Upcoming',
@@ -335,6 +337,8 @@ const translations = {
     'signIn': 'ਸਾਈਨ ਇਨ',
     'signUp': 'ਸਾਈਨ ਅੱਪ',
     'language': 'ਭਾਸ਼ਾ',
+    'tirthYatra': 'ਤੀਰਥ ਯਾਤਰਾ',
+    'pilgrimageTrips': 'ਤੀਰਥ ਯਾਤਰਾਵਾਂ',
     
     // Tabs
     'upcoming': 'ਆਉਣ ਵਾਲੇ',

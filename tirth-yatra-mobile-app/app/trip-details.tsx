@@ -1024,7 +1024,7 @@ export default function TripDetailsScreen() {
                     <View key={index} style={styles.transportCard}>
                       <View style={styles.transportHeader}>
                         <Ionicons name="bus" size={20} color="#FF9800" />
-                        <Text style={styles.transportName}>{bus.title || `Bus ${bus.id}`}</Text>
+                        <Text style={styles.transportName}>{bus.title || `Vehicle ${bus.id}`}</Text>
                       </View>
                       <View style={styles.transportDetails}>
                         {bus.model && (
@@ -1168,7 +1168,7 @@ export default function TripDetailsScreen() {
                               <View key={idx} style={styles.transportCard}>
                                 <View style={styles.transportHeader}>
                                   <Ionicons name="bus" size={20} color="#FF9800" />
-                                  <Text style={styles.transportName}>{bus.title || `Bus ${bus.id}`}</Text>
+                                  <Text style={styles.transportName}>{bus.title || `Vehicle ${bus.id}`}</Text>
                                 </View>
                                 <View style={styles.transportDetails}>
                                   {bus.model && (
@@ -1376,54 +1376,36 @@ export default function TripDetailsScreen() {
     <SafeAreaView style={styles.container}>
       {/* Fixed Header */}
       <View style={styles.mainHeader}>
-        <Text style={styles.headerTitle}>Tirth Yatra</Text>
+        <Text style={styles.headerTitle}>{t('tirthYatra')}</Text>
         <TouchableOpacity 
           style={styles.headerMenuButton}
           onPress={() => setHeaderMenuVisible(!headerMenuVisible)}
         >
           <Ionicons name="ellipsis-horizontal" size={24} color="#000" />
         </TouchableOpacity>
-        
-        {/* Header Dropdown Menu */}
-        {headerMenuVisible && (
-          <View style={styles.headerDropdown}>
-            {isLoggedIn ? (
-              // Logged in: Show only Language
-              <>
-                {console.log('Showing logged in options: Language only')}
-                <View style={styles.dropdownItem}>
-                  <Ionicons name="language-outline" size={20} color="#000" />
-                  <View style={styles.languageDropdownContainer}>
-                    <LanguageDropdown />
-                  </View>
-                </View>
-              </>
-            ) : (
-              // Logged out: Show only Language and Cancel
-              <>
-                {console.log('Showing logged out options: Language + Cancel')}
-                <View style={styles.dropdownItem}>
-                  <Ionicons name="language-outline" size={20} color="#000" />
-                  <View style={styles.languageDropdownContainer}>
-                    <LanguageDropdown />
-                  </View>
-                </View>
-                
-                <TouchableOpacity 
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    setHeaderMenuVisible(false);
-                    router.back();
-                  }}
-                >
-                  <Ionicons name="close-outline" size={20} color="#000" />
-                  <Text style={styles.dropdownItemText}>Cancel</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
       </View>
+
+      {/* Header Dropdown Menu - Outside header for full screen overlay */}
+      {headerMenuVisible && (
+        <TouchableOpacity
+          style={styles.headerDropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setHeaderMenuVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.headerDropdown}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.dropdownItem}>
+              <Ionicons name="language-outline" size={20} color="#000" />
+              <View style={styles.languageDropdownContainer}>
+                <LanguageDropdown />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
 
       {/* Tab Navigation */}
       <View style={styles.tabHeader}>
@@ -1584,6 +1566,15 @@ const styles = StyleSheet.create({
   },
   headerMenuButton: {
     padding: 8,
+  },
+  headerDropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9998,
+    backgroundColor: 'transparent',
   },
   headerDropdown: {
     position: 'absolute',
