@@ -2,11 +2,12 @@
 -- This migration adds the new vendor type structure
 
 -- Add new vendor type columns
+-- Note: Errors for duplicate columns will be handled gracefully by migration script
 ALTER TABLE vendor_feedback 
-ADD COLUMN transport_vendor_id INT NULL AFTER vendorid,
-ADD COLUMN accommodation_vendor_id INT NULL AFTER transport_vendor_id,
-ADD COLUMN food_vendor_id INT NULL AFTER accommodation_vendor_id,
-ADD COLUMN vendor_type ENUM('transport', 'accommodation', 'food') AFTER food_vendor_id;
+ADD COLUMN transport_vendor_id INT NULL,
+ADD COLUMN accommodation_vendor_id INT NULL,
+ADD COLUMN food_vendor_id INT NULL,
+ADD COLUMN vendor_type ENUM('transport', 'accommodation', 'food');
 
 -- Add foreign key constraints
 ALTER TABLE vendor_feedback 
@@ -24,8 +25,8 @@ FOREIGN KEY (food_vendor_id) REFERENCES food_vendors(id) ON DELETE CASCADE;
 -- Remove old vendorid column
 -- ALTER TABLE vendor_feedback DROP COLUMN vendorid;
 
--- Add indexes for better performance
-CREATE INDEX idx_vendor_feedback_transport_vendor_id ON vendor_feedback(transport_vendor_id);
-CREATE INDEX idx_vendor_feedback_accommodation_vendor_id ON vendor_feedback(accommodation_vendor_id);
-CREATE INDEX idx_vendor_feedback_food_vendor_id ON vendor_feedback(food_vendor_id);
-CREATE INDEX idx_vendor_feedback_vendor_type ON vendor_feedback(vendor_type);
+-- Add indexes for better performance (will be skipped if already exist)
+ALTER TABLE vendor_feedback ADD INDEX idx_vendor_feedback_transport_vendor_id (transport_vendor_id);
+ALTER TABLE vendor_feedback ADD INDEX idx_vendor_feedback_accommodation_vendor_id (accommodation_vendor_id);
+ALTER TABLE vendor_feedback ADD INDEX idx_vendor_feedback_food_vendor_id (food_vendor_id);
+ALTER TABLE vendor_feedback ADD INDEX idx_vendor_feedback_vendor_type (vendor_type);
