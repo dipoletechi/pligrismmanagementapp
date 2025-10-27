@@ -97,9 +97,9 @@ const CreateTrip = () => {
   };
   
   // Check if we're in edit mode or view mode
-  const isEditMode = location.state?.isEditMode || false;
+  const [isEditMode, setIsEditMode] = useState(location.state?.isEditMode || false);
   const isViewMode = location.state?.isViewMode || false;
-  const editingTrip = location.state?.editingTrip || null;
+  const [editingTrip, setEditingTrip] = useState(location.state?.editingTrip || null);
   
   
   
@@ -1278,11 +1278,23 @@ const CreateTrip = () => {
       }
       
       // If validation passes, create the trip immediately and then move to next step
-      handleSubmit(true).then((tripId) => {
+      handleSubmit(true).then(async (tripId) => {
         // Store the trip ID for subsequent steps
         if (tripId) {
           localStorage.setItem('currentTripId', tripId);
           console.log('Trip ID stored for subsequent steps:', tripId);
+          
+          // Fetch the created trip data and set it as editingTrip
+          try {
+            const response = await axios.get(`/api/trips/${tripId}`);
+            if (response.data && response.data.data) {
+              setEditingTrip(response.data.data);
+              setIsEditMode(true);
+              console.log('Switched to edit mode with trip:', response.data.data);
+            }
+          } catch (error) {
+            console.error('Error fetching created trip:', error);
+          }
         }
         // Move to next step after successful trip creation
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -2445,8 +2457,8 @@ const CreateTrip = () => {
         selected_event_end_time: formData.selectedEventEndTime,
         finance_data: JSON.stringify(formData.finance),
         use_all_days_selection: isAllDaysApplied,
-        // Preserve existing trip status when editing, use statusId for new trips
-        trip_status_id: (isEditMode && editingTrip?.trip_status_id) ? editingTrip.trip_status_id : statusId
+        // Use the statusId parameter to set trip status
+        trip_status_id: statusId
       };
       
       let response;
@@ -2456,6 +2468,14 @@ const CreateTrip = () => {
         console.log('Trip updated successfully:', response.data);
         setSnackbar({ open: true, message: 'Trip updated successfully!', severity: 'success' });
         tripId = editingTrip.id;
+        
+        // Clean up localStorage if this is final submit
+        if (!isFromStep0) {
+          localStorage.removeItem('currentTripId');
+          setTimeout(() => {
+            navigate('/trips/list');
+          }, 1500);
+        }
       } else {
         response = await axios.post('/api/trips', tripData);
         console.log('Trip created successfully:', response.data);

@@ -245,9 +245,33 @@ const Reports = () => {
     ).filter(Boolean);
 
     return (
-      <FormControl size="medium" sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}>
+      <FormControl fullWidth size="medium">
         <Select
           multiple
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
           value={selectedValues}
           onChange={() => {}}
           onOpen={() => setOpen(true)}
@@ -256,9 +280,6 @@ const Reports = () => {
           displayEmpty
           sx={{
             height: '56px',
-            width: '250px',
-            minWidth: '250px',
-            maxWidth: '250px',
             '& .MuiOutlinedInput-root': {
               height: '56px'
             },
@@ -267,15 +288,18 @@ const Reports = () => {
               display: 'flex',
               alignItems: 'center',
               padding: '16.5px 40px 16.5px 14px',
-              minWidth: 0
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
             }
           }}
           MenuProps={{
             PaperProps: {
               sx: {
                 maxHeight: 400,
-                width: '250px',
-                minWidth: '250px'
+                width: 'auto',
+                minWidth: '300px'
               }
             },
             anchorOrigin: {
@@ -315,7 +339,11 @@ const Reports = () => {
             );
           }}
         >
-          <Box sx={{ p: 1 }}>
+          <Box 
+            sx={{ p: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <TextField
               fullWidth
               size="small"
@@ -323,11 +351,21 @@ const Reports = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClick={(e) => {
-                e.preventDefault();
                 e.stopPropagation();
               }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+              }}
+              autoFocus={false}
             />
-            <Box sx={{ mt: 1, mb: 1 }}>
+            <Box 
+              sx={{ mt: 1, mb: 1 }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
               <Button
                 size="small"
                 onClick={(e) => {
@@ -341,7 +379,10 @@ const Reports = () => {
                 {(selectedValues?.length || 0) === (filteredOptions?.length || 0) ? 'Deselect All' : 'Select All'}
               </Button>
             </Box>
-            <Divider />
+            <Divider 
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
           </Box>
           {filteredOptions.map((option) => (
             <MenuItem
@@ -405,7 +446,7 @@ const Reports = () => {
           
           {/* All 8 Filters in Single Row */}
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={1.5}>
+            <Grid item xs={12} sm={6} md={1.3}>
               <DropdownChecklist
                 label="Trips"
                 options={filterOptions.trips.map(trip => ({ value: trip.id, label: trip.title }))}
@@ -414,7 +455,7 @@ const Reports = () => {
                 placeholder="Select trips..."
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={1.5}>
+            <Grid item xs={12} sm={6} md={1.3}>
               <FormControl fullWidth size="medium">
                 <Select
                   value={filters.vendor_type}
@@ -423,8 +464,18 @@ const Reports = () => {
                     handleFilterChange('vendor_id', ''); // Reset vendor selection
                   }}
                   displayEmpty
-                  sx={{ height: '56px' }}
-                  renderValue={(selected) => selected || <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>Vendor Type</span>}
+                  sx={{ 
+                    height: '56px',
+                    '& .MuiSelect-select': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }
+                  }}
+                  renderValue={(selected) => {
+                    if (!selected) return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>Type</span>;
+                    return selected.charAt(0).toUpperCase() + selected.slice(1);
+                  }}
                 >
                   <MenuItem value="">All Types</MenuItem>
                   <MenuItem value="accommodation">Accommodation</MenuItem>
@@ -440,11 +491,19 @@ const Reports = () => {
                   onChange={(e) => handleFilterChange('vendor_id', e.target.value)}
                   disabled={!filters.vendor_type}
                   displayEmpty
-                  sx={{ height: '56px' }}
+                  sx={{ 
+                    height: '56px',
+                    '& .MuiSelect-select': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }
+                  }}
                   renderValue={(selected) => {
                     if (!selected) return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>Vendor</span>;
                     const vendor = getVendorsByType().find(v => v.id === selected);
-                    return vendor?.title || selected;
+                    const title = vendor?.title || selected;
+                    return title.length > 12 ? title.substring(0, 12) + '...' : title;
                   }}
                 >
                   <MenuItem value="">All Vendors</MenuItem>
@@ -454,14 +513,24 @@ const Reports = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={1.5}>
+            <Grid item xs={12} sm={6} md={1.3}>
               <FormControl fullWidth size="medium">
                 <Select
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                   displayEmpty
-                  sx={{ height: '56px' }}
-                  renderValue={(selected) => selected || <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>Status</span>}
+                  sx={{ 
+                    height: '56px',
+                    '& .MuiSelect-select': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }
+                  }}
+                  renderValue={(selected) => {
+                    if (!selected) return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>Status</span>;
+                    return selected.charAt(0).toUpperCase() + selected.slice(1);
+                  }}
                 >
                   <MenuItem value="">All Statuses</MenuItem>
                   <MenuItem value="pending">Pending</MenuItem>
@@ -472,7 +541,7 @@ const Reports = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={12} sm={6} md={1.8}>
               <TextField
                 fullWidth
                 size="medium"
@@ -484,7 +553,7 @@ const Reports = () => {
                 sx={{ '& .MuiInputBase-root': { height: '56px' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={12} sm={6} md={1.8}>
               <TextField
                 fullWidth
                 size="medium"
@@ -496,7 +565,7 @@ const Reports = () => {
                 sx={{ '& .MuiInputBase-root': { height: '56px' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={1}>
+            <Grid item xs={12} sm={6} md={1.5}>
               <TextField
                 fullWidth
                 size="medium"
@@ -507,7 +576,7 @@ const Reports = () => {
                 sx={{ '& .MuiInputBase-root': { height: '56px' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={1}>
+            <Grid item xs={12} sm={6} md={1.5}>
               <TextField
                 fullWidth
                 size="medium"
