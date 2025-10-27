@@ -234,10 +234,11 @@ const Reports = () => {
   const getVendorsByType = () => {
     if (!filters.vendor_type) {
       // Return all vendors from all types when no type is selected
+      // Add type prefix to make IDs unique
       const allVendors = [
-        ...filterOptions.vendors.accommodation,
-        ...filterOptions.vendors.food,
-        ...filterOptions.vendors.transport
+        ...filterOptions.vendors.accommodation.map(v => ({ ...v, vendorType: 'accommodation' })),
+        ...filterOptions.vendors.food.map(v => ({ ...v, vendorType: 'food' })),
+        ...filterOptions.vendors.transport.map(v => ({ ...v, vendorType: 'transport' }))
       ];
       return allVendors;
     }
@@ -559,7 +560,12 @@ const Reports = () => {
                 >
                   <MenuItem value="">All Vendors</MenuItem>
                   {getVendorsByType().map(vendor => (
-                    <MenuItem key={vendor.id} value={vendor.id}>{vendor.title}</MenuItem>
+                    <MenuItem 
+                      key={vendor.vendorType ? `${vendor.vendorType}-${vendor.id}` : vendor.id} 
+                      value={vendor.id}
+                    >
+                      {vendor.title}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
