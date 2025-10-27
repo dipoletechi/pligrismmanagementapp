@@ -48,7 +48,6 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] },
   { text: 'Trip Management', icon: <TripIcon />, path: '/trips', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] },
   { text: 'Master Data', icon: <LocationIcon />, path: '/master-data', roles: ['superadmin', 'admin'] },
-  { text: 'Financial Management', icon: <FinanceIcon />, path: '/finance', roles: ['superadmin', 'admin'] },
   { text: 'Vendors Management', icon: <PeopleIcon />, path: '/vendors', roles: ['superadmin', 'admin', 'financial_manager'] },
   { text: 'Support Management', icon: <SupportIcon />, path: '/support', roles: ['superadmin', 'admin'] },
   { text: 'User Management', icon: <PeopleIcon />, path: '/users', roles: ['superadmin'] },
@@ -68,11 +67,6 @@ const TripSubMenu = [
   { text: 'List Trips', path: '/trips/list', permissions: { module: 'trips', action: 'read' } }
 ];
 
-const FinanceSubMenu = [
-  { text: 'Vendors', path: '/finance/vendors', permissions: { module: 'finance', action: 'read' } },
-  { text: 'Budget Management', path: '/finance/budget', permissions: { module: 'finance', action: 'read' } },
-  { text: 'Vendor Finance', path: '/finance/vendor-finance', permissions: { module: 'finance', action: 'read' } }
-];
 
 const VendorsSubMenu = [
   { text: 'Accommodation', path: '/vendors/accommodation', permissions: { module: 'vendors', action: 'read' } },
@@ -154,9 +148,6 @@ function MainLayout({ children }) {
         break;
       case '/trips':
         subMenu = TripSubMenu;
-        break;
-      case '/finance':
-        subMenu = FinanceSubMenu;
         break;
       case '/vendors':
         subMenu = VendorsSubMenu;
