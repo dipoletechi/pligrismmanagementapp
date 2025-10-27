@@ -142,7 +142,12 @@ const Reports = () => {
     try {
       const params = {};
       Object.keys(filters).forEach(key => {
-        if (filters[key]) params[key] = filters[key];
+        if (key === 'trip_ids' && Array.isArray(filters[key]) && filters[key].length > 0) {
+          // Send trip_ids as comma-separated string
+          params[key] = filters[key].join(',');
+        } else if (filters[key] && key !== 'trip_ids') {
+          params[key] = filters[key];
+        }
       });
 
       const response = await axios.get('/api/reports/export/csv', {
@@ -159,6 +164,7 @@ const Reports = () => {
       link.remove();
     } catch (error) {
       console.error('Error downloading CSV:', error);
+      alert('Error downloading CSV. Please try again.');
     }
   };
 

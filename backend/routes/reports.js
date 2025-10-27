@@ -209,23 +209,27 @@ router.get('/export/csv',
       );
 
       // Calculate total amount
-      const totalAmount = reportsWithDetails.reduce((sum, report) => sum + parseFloat(report.Amount), 0);
+      const totalAmount = reportsWithDetails.length > 0 
+        ? reportsWithDetails.reduce((sum, report) => sum + parseFloat(report.Amount || 0), 0)
+        : 0;
 
-      // Add total row
-      const totalRow = {
-        'Trip Title': '',
-        'Trip Start Date': '',
-        'Trip End Date': '',
-        'Vendor Title': 'TOTAL',
-        'Vendor Type': '',
-        'Amount': totalAmount,
-        'Status': '',
-        'Description': '',
-        'Payment Date': '',
-        'Created Date': ''
-      };
-      
-      const dataWithTotal = [...reportsWithDetails, totalRow];
+      // Add total row if there are reports
+      let dataWithTotal = reportsWithDetails;
+      if (reportsWithDetails.length > 0) {
+        const totalRow = {
+          'Trip Title': '',
+          'Trip Start Date': '',
+          'Trip End Date': '',
+          'Vendor Title': 'TOTAL',
+          'Vendor Type': '',
+          'Amount': totalAmount,
+          'Status': '',
+          'Description': '',
+          'Payment Date': '',
+          'Created Date': ''
+        };
+        dataWithTotal = [...reportsWithDetails, totalRow];
+      }
 
       // Convert to CSV
       const fields = ['Trip Title', 'Trip Start Date', 'Trip End Date', 'Vendor Title', 'Vendor Type', 'Amount', 'Status', 'Description', 'Payment Date', 'Created Date'];
