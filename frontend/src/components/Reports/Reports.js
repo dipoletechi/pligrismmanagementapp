@@ -183,13 +183,34 @@ const Reports = () => {
       report.status
     ]);
 
+    // Calculate total
+    const totalAmount = reports.reduce((sum, report) => sum + parseFloat(report.amount), 0);
+    
+    // Add total row
+    tableData.push([
+      '',
+      '',
+      'TOTAL',
+      '',
+      `Rs. ${totalAmount.toFixed(2)}`,
+      ''
+    ]);
+
     // Add table using autoTable as a function
     autoTable(doc, {
       head: [['Trip', 'Duration', 'Vendor', 'Type', 'Amount', 'Status']],
       body: tableData,
       startY: 40,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [25, 118, 210] }
+      headStyles: { fillColor: [25, 118, 210] },
+      // Style the total row
+      didParseCell: function (data) {
+        // Check if this is the last row (total row)
+        if (data.row.index === tableData.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [245, 245, 245];
+        }
+      }
     });
 
     doc.save(`vendor_payments_report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -205,7 +226,15 @@ const Reports = () => {
   };
 
   const getVendorsByType = () => {
-    if (!filters.vendor_type) return [];
+    if (!filters.vendor_type) {
+      // Return all vendors from all types when no type is selected
+      const allVendors = [
+        ...filterOptions.vendors.accommodation,
+        ...filterOptions.vendors.food,
+        ...filterOptions.vendors.transport
+      ];
+      return allVendors;
+    }
     return filterOptions.vendors[filters.vendor_type] || [];
   };
 
@@ -459,8 +488,20 @@ const Reports = () => {
                 <Select
                   value={filters.vendor_type}
                   onChange={(e) => {
-                    handleFilterChange('vendor_type', e.target.value);
-                    handleFilterChange('vendor_id', ''); // Reset vendor selection
+                    const newType = e.target.value;
+                    // Check if selected vendor belongs to new type
+                    let newVendorId = filters.vendor_id;
+                    if (newType && filters.vendor_id) {
+                      // Check if current vendor exists in new type
+                      const vendorsOfNewType = filterOptions.vendors[newType] || [];
+                      const vendorExists = vendorsOfNewType.some(v => v.id === filters.vendor_id);
+                      if (!vendorExists) {
+                        newVendorId = ''; // Reset vendor if it doesn't belong to new type
+                      }
+                    }
+                    
+                    // Update state only
+                    setFilters(prev => ({ ...prev, vendor_type: newType, vendor_id: newVendorId }));
                   }}
                   displayEmpty
                   sx={{ 
@@ -488,7 +529,6 @@ const Reports = () => {
                 <Select
                   value={filters.vendor_id}
                   onChange={(e) => handleFilterChange('vendor_id', e.target.value)}
-                  disabled={!filters.vendor_type}
                   displayEmpty
                   sx={{ 
                     height: '56px',
@@ -499,7 +539,13 @@ const Reports = () => {
                     }
                   }}
                   renderValue={(selected) => {
-                    if (!selected) return <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>Vendor</span>;
+                    if (!selected) {
+                      return (
+                        <span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+                          {filters.vendor_type ? 'Vendor' : 'All Vendors'}
+                        </span>
+                      );
+                    }
                     const vendor = getVendorsByType().find(v => v.id === selected);
                     const title = vendor?.title || selected;
                     return title.length > 12 ? title.substring(0, 12) + '...' : title;
@@ -586,43 +632,46 @@ const Reports = () => {
             </Grid>
           </Grid>
 
-          <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-            <Button 
-              variant="contained" 
-              startIcon={<FilterIcon />}
-              onClick={handleApplyFilters}
-            >
-              Apply Filters
-            </Button>
-            <Button 
-              variant="outlined" 
-              startIcon={<RefreshIcon />}
-              onClick={handleResetFilters}
-            >
-              Reset
-            </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, flexWrap: 'wrap', gap: 2 }}>
+            {/* Left side - Filter buttons */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button 
+                variant="contained" 
+                startIcon={<FilterIcon />}
+                onClick={handleApplyFilters}
+              >
+                Apply Filters
+              </Button>
+              <Button 
+                variant="outlined" 
+                startIcon={<RefreshIcon />}
+                onClick={handleResetFilters}
+              >
+                Reset
+              </Button>
+            </Box>
+
+            {/* Right side - Export buttons */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<DownloadIcon />}
+                onClick={handleDownloadCSV}
+              >
+                Download CSV
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<PdfIcon />}
+                onClick={handleDownloadPDF}
+              >
+                Download PDF
+              </Button>
+            </Box>
           </Box>
         </Paper>
-
-        {/* Export Buttons */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadCSV}
-          >
-            Download CSV
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<PdfIcon />}
-            onClick={handleDownloadPDF}
-          >
-            Download PDF
-          </Button>
-        </Box>
 
         {/* Table */}
         <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>

@@ -208,10 +208,29 @@ router.get('/export/csv',
         })
       );
 
+      // Calculate total amount
+      const totalAmount = reportsWithDetails.reduce((sum, report) => sum + parseFloat(report.Amount), 0);
+
+      // Add total row
+      const totalRow = {
+        'Trip Title': '',
+        'Trip Start Date': '',
+        'Trip End Date': '',
+        'Vendor Title': 'TOTAL',
+        'Vendor Type': '',
+        'Amount': totalAmount,
+        'Status': '',
+        'Description': '',
+        'Payment Date': '',
+        'Created Date': ''
+      };
+      
+      const dataWithTotal = [...reportsWithDetails, totalRow];
+
       // Convert to CSV
       const fields = ['Trip Title', 'Trip Start Date', 'Trip End Date', 'Vendor Title', 'Vendor Type', 'Amount', 'Status', 'Description', 'Payment Date', 'Created Date'];
       const json2csvParser = new Parser({ fields });
-      const csv = json2csvParser.parse(reportsWithDetails);
+      const csv = json2csvParser.parse(dataWithTotal);
 
       res.header('Content-Type', 'text/csv');
       res.header('Content-Disposition', 'attachment; filename=vendor_payments_report.csv');
