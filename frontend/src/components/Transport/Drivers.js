@@ -142,15 +142,29 @@ const Drivers = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+      <Box sx={{ mb: { xs: 2, md: 4 } }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', sm: 'flex-start' }, 
+          gap: { xs: 2, sm: 0 },
+          mb: 2 
+        }}>
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
+            <Typography 
+              component="h1" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem', md: '2.5rem' } }}
+            >
               Drivers Management
             </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+            >
               Manage drivers and their details
             </Typography>
           </Box>
@@ -158,7 +172,11 @@ const Drivers = () => {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpen()}
-            size="large"
+            fullWidth={{ xs: true, sm: false }}
+            sx={{
+              fontSize: { xs: '0.875rem', md: '1rem' },
+              py: { xs: 1, md: 1.5 }
+            }}
           >
             Add Driver
           </Button>
@@ -166,7 +184,7 @@ const Drivers = () => {
       </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 4 } }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>

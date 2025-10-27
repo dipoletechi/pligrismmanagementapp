@@ -91,17 +91,29 @@ export default function SupportTickets() {
 
   return (
     <MainLayout>
-      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', py: 4 }}>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 
+        py: { xs: 2, md: 4 },
+        px: { xs: 1, sm: 2, md: 0 }
+      }}>
         <Container maxWidth="xl">
           {/* Header */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ mb: { xs: 2, md: 4 } }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' }, 
+              justifyContent: 'space-between',
+              gap: { xs: 2, sm: 0 },
+              mb: 2 
+            }}>
               <Box>
                 <Typography 
-                  variant="h3" 
                   component="h1" 
                   gutterBottom
                   sx={{
+                    fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                     background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
@@ -109,13 +121,16 @@ export default function SupportTickets() {
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2
+                    gap: { xs: 1.5, md: 2 }
                   }}
                 >
-                  <SupportIcon sx={{ fontSize: 48, color: '#1976d2' }} />
+                  <SupportIcon sx={{ fontSize: { xs: 32, md: 48 }, color: '#1976d2' }} />
                   Support Tickets
                 </Typography>
-                <Typography variant="h6" color="text.secondary">
+                <Typography 
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' } }}
+                >
                   Manage and track support requests
                 </Typography>
               </Box>

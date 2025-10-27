@@ -4495,10 +4495,11 @@ const CreateTrip = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header Section */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h3" component="h1" gutterBottom sx={{ 
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' }}>
+        <Typography component="h1" gutterBottom sx={{ 
+          fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
           fontWeight: 'bold',
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           backgroundClip: 'text',
@@ -4507,12 +4508,19 @@ const CreateTrip = () => {
         }}>
             {isViewMode ? 'View Trip' : isEditMode ? 'Edit Trip' : 'Trip Management'}
         </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography 
+          color="text.secondary" 
+          sx={{ 
+            mb: 2,
+            fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+            px: { xs: 2, md: 0 }
+          }}
+        >
           {isViewMode ? 'View trip details and configurations (Read-only)' : isEditMode ? 'Update trip details and configurations' : 'Create a new pilgrimage trip with all necessary details'}
         </Typography>
         <Box sx={{ 
-          width: 100, 
-          height: 4, 
+          width: { xs: 60, md: 100 }, 
+          height: { xs: 3, md: 4 }, 
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           borderRadius: 2,
           mx: 'auto'
@@ -4520,7 +4528,7 @@ const CreateTrip = () => {
       </Box>
 
       <Paper sx={{ 
-        p: 4, 
+        p: { xs: 2, sm: 3, md: 4 }, 
         borderRadius: 3,
         boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
@@ -4530,16 +4538,19 @@ const CreateTrip = () => {
           activeStep={activeStep} 
           orientation="horizontal"
           sx={{ 
-            mb: 4,
+            mb: { xs: 2, md: 4 },
             '& .MuiStepLabel-label': {
               fontWeight: 600,
-              fontSize: '0.9rem'
+              fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.9rem' }
             },
             '& .MuiStepLabel-root .Mui-active': {
               color: '#1976d2'
             },
             '& .MuiStepLabel-root .Mui-completed': {
               color: '#4caf50'
+            },
+            '& .MuiStepIcon-root': {
+              fontSize: { xs: '1.5rem', md: '2rem' }
             }
           }}
         >
@@ -4585,21 +4596,23 @@ const CreateTrip = () => {
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'row', 
-          pt: 3,
-          mt: 3,
-          borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+          pt: { xs: 2, md: 3 },
+          mt: { xs: 2, md: 3 },
+          borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+          gap: { xs: 1, md: 0 }
         }}>
           <Button
             variant={activeStep === 0 ? "outlined" : "contained"}
             disabled={activeStep === 0}
             onClick={handleBack}
             sx={{ 
-              mr: 1,
-              px: 3,
-              py: 1.5,
+              mr: { xs: 0, md: 1 },
+              px: { xs: 2, md: 3 },
+              py: { xs: 1, md: 1.5 },
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
+              fontSize: { xs: '0.875rem', md: '1rem' },
               ...(activeStep > 0 && {
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
@@ -4623,11 +4636,12 @@ const CreateTrip = () => {
               onClick={() => navigate('/trips/list')}
               variant="contained"
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)',
                 boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
                 '&:hover': {
@@ -4639,17 +4653,18 @@ const CreateTrip = () => {
               Close
             </Button>
           ) : activeStep === (steps?.length || 0) - 1 && !isViewMode ? (
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
               <Button 
                 onClick={() => handleSubmit(false, 1)} 
                 variant="outlined"
                 disabled={loading}
                 sx={{
-                  px: 4,
-                  py: 1.5,
+                  px: { xs: 2, md: 4 },
+                  py: { xs: 1, md: 1.5 },
                   borderRadius: 2,
                   textTransform: 'none',
                   fontWeight: 600,
+                  fontSize: { xs: '0.875rem', md: '1rem' },
                   borderColor: '#ff9800',
                   color: '#ff9800',
                   '&:hover': {
@@ -4666,11 +4681,12 @@ const CreateTrip = () => {
               variant="contained"
               disabled={loading}
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)',
                 boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
                 '&:hover': {
@@ -4697,11 +4713,12 @@ const CreateTrip = () => {
                 )
               }
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
                 '&:hover': {

@@ -338,17 +338,18 @@ const TripList = () => {
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
     }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2, md: 4 } }}>
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'flex-start', 
             mb: 3,
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
@@ -356,10 +357,10 @@ const TripList = () => {
           }}>
             <Box>
               <Typography 
-                variant="h3" 
                 component="h1" 
                 gutterBottom
                 sx={{
+                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -370,7 +371,13 @@ const TripList = () => {
               >
                 Trip Management
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              <Typography 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  fontWeight: 400 
+                }}
+              >
                 Manage pilgrimage trips and their details
               </Typography>
             </Box>
@@ -378,7 +385,7 @@ const TripList = () => {
         </Box>
 
         {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 4 } }}>
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={{
               borderRadius: 3,
@@ -391,14 +398,14 @@ const TripList = () => {
                 boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
               }
             }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <TripIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 1, md: 2 } }}>
+                  <TripIcon sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 }, opacity: 0.9 }} />
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 700 }}>
                     {trips.length}
                   </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                <Typography sx={{ fontSize: { xs: '1rem', md: '1.25rem' }, fontWeight: 500, opacity: 0.9 }}>
                   Total Trips
                 </Typography>
               </CardContent>
@@ -416,14 +423,14 @@ const TripList = () => {
                 boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
               }
             }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <CalendarIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 1, md: 2 } }}>
+                  <CalendarIcon sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 }, opacity: 0.9 }} />
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 700 }}>
                     {trips.filter(t => t.tripStatus?.name === 'Published' && new Date(t.start_date) <= new Date() && new Date(t.end_date) >= new Date()).length}
                   </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                <Typography sx={{ fontSize: { xs: '1rem', md: '1.25rem' }, fontWeight: 500, opacity: 0.9 }}>
                   Active Trips
                 </Typography>
               </CardContent>
@@ -441,14 +448,14 @@ const TripList = () => {
                 boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
               }
             }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <MoneyIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 1, md: 2 } }}>
+                  <MoneyIcon sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 }, opacity: 0.9 }} />
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 700 }}>
                     ₹{trips.reduce((sum, trip) => sum + (parseFloat(trip.budget) || 0), 0).toLocaleString()}
                   </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                <Typography sx={{ fontSize: { xs: '1rem', md: '1.25rem' }, fontWeight: 500, opacity: 0.9 }}>
                   Total Budget
                 </Typography>
               </CardContent>
@@ -466,14 +473,14 @@ const TripList = () => {
                 boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
               }
             }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <TripIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 1, md: 2 } }}>
+                  <TripIcon sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 }, opacity: 0.9 }} />
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 700 }}>
                     {trips.filter(t => t.tripStatus?.name === 'Completed').length}
                   </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
+                <Typography sx={{ fontSize: { xs: '1rem', md: '1.25rem' }, fontWeight: 500, opacity: 0.9 }}>
                   Completed
                 </Typography>
               </CardContent>
@@ -488,7 +495,10 @@ const TripList = () => {
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.2)'
         }}>
-          <TableContainer sx={{ maxHeight: 400 }}>
+          <TableContainer sx={{ 
+            maxHeight: { xs: 500, md: 400 },
+            overflowX: 'auto'
+          }}>
             <Table>
               <TableHead>
                 <TableRow sx={{
@@ -496,17 +506,18 @@ const TripList = () => {
                   '& .MuiTableCell-head': {
                     color: 'white',
                     fontWeight: 600,
-                    fontSize: '1.1rem',
-                    border: 'none'
+                    fontSize: { xs: '0.875rem', md: '1.1rem' },
+                    border: 'none',
+                    py: { xs: 1.5, md: 2 }
                   }
                 }}>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Destination</TableCell>
-                  <TableCell>Start Date</TableCell>
-                  <TableCell>End Date</TableCell>
-                  <TableCell>Budget</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 200, md: 'auto' } }}>Title</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 120, md: 'auto' } }}>Destination</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Start Date</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>End Date</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Budget</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Status</TableCell>
+                  <TableCell align="center" sx={{ minWidth: { xs: 200, md: 'auto' } }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -525,13 +536,15 @@ const TripList = () => {
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <TableCell>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
                           onClick={() => handleTripIconClick(trip)}
+                          size="small"
                           sx={{
                             color: '#1976d2',
-                            mr: 2,
+                            mr: { xs: 1, md: 2 },
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': {
                               backgroundColor: 'rgba(25, 118, 210, 0.1)',
                               transform: 'scale(1.1)'
@@ -540,49 +553,51 @@ const TripList = () => {
                           }}
                           title="View Trip Details"
                         >
-                          <TripIcon sx={{ fontSize: 24 }} />
+                          <TripIcon sx={{ fontSize: { xs: 18, md: 24 } }} />
                         </IconButton>
                         <Box>
-                          <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+                          <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, fontWeight: 600 }} color="text.primary">
                             {trip.title}
                           </Typography>
                           {trip.description && (
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography sx={{ fontSize: { xs: '0.7rem', md: '0.75rem' } }} color="text.secondary">
                               {trip.description.substring(0, 50)}...
                             </Typography>
                           )}
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {trip.destination || 'No destination'}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {new Date(trip.start_date).toLocaleDateString()}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {new Date(trip.end_date).toLocaleDateString()}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight="600" color="text.primary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, fontWeight: 600 }} color="text.primary">
                         {trip.budget ? `₹${parseFloat(trip.budget).toLocaleString()}` : 'No budget'}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
                         <Chip 
                           label={trip.tripStatus?.name || 'Draft'} 
                           color={statusColors[trip.tripStatus?.name] || 'default'} 
                           size="small"
                           sx={{
                             fontWeight: 600,
-                            borderRadius: 2
+                            borderRadius: 2,
+                            fontSize: { xs: '0.7rem', md: '0.8125rem' },
+                            height: { xs: 24, md: 32 }
                           }}
                         />
                         {(user?.role === 'superadmin' || user?.role === 'admin') && (
@@ -591,24 +606,27 @@ const TripList = () => {
                             onClick={() => handleStatusChange(trip)}
                             sx={{
                               color: '#1976d2',
+                              p: { xs: 0.25, md: 0.5 },
                               '&:hover': {
                                 backgroundColor: 'rgba(25, 118, 210, 0.1)'
                               }
                             }}
                             title="Change Status"
                           >
-                            <EditIcon sx={{ fontSize: 16 }} />
+                            <EditIcon sx={{ fontSize: { xs: 14, md: 16 } }} />
                           </IconButton>
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <TableCell align="center" sx={{ py: { xs: 1, md: 2 } }}>
+                      <Box sx={{ display: 'flex', gap: { xs: 0.5, md: 1 }, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <IconButton
                           onClick={() => handleViewTrip(trip)}
+                          size="small"
                           sx={{
                             color: '#4caf50',
                             backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': {
                               backgroundColor: 'rgba(76, 175, 80, 0.2)',
                               transform: 'scale(1.1)'
@@ -617,14 +635,16 @@ const TripList = () => {
                           }}
                           title="View Trip"
                         >
-                          <ViewIcon />
+                          <ViewIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                         {user?.role !== 'financial_manager' && (
                           <IconButton
                             onClick={() => handleEditTrip(trip)}
+                            size="small"
                             sx={{
                               color: '#1976d2',
                               backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                              p: { xs: 0.5, md: 1 },
                               '&:hover': {
                                 backgroundColor: 'rgba(25, 118, 210, 0.2)',
                                 transform: 'scale(1.1)'
@@ -633,15 +653,17 @@ const TripList = () => {
                             }}
                             title="Edit Trip"
                           >
-                            <EditIcon />
+                            <EditIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                           </IconButton>
                         )}
                         {user?.role !== 'financial_manager' && (
                           <IconButton
                             onClick={() => handleTrackTrip(trip)}
+                            size="small"
                             sx={{
                               color: '#ff9800',
                               backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                              p: { xs: 0.5, md: 1 },
                               '&:hover': {
                                 backgroundColor: 'rgba(255, 152, 0, 0.2)',
                                 transform: 'scale(1.1)'
@@ -650,15 +672,17 @@ const TripList = () => {
                             }}
                             title="Track Trip"
                           >
-                            <TrackIcon />
+                            <TrackIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                           </IconButton>
                         )}
                         {user?.role !== 'finance' && user?.role !== 'user' && user?.role !== 'financial_manager' && (
                           <IconButton
                             onClick={() => handleScannerAction(trip)}
+                            size="small"
                             sx={{
                               color: '#9c27b0',
                               backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                              p: { xs: 0.5, md: 1 },
                               '&:hover': {
                                 backgroundColor: 'rgba(156, 39, 176, 0.2)',
                                 transform: 'scale(1.1)'
@@ -667,14 +691,16 @@ const TripList = () => {
                             }}
                             title="Scanner Action"
                           >
-                            <ScannerIcon />
+                            <ScannerIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                           </IconButton>
                         )}
                         <IconButton
                           onClick={() => handleApplicants(trip)}
+                          size="small"
                           sx={{
                             color: '#ff5722',
                             backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': {
                               backgroundColor: 'rgba(255, 87, 34, 0.2)',
                               transform: 'scale(1.1)'
@@ -683,13 +709,15 @@ const TripList = () => {
                           }}
                           title="View Applicants"
                         >
-                          <PeopleIcon />
+                          <PeopleIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                         <IconButton
                           onClick={() => handleFeedback(trip)}
+                          size="small"
                           sx={{
                             color: '#9c27b0',
                             backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': {
                               backgroundColor: 'rgba(156, 39, 176, 0.2)',
                               transform: 'scale(1.1)'
@@ -698,14 +726,16 @@ const TripList = () => {
                           }}
                           title="View Feedback"
                         >
-                          <FeedbackIcon />
+                          <FeedbackIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                         {user?.role !== 'financial_manager' && (
                           <IconButton
                             onClick={() => handleDelete(trip.id)}
+                            size="small"
                             sx={{
                               color: '#d32f2f',
                               backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                              p: { xs: 0.5, md: 1 },
                               '&:hover': {
                                 backgroundColor: 'rgba(211, 47, 47, 0.2)',
                                 transform: 'scale(1.1)'
@@ -714,7 +744,7 @@ const TripList = () => {
                             }}
                             title="Delete Trip"
                           >
-                            <DeleteIcon />
+                            <DeleteIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                           </IconButton>
                         )}
                       </Box>

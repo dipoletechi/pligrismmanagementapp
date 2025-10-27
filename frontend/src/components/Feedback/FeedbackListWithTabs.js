@@ -176,26 +176,50 @@ const FeedbackListWithTabs = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: { xs: 2, md: 3 }
+      }}>
+        <Typography 
+          sx={{ 
+            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+            fontWeight: 'bold' 
+          }}
+        >
           {tripTitle}
         </Typography>
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={activeTab} onChange={handleTabChange} aria-label="feedback tabs">
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: { xs: 2, md: 3 } }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={handleTabChange} 
+          aria-label="feedback tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           <Tab 
             icon={<TripOrigin />} 
             label={`Trip Feedback (${tripFeedbacks.length})`} 
             iconPosition="start"
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+              minHeight: { xs: 48, md: 56 }
+            }}
           />
           <Tab 
             icon={<Store />} 
             label={`Vendor Feedback (${vendorFeedbacks.length})`} 
             iconPosition="start"
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+              minHeight: { xs: 48, md: 56 }
+            }}
           />
         </Tabs>
       </Box>

@@ -454,25 +454,26 @@ const TransportVendors = () => {
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
     }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2, md: 4 } }}>
           <Box sx={{ 
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             {/* Title and Description */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
               <Typography 
-                variant="h3" 
                 component="h1" 
                 gutterBottom
                 sx={{
+                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -483,7 +484,13 @@ const TransportVendors = () => {
               >
                 Transport Vendors
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              <Typography 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  fontWeight: 400 
+                }}
+              >
                 Manage transport vendors and their details
               </Typography>
             </Box>
@@ -491,9 +498,10 @@ const TransportVendors = () => {
             {/* Stats Cards Row */}
             <Box sx={{ 
               display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between', 
-              alignItems: 'center',
-              gap: 3,
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 2, md: 3 },
               flexWrap: 'wrap'
             }}>
               {/* Total Vendors Card */}

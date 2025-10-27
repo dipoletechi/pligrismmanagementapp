@@ -170,15 +170,29 @@ const Buses = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+      <Box sx={{ mb: { xs: 2, md: 4 } }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', sm: 'flex-start' }, 
+          gap: { xs: 2, sm: 0 },
+          mb: 2 
+        }}>
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
+            <Typography 
+              component="h1" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem', md: '2.5rem' } }}
+            >
               Bus Management
             </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+            >
               Manage buses and transport vehicles
             </Typography>
           </Box>
@@ -186,7 +200,11 @@ const Buses = () => {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpen()}
-            size="large"
+            fullWidth={{ xs: true, sm: false }}
+            sx={{
+              fontSize: { xs: '0.875rem', md: '1rem' },
+              py: { xs: 1, md: 1.5 }
+            }}
           >
             Add Bus
           </Button>
@@ -194,15 +212,15 @@ const Buses = () => {
       </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 4 } }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
-            <CardContent>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <BusIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
+                <BusIcon color="primary" sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 } }} />
                 <Box>
-                  <Typography variant="h4">{buses.length}</Typography>
-                  <Typography color="text.secondary">Total Buses</Typography>
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 600 }}>{buses.length}</Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}>Total Buses</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -210,12 +228,12 @@ const Buses = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
-            <CardContent>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <TransportIcon color="success" sx={{ fontSize: 40, mr: 2 }} />
+                <TransportIcon color="success" sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 } }} />
                 <Box>
-                  <Typography variant="h4">{buses.length}</Typography>
-                  <Typography color="text.secondary">Active Vehicles</Typography>
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 600 }}>{buses.length}</Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}>Active Vehicles</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -225,45 +243,76 @@ const Buses = () => {
 
       {/* Buses Table */}
       <Paper>
-        <TableContainer sx={{ maxHeight: 400 }}>
+        <TableContainer sx={{ 
+          maxHeight: { xs: 500, md: 400 },
+          overflowX: 'auto'
+        }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Title</TableCell>
-                <TableCell>RC No</TableCell>
-                <TableCell>Model</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Seats</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell sx={{ 
+                  minWidth: { xs: 150, md: 'auto' },
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1.5, md: 2 }
+                }}>Title</TableCell>
+                <TableCell sx={{ 
+                  minWidth: { xs: 120, md: 'auto' },
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1.5, md: 2 }
+                }}>RC No</TableCell>
+                <TableCell sx={{ 
+                  minWidth: { xs: 100, md: 'auto' },
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1.5, md: 2 }
+                }}>Model</TableCell>
+                <TableCell sx={{ 
+                  minWidth: { xs: 100, md: 'auto' },
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1.5, md: 2 }
+                }}>Type</TableCell>
+                <TableCell sx={{ 
+                  minWidth: { xs: 80, md: 'auto' },
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1.5, md: 2 }
+                }}>Seats</TableCell>
+                <TableCell align="center" sx={{ 
+                  minWidth: { xs: 100, md: 'auto' },
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1.5, md: 2 }
+                }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {buses.map((bus) => (
                 <TableRow key={bus.id}>
-                  <TableCell>
-                    <Typography variant="subtitle2" fontWeight="bold">
+                  <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                    <Typography sx={{ fontSize: { xs: '0.875rem', md: '0.9375rem' }, fontWeight: 'bold' }}>
                       {bus.title}
                     </Typography>
                   </TableCell>
-                  <TableCell>{bus.rc_no}</TableCell>
-                  <TableCell>{bus.model || '-'}</TableCell>
-                  <TableCell>{bus.type || '-'}</TableCell>
-                  <TableCell>{bus.no_of_sittings || '-'}</TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleOpen(bus)}
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDelete(bus.id)}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                  <TableCell sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, py: { xs: 1, md: 2 } }}>{bus.rc_no}</TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, py: { xs: 1, md: 2 } }}>{bus.model || '-'}</TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, py: { xs: 1, md: 2 } }}>{bus.type || '-'}</TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, py: { xs: 1, md: 2 } }}>{bus.no_of_sittings || '-'}</TableCell>
+                  <TableCell align="center" sx={{ py: { xs: 1, md: 2 } }}>
+                    <Box sx={{ display: 'flex', gap: { xs: 0.5, md: 1 }, justifyContent: 'center' }}>
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleOpen(bus)}
+                        size="small"
+                        sx={{ p: { xs: 0.5, md: 1 } }}
+                      >
+                        <EditIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDelete(bus.id)}
+                        size="small"
+                        sx={{ p: { xs: 0.5, md: 1 } }}
+                      >
+                        <DeleteIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
@@ -278,13 +327,14 @@ const Buses = () => {
         onClose={handleClose} 
         maxWidth="md" 
         fullWidth
+        fullScreen={{ xs: true, sm: false }}
         sx={{
           '& .MuiDialog-paper': {
-            borderRadius: 3,
+            borderRadius: { xs: 0, sm: 3 },
             boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             margin: 'auto',
-            maxHeight: '90vh'
+            maxHeight: { xs: '100vh', sm: '90vh' }
           }
         }}
       >
@@ -293,15 +343,15 @@ const Buses = () => {
             background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
             color: 'white',
             fontWeight: 600,
-            fontSize: '1.5rem',
+            fontSize: { xs: '1.25rem', md: '1.5rem' },
             textAlign: 'center',
-            py: 3
+            py: { xs: 2, md: 3 }
           }}
         >
           {editingBus ? 'Edit Bus' : 'Add New Bus'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent sx={{ p: 4 }}>
+          <DialogContent sx={{ p: { xs: 2, md: 4 } }}>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12}>
                 <TextField
@@ -607,16 +657,22 @@ const Buses = () => {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: 3, gap: 2 }}>
+          <DialogActions sx={{ 
+            p: { xs: 2, md: 3 }, 
+            gap: { xs: 1, md: 2 },
+            flexDirection: { xs: 'column', sm: 'row' }
+          }}>
             <Button
               onClick={handleClose}
               variant="outlined"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 borderRadius: 2,
-                px: 3,
-                py: 1.5,
+                px: { xs: 2, md: 3 },
+                py: { xs: 1.25, md: 1.5 },
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 borderColor: '#1976d2',
                 color: '#1976d2',
                 '&:hover': {
@@ -630,12 +686,14 @@ const Buses = () => {
             <Button
               type="submit"
               variant="contained"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 borderRadius: 2,
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1.25, md: 1.5 },
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
                 '&:hover': {
