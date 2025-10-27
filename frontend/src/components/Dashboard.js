@@ -16,11 +16,10 @@ import {
   Support as SupportIcon,
   AttachMoney as MoneyIcon
 } from '@mui/icons-material';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 
 const Dashboard = () => {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     trips: {
       total: 0,
@@ -98,17 +97,18 @@ const Dashboard = () => {
     <Box sx={{
       minHeight: '100vh',
       background: '#fafafa',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 3 }
     }}>
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: '100%', maxWidth: '1400px', mx: 'auto' }}>
         {/* Header */}
         
 
         {/* Statistics Cards */}
-        <Grid container spacing={0} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 2, md: 0 }} sx={{ mb: { xs: 2, md: 4 } }}>
           {/* Trip Statistics - Only for superadmin, admin, trip_manager */}
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager') && (
-            <Grid size={{ xs: 12, md: 4 }} sx={{ pr: 0.5 }} width={'50%'} >
+            <Grid size={{ xs: 12, md: 4 }} sx={{ pr: { xs: 0, md: 0.5 }, mb: { xs: 2, md: 0 } }}>
               <Card sx={{
                 borderRadius: 3,
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -120,19 +120,20 @@ const Dashboard = () => {
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                 }
               }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 3 } }}>
                     <Box sx={{
-                      p: 2.5,
+                      p: { xs: 1.5, md: 2.5 },
                       borderRadius: 3,
                       background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                       color: 'white',
-                      mr: 3,
+                      mr: { xs: 1.5, md: 3 },
                       boxShadow: '0 8px 16px rgba(25, 118, 210, 0.3)'
                     }}>
-                      <TripIcon sx={{ fontSize: 32 }} />
+                      <TripIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
                     </Box>
-                    <Typography variant="h4" sx={{ 
+                    <Typography sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
                       fontWeight: 700,
                       background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                       backgroundClip: 'text',
@@ -147,7 +148,7 @@ const Dashboard = () => {
                     <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
-                        p: 2.5, 
+                        p: { xs: 1.5, md: 2.5 }, 
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         borderRadius: 3,
                         color: 'white',
@@ -158,10 +159,10 @@ const Dashboard = () => {
                           boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)'
                         }
                       }}>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                        <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                           {stats.trips.total}
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                           Total Trips
                         </Typography>
                       </Box>
@@ -169,7 +170,7 @@ const Dashboard = () => {
                     <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
-                        p: 2.5, 
+                        p: { xs: 1.5, md: 2.5 }, 
                         background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                         borderRadius: 3,
                         color: 'white',
@@ -180,10 +181,10 @@ const Dashboard = () => {
                           boxShadow: '0 12px 24px rgba(240, 147, 251, 0.4)'
                         }
                       }}>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                        <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                           {stats.trips.upcoming}
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                           Upcoming
                         </Typography>
                       </Box>
@@ -191,7 +192,7 @@ const Dashboard = () => {
                     <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
-                        p: 2.5, 
+                        p: { xs: 1.5, md: 2.5 }, 
                         background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                         borderRadius: 3,
                         color: 'white',
@@ -202,10 +203,10 @@ const Dashboard = () => {
                           boxShadow: '0 12px 24px rgba(79, 172, 254, 0.4)'
                         }
                       }}>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                        <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                           {stats.trips.past}
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                           Past
       </Typography>
                       </Box>
@@ -213,7 +214,7 @@ const Dashboard = () => {
                     <Grid size={{ xs: 6 }}>
                       <Box sx={{ 
                         textAlign: 'center', 
-                        p: 2.5, 
+                        p: { xs: 1.5, md: 2.5 }, 
                         background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
                         borderRadius: 3,
                         color: 'white',
@@ -224,10 +225,10 @@ const Dashboard = () => {
                           boxShadow: '0 12px 24px rgba(67, 233, 123, 0.4)'
                         }
                       }}>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                        <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                           {stats.trips.completed}
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                           Completed
                         </Typography>
                       </Box>
@@ -240,7 +241,7 @@ const Dashboard = () => {
 
           {/* User Statistics - Only for superadmin, admin, trip_manager, financial_manager */}
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
-            <Grid size={{ xs: 12, md: 4 }} sx={{ px: 0.5 }} width={'50%'}>
+            <Grid size={{ xs: 12, md: 4 }} sx={{ px: { xs: 0, md: 0.5 }, mb: { xs: 2, md: 0 } }}>
             <Card sx={{
               width: '100%',
               borderRadius: 4,
@@ -254,19 +255,20 @@ const Dashboard = () => {
                 boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)'
               }
             }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
                   <Box sx={{
-                    p: 2,
+                    p: { xs: 1.5, md: 2 },
                     borderRadius: 3,
                     background: 'linear-gradient(45deg, #9c27b0 30%, #e91e63 90%)',
                     color: 'white',
-                    mr: 3,
+                    mr: { xs: 1.5, md: 3 },
                     boxShadow: '0 8px 16px rgba(156, 39, 176, 0.3)'
                   }}>
-                    <PeopleIcon sx={{ fontSize: 32 }} />
+                    <PeopleIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
                   </Box>
-                  <Typography variant="h4" sx={{ 
+                  <Typography sx={{ 
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
                     fontWeight: 700,
                     background: 'linear-gradient(45deg, #9c27b0 30%, #e91e63 90%)',
                     backgroundClip: 'text',
@@ -281,7 +283,7 @@ const Dashboard = () => {
                   <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
-                      p: 2.5, 
+                      p: { xs: 1.5, md: 2.5 }, 
                       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                       borderRadius: 3,
                       color: 'white',
@@ -292,10 +294,10 @@ const Dashboard = () => {
                         boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)'
                       }
                     }}>
-                      <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                         {stats.users.total}
                       </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                         Total Users
                       </Typography>
                     </Box>
@@ -303,7 +305,7 @@ const Dashboard = () => {
                   <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
-                      p: 2.5, 
+                      p: { xs: 1.5, md: 2.5 }, 
                       background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                       borderRadius: 3,
                       color: 'white',
@@ -314,10 +316,10 @@ const Dashboard = () => {
                         boxShadow: '0 12px 24px rgba(240, 147, 251, 0.4)'
                       }
                     }}>
-                      <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                         {stats.users.verified}
                       </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                         Verified
                       </Typography>
                     </Box>
@@ -325,7 +327,7 @@ const Dashboard = () => {
                   <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
-                      p: 2.5, 
+                      p: { xs: 1.5, md: 2.5 }, 
                       background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                       borderRadius: 3,
                       color: 'white',
@@ -336,10 +338,10 @@ const Dashboard = () => {
                         boxShadow: '0 12px 24px rgba(79, 172, 254, 0.4)'
                       }
                     }}>
-                      <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                         {stats.users.pending}
                       </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                         Pending
       </Typography>
                     </Box>
@@ -347,7 +349,7 @@ const Dashboard = () => {
                   <Grid size={{ xs: 6 }}>
                     <Box sx={{ 
                       textAlign: 'center', 
-                      p: 2.5, 
+                      p: { xs: 1.5, md: 2.5 }, 
                       background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
                       borderRadius: 3,
                       color: 'white',
@@ -358,11 +360,146 @@ const Dashboard = () => {
                         boxShadow: '0 12px 24px rgba(67, 233, 123, 0.4)'
                       }
                     }}>
-                      <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
                         {stats.users.inProgress}
                       </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                         In Progress
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+            </Grid>
+          )}
+
+          {/* Support Ticket Statistics - Only for superadmin, admin */}
+          {(user.role === 'superadmin' || user.role === 'admin') && (
+            <Grid size={{ xs: 12, md: 4 }} sx={{ pl: { xs: 0, md: 0.5 } }}>
+            <Card sx={{
+              width: '100%',
+              borderRadius: 4,
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)'
+              }
+            }}>
+              <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
+                  <Box sx={{
+                    p: { xs: 1.5, md: 2 },
+                    borderRadius: 3,
+                    background: 'linear-gradient(45deg, #f44336 30%, #ff5722 90%)',
+                    color: 'white',
+                    mr: { xs: 1.5, md: 3 },
+                    boxShadow: '0 8px 16px rgba(244, 67, 54, 0.3)'
+                  }}>
+                    <SupportIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
+                  </Box>
+                  <Typography sx={{ 
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #f44336 30%, #ff5722 90%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}>
+                    Support Tickets
+                  </Typography>
+                </Box>
+                
+                <Grid container spacing={1}>
+                  <Grid size={{ xs: 6 }}>
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      p: { xs: 1.5, md: 2.5 }, 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      borderRadius: 3,
+                      color: 'white',
+                      boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)'
+                      }
+                    }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
+                        {stats.supportTickets.total}
+                      </Typography>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
+                        Total Tickets
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      p: { xs: 1.5, md: 2.5 }, 
+                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      borderRadius: 3,
+                      color: 'white',
+                      boxShadow: '0 8px 16px rgba(240, 147, 251, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 24px rgba(240, 147, 251, 0.4)'
+                      }
+                    }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
+                        {stats.supportTickets.byStatus?.open || 0}
+                      </Typography>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
+                        Open
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      p: { xs: 1.5, md: 2.5 }, 
+                      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      borderRadius: 3,
+                      color: 'white',
+                      boxShadow: '0 8px 16px rgba(79, 172, 254, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 24px rgba(79, 172, 254, 0.4)'
+                      }
+                    }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
+                        {stats.supportTickets.byStatus?.['in-progress'] || 0}
+                      </Typography>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
+                        In Progress
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      p: { xs: 1.5, md: 2.5 }, 
+                      background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                      borderRadius: 3,
+                      color: 'white',
+                      boxShadow: '0 8px 16px rgba(67, 233, 123, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 24px rgba(67, 233, 123, 0.4)'
+                      }
+                    }}>
+                      <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
+                        {stats.supportTickets.byStatus?.resolved || 0}
+                      </Typography>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
+                        Resolved
                       </Typography>
                     </Box>
                   </Grid>
@@ -374,9 +511,9 @@ const Dashboard = () => {
         </Grid>
 
         {/* Financial Statistics - Only for superadmin, admin, trip_manager, financial_manager */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 4 } }}>
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
-            <Grid size={{ xs: 12, md: 6 }} width={'100%'}>
+            <Grid size={{ xs: 12 }}>
             <Card sx={{
               borderRadius: 3,
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -388,19 +525,20 @@ const Dashboard = () => {
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
               }
             }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
                   <Box sx={{
-                    p: 2,
+                    p: { xs: 1.5, md: 2 },
                     borderRadius: 3,
                     background: 'linear-gradient(45deg, #4caf50 30%, #8bc34a 90%)',
                     color: 'white',
-                    mr: 3,
+                    mr: { xs: 1.5, md: 3 },
                     boxShadow: '0 8px 16px rgba(76, 175, 80, 0.3)'
                   }}>
-                    <MoneyIcon sx={{ fontSize: 32 }} />
+                    <MoneyIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
                   </Box>
-                  <Typography variant="h4" sx={{ 
+                  <Typography sx={{ 
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
                     fontWeight: 700,
                     background: 'linear-gradient(45deg, #4caf50 30%, #8bc34a 90%)',
                     backgroundClip: 'text',
@@ -412,42 +550,42 @@ const Dashboard = () => {
                 </Box>
                 
                 <Grid container spacing={1}>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#4caf50' }}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2 }}>
+                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#4caf50' }}>
                         ₹{stats.funds.total.toLocaleString()}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
                         Total Funds
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#2196f3' }}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
+                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#2196f3' }}>
                         ₹{stats.funds.published.toLocaleString()}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
                         Published
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(255, 152, 0, 0.1)', borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#ff9800' }}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(255, 152, 0, 0.1)', borderRadius: 2 }}>
+                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#ff9800' }}>
                         ₹{stats.funds.draft.toLocaleString()}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
                         Draft
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, color: '#9c27b0' }}>
+                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2 }}>
+                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#9c27b0' }}>
                         ₹{stats.funds.pastPublished.toLocaleString()}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
                         Past Published
                     </Typography>
                     </Box>
@@ -456,80 +594,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             </Grid>
-          )}
-          {/* Support Ticket Statistics - Only for superadmin, admin */}
-          {(user.role === 'superadmin' || user.role === 'admin') && (
-            <Grid size={{ xs: 12, md: 4 }} sx={{ pl: 0.5 }}>
-            <Card sx={{
-              borderRadius: 3,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              background: '#ffffff',
-              border: 'none',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }
-            }}>
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: 'linear-gradient(45deg, #f44336 30%, #ff5722 90%)',
-                    color: 'white',
-                    mr: 3,
-                    boxShadow: '0 8px 16px rgba(244, 67, 54, 0.3)'
-                  }}>
-                    <SupportIcon sx={{ fontSize: 32 }} />
-                  </Box>
-                  <Typography variant="h4" sx={{ 
-                    fontWeight: 700,
-                    background: 'linear-gradient(45deg, #f44336 30%, #ff5722 90%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                  }}>
-                    Support Tickets
-                  </Typography>
-                </Box>
-                
-                {/* Charts Section */}
-                <Box sx={{ display: 'flex', gap: 3, mb: 3, minHeight: 400 }}>
-                  {/* Pie Chart */}
-                  <Box sx={{ flex: 1, minHeight: 350, border: '1px solid #e0e0e0', borderRadius: 2, p: 2 }}>
-                    <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', fontWeight: 600 }}>
-                      Status Distribution
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={Object.entries(stats.supportTickets.byStatus).map(([status, count]) => ({
-                            name: status,
-                            value: count
-                          }))}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {Object.entries(stats.supportTickets.byStatus).map(([status, count], index) => (
-                            <Cell key={`cell-${index}`} fill={['#f44336', '#ff9800', '#4caf50', '#2196f3'][index % 4]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </Box>
-
-                </Box>
-                
-              </CardContent>
-            </Card>
-          </Grid>
           )}
       </Grid>
 
