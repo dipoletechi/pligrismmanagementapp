@@ -69,7 +69,9 @@ const UserManagement = () => {
   const fetchAllUsers = async () => {
     try {
       const response = await axios.get('/api/users?page=1&limit=1000'); // Get all users for counts
-      setAllUsersData(response.data.data.users);
+      // Filter out users with role='user'
+      const nonRegularUsers = response.data.data.users.filter(u => u.role !== 'user');
+      setAllUsersData(nonRegularUsers);
     } catch (error) {
       console.error('Error fetching all users:', error);
     }
@@ -100,7 +102,7 @@ const UserManagement = () => {
   useEffect(() => {
     if (hasPermission('users', 'read')) {
       fetchAllUsers(); // Fetch all users for counts
-      fetchUsers(); // Fetch paginated users
+      fetchUsers(1, 'admin'); // Fetch paginated users (default: admin role)
     }
   }, [hasPermission]);
 
@@ -259,10 +261,8 @@ const UserManagement = () => {
     return labels[role] || role;
   };
 
-  // Tab configuration
+  // Tab configuration (excluding regular users)
   const tabs = [
-    { label: 'All Users', value: 'all', role: null },
-    { label: 'Users', value: 'user', role: 'user' },
     { label: 'Admins', value: 'admin', role: 'admin' },
     { label: 'Super Admins', value: 'superadmin', role: 'superadmin' },
     { label: 'Trip Managers', value: 'trip_manager', role: 'trip_manager' },
@@ -272,19 +272,16 @@ const UserManagement = () => {
   // Use users directly since backend filtering is now implemented
   const filteredUsers = users;
 
-  // Get counts for each role
+  // Get counts for each role (excluding regular users)
   const getRoleCount = (role) => {
     const dataToUse = allUsersData.length > 0 ? allUsersData : users;
-    if (role === null) {
-      return dataToUse.length;
-    }
-    return dataToUse.filter(user => user.role === role).length;
+    return dataToUse.filter(user => user.role === role && user.role !== 'user').length;
   };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     // Fetch users based on selected role
-    const selectedRole = newValue === 0 ? null : tabs[newValue].role;
+    const selectedRole = tabs[newValue].role;
     fetchUsers(1, selectedRole);
   };
 
@@ -300,28 +297,31 @@ const UserManagement = () => {
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
     }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2, md: 4 } }}>
           <Box sx={{ 
             display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
+            alignItems: { xs: 'flex-start', sm: 'flex-start' }, 
+            gap: { xs: 2, sm: 0 },
             mb: 3,
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            <Box>
+            <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
               <Typography 
-                variant="h3" 
                 component="h1" 
                 gutterBottom
                 sx={{
+                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -332,7 +332,13 @@ const UserManagement = () => {
               >
                 User Management
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              <Typography 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  fontWeight: 400 
+                }} 
+                color="text.secondary"
+              >
                 Manage system users and their roles
               </Typography>
             </Box>
@@ -342,13 +348,14 @@ const UserManagement = () => {
                 startIcon={<AddIcon />}
                 onClick={() => handleOpen()}
                 size="large"
+                fullWidth={{ xs: true, sm: false }}
                 sx={{
                   borderRadius: 3,
-                  px: 4,
-                  py: 2,
+                  px: { xs: 2, md: 4 },
+                  py: { xs: 1.5, md: 2 },
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '1.1rem',
+                  fontSize: { xs: '0.9rem', md: '1.1rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
                   '&:hover': {
@@ -365,117 +372,13 @@ const UserManagement = () => {
           </Box>
         </Box>
 
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <PeopleIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {allUsersData.length > 0 ? allUsersData.length : users.length}
-                </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Total Users
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(240, 147, 251, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(240, 147, 251, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <PersonIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {(allUsersData.length > 0 ? allUsersData : users).filter(u => u.isActive).length}
-                </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Active Users
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <PersonIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {(allUsersData.length > 0 ? allUsersData : users).filter(u => u.role === 'admin').length}
-                </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Admins
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(67, 233, 123, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <PeopleIcon sx={{ fontSize: 40, mr: 2, opacity: 0.9 }} />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  {(allUsersData.length > 0 ? allUsersData : users).filter(u => u.role === 'superadmin').length}
-                </Typography>
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                  Super Admins
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
         {/* Role-based Tabs */}
         <Paper sx={{
           borderRadius: 3,
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.2)',
-          mb: 3
+          mb: { xs: 2, md: 3 }
         }}>
           <Tabs
             value={activeTab}
@@ -486,9 +389,9 @@ const UserManagement = () => {
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 600,
-                fontSize: '1rem',
-                minHeight: 60,
-                px: 3
+                fontSize: { xs: '0.875rem', md: '1rem' },
+                minHeight: { xs: 48, md: 60 },
+                px: { xs: 2, md: 3 }
               },
               '& .Mui-selected': {
                 color: '#1976d2',
@@ -522,7 +425,10 @@ const UserManagement = () => {
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.2)'
         }}>
-          <TableContainer sx={{ maxHeight: 400 }}>
+          <TableContainer sx={{ 
+            maxHeight: { xs: 500, md: 400 },
+            overflowX: 'auto'
+          }}>
             <Table>
               <TableHead>
                 <TableRow sx={{
@@ -530,16 +436,17 @@ const UserManagement = () => {
                   '& .MuiTableCell-head': {
                     color: 'white',
                     fontWeight: 600,
-                    fontSize: '1.1rem',
-                    border: 'none'
+                    fontSize: { xs: '0.875rem', md: '1.1rem' },
+                    border: 'none',
+                    py: { xs: 1.5, md: 2 }
                   }
                 }}>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 120, md: 'auto' } }}>Name</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 150, md: 'auto' } }}>Email</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Role</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 80, md: 'auto' } }}>Status</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Created</TableCell>
+                  <TableCell align="center" sx={{ minWidth: { xs: 100, md: 'auto' } }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -558,54 +465,60 @@ const UserManagement = () => {
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <TableCell>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <PersonIcon sx={{ color: '#1976d2', mr: 2, fontSize: 24 }} />
-                        <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+                        <PersonIcon sx={{ color: '#1976d2', mr: { xs: 1, md: 2 }, fontSize: { xs: 20, md: 24 } }} />
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, fontWeight: 600 }} color="text.primary">
                           {userData.firstName} {userData.lastName}
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {userData.email}
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
                       <Chip
                         label={getRoleLabel(userData.role)}
                         color={getRoleColor(userData.role)}
                         size="small"
                         sx={{
                           fontWeight: 600,
-                          borderRadius: 2
+                          borderRadius: 2,
+                          fontSize: { xs: '0.7rem', md: '0.8125rem' },
+                          height: { xs: 24, md: 32 }
                         }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
                       <Chip
                         label={userData.isActive ? 'Active' : 'Inactive'}
                         color={userData.isActive ? 'success' : 'default'}
                         size="small"
                         sx={{
                           fontWeight: 600,
-                          borderRadius: 2
+                          borderRadius: 2,
+                          fontSize: { xs: '0.7rem', md: '0.8125rem' },
+                          height: { xs: 24, md: 32 }
                         }}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {new Date(userData.createdAt).toLocaleDateString()}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <TableCell align="center" sx={{ py: { xs: 1, md: 2 } }}>
+                      <Box sx={{ display: 'flex', gap: { xs: 0.5, md: 1 }, justifyContent: 'center' }}>
                         {hasPermission('users', 'update') && (
                           <IconButton
                             onClick={() => handleOpen(userData)}
+                            size="small"
                             sx={{
                               color: '#1976d2',
                               backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                              p: { xs: 0.5, md: 1 },
                               '&:hover': {
                                 backgroundColor: 'rgba(25, 118, 210, 0.2)',
                                 transform: 'scale(1.1)'
@@ -613,15 +526,17 @@ const UserManagement = () => {
                               transition: 'all 0.2s ease'
                             }}
                           >
-                            <EditIcon />
+                            <EditIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                           </IconButton>
                         )}
                         {hasPermission('users', 'delete') && userData.id !== user.id && (
                           <IconButton
                             onClick={() => handleDelete(userData.id)}
+                            size="small"
                             sx={{
                               color: '#d32f2f',
                               backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                              p: { xs: 0.5, md: 1 },
                               '&:hover': {
                                 backgroundColor: 'rgba(211, 47, 47, 0.2)',
                                 transform: 'scale(1.1)'
@@ -629,7 +544,7 @@ const UserManagement = () => {
                               transition: 'all 0.2s ease'
                             }}
                           >
-                            <DeleteIcon />
+                            <DeleteIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                           </IconButton>
                         )}
                       </Box>
@@ -642,8 +557,17 @@ const UserManagement = () => {
         </Paper>
 
       {/* User Form Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={{ xs: true, sm: false }}
+      >
+        <DialogTitle sx={{ 
+          fontSize: { xs: '1.25rem', md: '1.5rem' },
+          py: { xs: 2, md: 3 }
+        }}>
           {editingUser ? 'Edit User' : 'Add New User'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
@@ -730,9 +654,22 @@ const UserManagement = () => {
               </Select>
             </FormControl>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
+          <DialogActions sx={{ 
+            px: { xs: 2, md: 3 }, 
+            py: { xs: 2, md: 2 },
+            gap: { xs: 1, md: 1 }
+          }}>
+            <Button 
+              onClick={handleClose}
+              sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained"
+              sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+            >
               {editingUser ? 'Update' : 'Create'}
             </Button>
           </DialogActions>

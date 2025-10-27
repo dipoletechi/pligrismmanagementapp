@@ -44,6 +44,11 @@ const Dashboard = () => {
     supportTickets: {
       total: 0,
       byStatus: {}
+    },
+    pilgrims: {
+      total: 0,
+      active: 0,
+      inactive: 0
     }
   });
   const [loading, setLoading] = useState(true);
@@ -56,11 +61,23 @@ const Dashboard = () => {
       const response = await axios.get('/api/mobile/dashboard-stats');
       const data = response.data.data;
 
+      // Fetch pilgrim stats (users with role='user')
+      const pilgrimResponse = await axios.get('/api/users?role=user&page=1&limit=1000');
+      const pilgrimData = pilgrimResponse.data.data.users;
+      const totalPilgrims = pilgrimData.length;
+      const activePilgrims = pilgrimData.filter(u => u.isActive).length;
+      const inactivePilgrims = pilgrimData.filter(u => !u.isActive).length;
+
       setStats({
         trips: data.trips,
         funds: data.funds,
         users: data.users,
-        supportTickets: data.supportTickets
+        supportTickets: data.supportTickets,
+        pilgrims: {
+          total: totalPilgrims,
+          active: activePilgrims,
+          inactive: inactivePilgrims
+        }
       });
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
@@ -411,7 +428,7 @@ const Dashboard = () => {
                     WebkitTextFillColor: 'transparent'
                   }}>
                     Support Tickets
-                  </Typography>
+                </Typography>
                 </Box>
                 
                 <Grid container spacing={1}>
@@ -500,7 +517,7 @@ const Dashboard = () => {
                       </Typography>
                       <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
                         Resolved
-                      </Typography>
+                    </Typography>
                     </Box>
                   </Grid>
                 </Grid>
@@ -510,90 +527,190 @@ const Dashboard = () => {
           )}
         </Grid>
 
-        {/* Financial Statistics - Only for superadmin, admin, trip_manager, financial_manager */}
+        {/* Pilgrim Statistics & Financial Statistics Row */}
         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 4 } }}>
+          {/* Pilgrim Statistics - 4 columns */}
           {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{
               borderRadius: 3,
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
               background: '#ffffff',
               border: 'none',
               transition: 'all 0.3s ease',
+                height: '100%',
               '&:hover': {
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
               }
             }}>
-              <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
+                <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
                   <Box sx={{
-                    p: { xs: 1.5, md: 2 },
+                      p: { xs: 1.5, md: 2 },
                     borderRadius: 3,
-                    background: 'linear-gradient(45deg, #4caf50 30%, #8bc34a 90%)',
+                      background: 'linear-gradient(45deg, #ff6b6b 30%, #ee5a6f 90%)',
                     color: 'white',
-                    mr: { xs: 1.5, md: 3 },
-                    boxShadow: '0 8px 16px rgba(76, 175, 80, 0.3)'
+                      mr: { xs: 1.5, md: 3 },
+                      boxShadow: '0 8px 16px rgba(255, 107, 107, 0.3)'
                   }}>
-                    <MoneyIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
+                      <PeopleIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
                   </Box>
-                  <Typography sx={{ 
-                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
+                    <Typography sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
                     fontWeight: 700,
-                    background: 'linear-gradient(45deg, #4caf50 30%, #8bc34a 90%)',
+                      background: 'linear-gradient(45deg, #ff6b6b 30%, #ee5a6f 90%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
                   }}>
-                    Financial Statistics
-                </Typography>
+                      Pilgrim Statistics
+                  </Typography>
                 </Box>
                 
-                <Grid container spacing={1}>
-                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2 }}>
-                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#4caf50' }}>
-                        ₹{stats.funds.total.toLocaleString()}
-                      </Typography>
-                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
-                        Total Funds
-                      </Typography>
-                    </Box>
+                  <Grid container spacing={1}>
+                    <Grid size={{ xs: 12 }}>
+                      <Box sx={{ 
+                        textAlign: 'center', 
+                        p: { xs: 1.5, md: 2.5 }, 
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        borderRadius: 3,
+                        color: 'white',
+                        boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 24px rgba(102, 126, 234, 0.4)'
+                        }
+                      }}>
+                        <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' }, fontWeight: 800, mb: 1 }}>
+                          {stats.pilgrims.total}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, opacity: 0.9, fontWeight: 500 }}>
+                          Total Pilgrims
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Box sx={{ 
+                        textAlign: 'center', 
+                        p: { xs: 1.5, md: 2 }, 
+                        bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                        borderRadius: 2 
+                      }}>
+                        <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#4caf50' }}>
+                          {stats.pilgrims.active}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
+                          Active
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Box sx={{ 
+                        textAlign: 'center', 
+                        p: { xs: 1.5, md: 2 }, 
+                        bgcolor: 'rgba(244, 67, 54, 0.1)', 
+                        borderRadius: 2 
+                      }}>
+                        <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#f44336' }}>
+                          {stats.pilgrims.inactive}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
+                          Inactive
+                        </Typography>
+                      </Box>
+                    </Grid>
                   </Grid>
-                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
-                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#2196f3' }}>
-                        ₹{stats.funds.published.toLocaleString()}
-                      </Typography>
-                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
-                        Published
-                      </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+
+          {/* Financial Statistics - 8 columns */}
+          {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Card sx={{
+                borderRadius: 3,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                background: '#ffffff',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                height: '100%',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                }
+              }}>
+                <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
+                    <Box sx={{
+                      p: { xs: 1.5, md: 2 },
+                      borderRadius: 3,
+                      background: 'linear-gradient(45deg, #4caf50 30%, #8bc34a 90%)',
+                      color: 'white',
+                      mr: { xs: 1.5, md: 3 },
+                      boxShadow: '0 8px 16px rgba(76, 175, 80, 0.3)'
+                    }}>
+                      <MoneyIcon sx={{ fontSize: { xs: 24, md: 32 } }} />
                     </Box>
-                  </Grid>
-                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(255, 152, 0, 0.1)', borderRadius: 2 }}>
-                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#ff9800' }}>
-                        ₹{stats.funds.draft.toLocaleString()}
-                      </Typography>
-                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
-                        Draft
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-                    <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2 }}>
-                      <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#9c27b0' }}>
-                        ₹{stats.funds.pastPublished.toLocaleString()}
-                      </Typography>
-                      <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
-                        Past Published
+                    <Typography sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
+                      fontWeight: 700,
+                      background: 'linear-gradient(45deg, #4caf50 30%, #8bc34a 90%)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}>
+                      Financial Statistics
                     </Typography>
-                    </Box>
+                  </Box>
+
+                  <Grid container spacing={1}>
+                    <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                      <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2 }}>
+                        <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#4caf50' }}>
+                          ₹{stats.funds.total.toLocaleString()}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
+                          Total Funds
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                      <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2 }}>
+                        <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#2196f3' }}>
+                          ₹{stats.funds.published.toLocaleString()}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
+                          Published
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                      <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(255, 152, 0, 0.1)', borderRadius: 2 }}>
+                        <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#ff9800' }}>
+                          ₹{stats.funds.draft.toLocaleString()}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
+                          Draft
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                      <Box sx={{ textAlign: 'center', p: { xs: 1.5, md: 2 }, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2 }}>
+                        <Typography sx={{ fontSize: { xs: '1.25rem', md: '1.75rem' }, fontWeight: 700, color: '#9c27b0' }}>
+                          ₹{stats.funds.pastPublished.toLocaleString()}
+                        </Typography>
+                        <Typography sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }} color="text.secondary">
+                          Past Published
+                        </Typography>
+                </Box>
+                    </Grid>
                   </Grid>
-                </Grid>
               </CardContent>
             </Card>
-            </Grid>
+          </Grid>
           )}
       </Grid>
 
