@@ -245,7 +245,7 @@ const Reports = () => {
     ).filter(Boolean);
 
     return (
-      <FormControl fullWidth size="medium">
+      <FormControl size="medium" sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}>
         <Select
           multiple
           value={selectedValues}
@@ -256,7 +256,9 @@ const Reports = () => {
           displayEmpty
           sx={{
             height: '56px',
-            width: selectedLabels.length === 0 ? '200px' : '100%',
+            width: '250px',
+            minWidth: '250px',
+            maxWidth: '250px',
             '& .MuiOutlinedInput-root': {
               height: '56px'
             },
@@ -272,8 +274,8 @@ const Reports = () => {
             PaperProps: {
               sx: {
                 maxHeight: 400,
-                width: selectedLabels.length === 0 ? '200px' : 'auto',
-                minWidth: selectedLabels.length === 0 ? '200px' : '100%'
+                width: '250px',
+                minWidth: '250px'
               }
             },
             anchorOrigin: {
@@ -293,25 +295,22 @@ const Reports = () => {
               return <Box sx={{ maxWidth: 'fit-content' }}><span style={{ color: 'rgba(0, 0, 0, 0.6)' }}>{label}</span></Box>;
             }
             if (selectedLabels.length === options.length) {
-              return <Chip label="All Selected" size="small" />;
+              return <Chip label="All Selected" size="small" sx={{ height: '24px' }} />;
             }
             return (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, overflow: 'hidden', maxHeight: '40px' }}>
-                {selectedLabels.slice(0, 2).map((label, index) => (
-                  <Chip
-                    key={index}
-                    label={label}
-                    size="small"
-                    onDelete={() => handleToggle(options.find(opt => opt.label === label)?.value)}
-                    onMouseDown={(e) => e.stopPropagation()}
-                  />
-                ))}
-                {selectedLabels.length > 2 && (
-                  <Chip 
-                    label={`+${selectedLabels.length - 2} more`} 
-                    size="small"
-                  />
-                )}
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'nowrap', 
+                gap: 0.5, 
+                overflow: 'hidden', 
+                alignItems: 'center',
+                height: '24px'
+              }}>
+                <Chip 
+                  label={`${selectedLabels.length} selected`}
+                  size="small"
+                  sx={{ height: '24px' }}
+                />
               </Box>
             );
           }}
@@ -404,9 +403,9 @@ const Reports = () => {
             <Typography variant="h6">Filters</Typography>
           </Box>
           
-          {/* First Row - 4 Filters */}
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6} md={3}>
+          {/* All 8 Filters in Single Row */}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={1.5}>
               <DropdownChecklist
                 label="Trips"
                 options={filterOptions.trips.map(trip => ({ value: trip.id, label: trip.title }))}
@@ -415,7 +414,7 @@ const Reports = () => {
                 placeholder="Select trips..."
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={1.5}>
               <FormControl fullWidth size="medium">
                 <Select
                   value={filters.vendor_type}
@@ -434,7 +433,7 @@ const Reports = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={1.5}>
               <FormControl fullWidth size="medium">
                 <Select
                   value={filters.vendor_id}
@@ -455,7 +454,7 @@ const Reports = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={1.5}>
               <FormControl fullWidth size="medium">
                 <Select
                   value={filters.status}
@@ -473,11 +472,7 @@ const Reports = () => {
                 </Select>
               </FormControl>
             </Grid>
-          </Grid>
-
-          {/* Second Row - 4 Filters */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
                 size="medium"
@@ -489,7 +484,7 @@ const Reports = () => {
                 sx={{ '& .MuiInputBase-root': { height: '56px' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
                 size="medium"
@@ -501,22 +496,22 @@ const Reports = () => {
                 sx={{ '& .MuiInputBase-root': { height: '56px' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={1}>
               <TextField
                 fullWidth
                 size="medium"
-                label="Min Amount (₹)"
+                label="Min (₹)"
                 type="number"
                 value={filters.amount_min}
                 onChange={(e) => handleFilterChange('amount_min', e.target.value)}
                 sx={{ '& .MuiInputBase-root': { height: '56px' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={1}>
               <TextField
                 fullWidth
                 size="medium"
-                label="Max Amount (₹)"
+                label="Max (₹)"
                 type="number"
                 value={filters.amount_max}
                 onChange={(e) => handleFilterChange('amount_max', e.target.value)}
