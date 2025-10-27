@@ -29,7 +29,7 @@ const TripVendorAllocation = sequelize.define('TripVendorAllocation', {
     defaultValue: 0.00
   },
   status: {
-    type: DataTypes.ENUM('pending', 'approved', 'processing', 'completed', 'cancelled'),
+    type: DataTypes.ENUM('paid', 'pending', 'approved'),
     defaultValue: 'pending'
   },
   payment_date: {

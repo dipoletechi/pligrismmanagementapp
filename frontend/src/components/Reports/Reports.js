@@ -197,10 +197,9 @@ const Reports = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: 'warning',
-      approved: 'info',
-      processing: 'primary',
-      completed: 'success'
+      paid: 'success',      // Green
+      pending: 'info',   // Orange/Yellow
+      approved: 'warning'   // Yellow
     };
     return colors[status] || 'default';
   };
@@ -533,11 +532,9 @@ const Reports = () => {
                   }}
                 >
                   <MenuItem value="">All Statuses</MenuItem>
+                  <MenuItem value="paid">Paid</MenuItem>
                   <MenuItem value="pending">Pending</MenuItem>
                   <MenuItem value="approved">Approved</MenuItem>
-                  <MenuItem value="processing">Processing</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="cancelled">Cancelled</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -692,6 +689,19 @@ const Reports = () => {
                     ))
                   )}
                 </TableBody>
+                {reports.length > 0 && (
+                  <TableBody>
+                    <TableRow sx={{ backgroundColor: '#f5f5f5', borderTop: '2px solid #1976d2' }}>
+                      <TableCell colSpan={4} align="right" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                        Total:
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1976d2' }}>
+                        ₹{reports.reduce((sum, report) => sum + parseFloat(report.amount), 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell colSpan={2}></TableCell>
+                    </TableRow>
+                  </TableBody>
+                )}
               </Table>
             </TableContainer>
           )}
