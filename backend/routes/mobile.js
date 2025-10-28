@@ -267,17 +267,17 @@ router.get('/trips/:id', async (req, res) => {
         {
           model: TransportVendor,
           as: 'transportVendor',
-          attributes: ['title', 'address', 'phone', 'email', 'description']
+          attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
         },
         {
           model: AccommodationVendor,
           as: 'accommodationVendor',
-          attributes: ['title', 'address', 'phone', 'email', 'description']
+          attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
         },
         {
           model: FoodVendor,
           as: 'foodVendor',
-          attributes: ['title', 'address', 'phone', 'email', 'description']
+          attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
         }
       ]
     });
@@ -716,17 +716,17 @@ router.get('/trips/:id/details', async (req, res) => {
         {
           model: TransportVendor,
           as: 'transportVendor',
-          attributes: ['title', 'address', 'phone', 'email', 'description']
+          attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
         },
         {
           model: AccommodationVendor,
           as: 'accommodationVendor',
-          attributes: ['title', 'address', 'phone', 'email', 'description']
+          attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
         },
         {
           model: FoodVendor,
           as: 'foodVendor',
-          attributes: ['title', 'address', 'phone', 'email', 'description']
+          attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
         }
       ]
     });
@@ -741,7 +741,7 @@ router.get('/trips/:id/details', async (req, res) => {
     
     // Get accommodation data
     const accommodationVendors = await AccommodationVendor.findAll({
-      attributes: ['title', 'address', 'phone', 'email', 'description']
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
     // Get food management data
@@ -759,7 +759,7 @@ router.get('/trips/:id/details', async (req, res) => {
     });
     
     const foodVendors = await FoodVendor.findAll({
-      attributes: ['title', 'address', 'phone', 'email', 'description']
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
     // Get transport data
@@ -791,7 +791,7 @@ router.get('/trips/:id/details', async (req, res) => {
     });
     
     const transportVendors = await TransportVendor.findAll({
-      attributes: ['title', 'address', 'phone', 'email', 'description']
+      attributes: ['id', 'title', 'address', 'phone', 'email', 'description']
     });
     
     // Get amenities

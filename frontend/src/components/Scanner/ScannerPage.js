@@ -635,11 +635,25 @@ const ScannerPage = () => {
           tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
           qrScanner.dayString
         );
-        // Use transport ID instead of name
-        logItemId = dayTransport?.vendor?.id || dayTransport?.buses?.[0]?.id || 'transport_1';
+        
+        // Use transport vendor ID with proper fallback
+        if (dayTransport?.vendor?.id) {
+          logItemId = dayTransport.vendor.id;
+        } else if (tripData?.transportVendor?.id) {
+          logItemId = tripData.transportVendor.id;
+        } else if (dayTransport?.buses?.[0]?.id) {
+          logItemId = dayTransport.buses[0].id;
+        } else if (tripData?.bus?.id) {
+          logItemId = tripData.bus.id;
+        } else {
+          logItemId = 'transport_1'; // Last resort fallback
+        }
+        
         console.log('Transport ID for log:', logItemId);
         console.log('Transport vendor details:', dayTransport?.vendor);
+        console.log('Main trip transport vendor:', tripData?.transportVendor);
         console.log('Transport bus details:', dayTransport?.buses?.[0]);
+        console.log('Main trip bus:', tripData?.bus);
       } else if (qrScanner.category === 'accommodation') {
         logType = qrScanner.action === 'checkIn' ? 'AccommodationCheckIn' : 'AccommodationCheckOut';
         // Get accommodation details for the specific day
@@ -647,10 +661,19 @@ const ScannerPage = () => {
           tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
           qrScanner.dayString
         );
-        // Use accommodation ID instead of name
-        logItemId = dayAccommodation?.id || 'accommodation_1';
+        
+        // Use accommodation ID with proper fallback
+        if (dayAccommodation?.id) {
+          logItemId = dayAccommodation.id;
+        } else if (tripData?.accommodationVendor?.id) {
+          logItemId = tripData.accommodationVendor.id;
+        } else {
+          logItemId = 'accommodation_1'; // Last resort fallback
+        }
+        
         console.log('Accommodation ID for log:', logItemId);
         console.log('Accommodation details:', dayAccommodation);
+        console.log('Main trip accommodation vendor:', tripData?.accommodationVendor);
       } else if (qrScanner.category === 'events') {
         logType = qrScanner.action === 'checkIn' ? 'EventCheckIn' : 'EventCheckOut';
         // Get event details for the specific day
@@ -658,10 +681,19 @@ const ScannerPage = () => {
           tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
           qrScanner.dayString
         );
-        // Use event ID instead of name
-        logItemId = dayEvents?.[0]?.id || 'event_1';
+        
+        // Use event ID with proper fallback
+        if (dayEvents?.[0]?.id) {
+          logItemId = dayEvents[0].id;
+        } else if (tripData?.selected_event_id) {
+          logItemId = tripData.selected_event_id;
+        } else {
+          logItemId = 'event_1'; // Last resort fallback
+        }
+        
         console.log('Event ID for log:', logItemId);
         console.log('Event details:', dayEvents?.[0]);
+        console.log('Main trip event:', tripData?.selected_event_id);
       }
 
       console.log('Determined Log Type:', logType);
