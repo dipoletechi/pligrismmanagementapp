@@ -232,12 +232,14 @@ const ScannerPage = () => {
       
       // Get data for this specific day
       const dayKey = dateString.split('/').reverse().join('-');
-      console.log('Looking for transport data for date:', dayKey);
+      const dayKeyFormat = `Day ${dayNumber}`;
+      console.log('Looking for transport data for date:', dayKey, 'and day:', dayKeyFormat);
       
-      const dayVendor = vendorsByDay[dayKey];
-      const dayDrivers = driversByDay[dayKey] || [];
-      const dayBuses = busesByDay[dayKey] || [];
-      const dayConductors = conductorsByDay[dayKey] || [];
+      // Try both date format and Day format
+      const dayVendor = vendorsByDay[dayKey] || vendorsByDay[dayKeyFormat];
+      const dayDrivers = driversByDay[dayKey] || driversByDay[dayKeyFormat] || [];
+      const dayBuses = busesByDay[dayKey] || busesByDay[dayKeyFormat] || [];
+      const dayConductors = conductorsByDay[dayKey] || conductorsByDay[dayKeyFormat] || [];
       
       console.log('Found vendor for this date:', dayVendor);
       console.log('Found drivers for this date:', dayDrivers);
@@ -314,11 +316,14 @@ const ScannerPage = () => {
         }
         console.log('Parsed events_by_day:', eventsByDay);
         
-        // Try to find events by date (format: YYYY-MM-DD)
+        // Try to find events by date (format: YYYY-MM-DD) or Day format
         const dateKey = dateString.split('/').reverse().join('-'); // Convert DD/MM/YYYY to YYYY-MM-DD
-        console.log('Looking for events for date:', dateKey);
+        const dayKeyFormat = `Day ${dayNumber}`;
+        console.log('Looking for events for date:', dateKey, 'and day:', dayKeyFormat);
         console.log('Available dates in events_by_day:', Object.keys(eventsByDay));
-        const dayEvents = eventsByDay[dateKey];
+        
+        // Try both date format and Day format
+        const dayEvents = eventsByDay[dateKey] || eventsByDay[dayKeyFormat];
         console.log('Found events for this date:', dayEvents);
         
         if (dayEvents && dayEvents.length > 0) {
@@ -381,11 +386,14 @@ const ScannerPage = () => {
         }
         console.log('Parsed accommodations_by_day:', accommodationsByDay);
         
-        // Try to find accommodation by date (format: YYYY-MM-DD)
+        // Try to find accommodation by date (format: YYYY-MM-DD) or Day format
         const dateKey = dateString.split('/').reverse().join('-'); // Convert DD/MM/YYYY to YYYY-MM-DD
-        console.log('Looking for accommodation for date:', dateKey);
+        const dayKey = `Day ${dayNumber}`;
+        console.log('Looking for accommodation for date:', dateKey, 'and day:', dayKey);
         console.log('Available dates in accommodations_by_day:', Object.keys(accommodationsByDay));
-        const dayAccommodations = accommodationsByDay[dateKey];
+        
+        // Try both date format and Day format
+        const dayAccommodations = accommodationsByDay[dateKey] || accommodationsByDay[dayKey];
         console.log('Found accommodations for this date:', dayAccommodations);
         
         if (dayAccommodations && dayAccommodations.length > 0) {
@@ -395,6 +403,7 @@ const ScannerPage = () => {
           const vendorId = accommodation.vendorId || accommodation.vendor;
           console.log('Looking for vendor ID:', vendorId);
           console.log('Accommodation data:', accommodation);
+          console.log('Available accommodation vendors:', tripData.allAccommodationVendors);
           
           // Check if vendor is already enhanced (contains vendor name instead of ID)
           if (typeof vendorId === 'string' && vendorId !== 'Unknown Vendor' && !accommodation.vendorId) {
@@ -468,11 +477,19 @@ const ScannerPage = () => {
       
       // Fallback to general accommodation vendor
       if (tripData.accommodationVendor) {
+        console.log('Using fallback accommodation vendor:', tripData.accommodationVendor);
         return tripData.accommodationVendor;
+      }
+      
+      // Additional fallback - try to get any accommodation vendor
+      if (tripData.allAccommodationVendors && tripData.allAccommodationVendors.length > 0) {
+        console.log('Using first available accommodation vendor:', tripData.allAccommodationVendors[0]);
+        return tripData.allAccommodationVendors[0];
       }
       
       // If no database data, return null
       console.log('No accommodation data found for day:', dayNumber);
+      console.log('Available accommodation vendors:', tripData.allAccommodationVendors);
       return null;
     } catch (error) {
       console.error('Error parsing accommodations_by_day:', error);
