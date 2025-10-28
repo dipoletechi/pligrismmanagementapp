@@ -200,7 +200,7 @@ const TripApplicants = () => {
     if (!selectedApplicant) return;
 
     try {
-      const response = await axios.put(`/api/trip-pligrim/${selectedApplicant.id}`, {
+      const response = await axios.put(`/api/trip-pligrim/${selectedApplicant.applicationId}`, {
         status: editStatus
       }, {
         headers: {
@@ -212,11 +212,11 @@ const TripApplicants = () => {
         // Update local state
         setApplicants(prevApplicants =>
           prevApplicants.map(applicant =>
-            applicant.id === selectedApplicant.id ? { ...applicant, status: editStatus } : applicant
+            applicant.applicationId === selectedApplicant.applicationId ? { ...applicant, status: editStatus } : applicant
           )
         );
         updateTabCounts(applicants.map(applicant =>
-          applicant.id === selectedApplicant.id ? { ...applicant, status: editStatus } : applicant
+          applicant.applicationId === selectedApplicant.applicationId ? { ...applicant, status: editStatus } : applicant
         ));
         setEditDialogOpen(false);
         setSelectedApplicant(null);
