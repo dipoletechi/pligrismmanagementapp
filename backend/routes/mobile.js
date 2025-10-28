@@ -2770,8 +2770,7 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
       const aadhaarPatterns = [
         /\b\d{4}\s?\d{4}\s?\d{4}\b/g,
         /\b\d{12}\b/g,
-        /X{8}\d{4}/g, // Masked Aadhaar like XXXXXXXXX5276
-        /6088\s?1654\s?6160/g
+        /X{8}\d{4}/g // Masked Aadhaar like XXXXXXXXX5276
       ];
       
       for (const pattern of aadhaarPatterns) {
@@ -2785,9 +2784,6 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
       // Parse name from front image - look for name patterns in OCR text
       const namePatterns = [
         /(?:Name|नाम)[:\s]*([A-Za-z\s]+)/i,
-        /Banty\s+Kumar\s+Ray/i,
-        /बंटी\s+कुमार\s+राय/i,
-        /Manish\s+Singh\s+Negi/i,
         /[A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+/g, // General name pattern
         /[A-Z][a-z]+\s+[A-Z][a-z]+/g, // Two word names
         /(?:Name|नाम)[:\s]*([A-Za-z\s]+)/i // Hindi and English name patterns
@@ -2802,17 +2798,14 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
         }
       }
       
-      // Always use correct name for testing
-      fullName = 'Banty Kumar Ray';
-      console.log('Using correct name:', fullName);
+      // Use extracted name from OCR
+      console.log('Extracted name from OCR:', fullName);
       
       // Parse DOB - look for date patterns
       const dobPatterns = [
         /\b\d{2}\/\d{2}\/\d{4}\b/g,
         /\b\d{4}-\d{2}-\d{2}\b/g, // YYYY-MM-DD format
-        /20\/03\/2001/g,
-        /1991-12-04/g,
-        /\b\d{1,2}\/\d{1,2}\/\d{4}\b/g,
+        /\b\d{1,2}\/\d{1,2}\/\d{4}\b/g, // DD/MM/YYYY format
         /\b\d{2}-\d{2}-\d{4}\b/g // DD-MM-YYYY format
       ];
       
@@ -2844,7 +2837,6 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
       // Parse address from back image
       const addressPatterns = [
         /(?:Address|पता)[:\s]*([^\n]+(?:\n[^\n]+)*)/i,
-        /MANDIR\s+KE\s+PASS[^,]*,\s*[^,]*,\s*[^,]*,\s*[^,]*,\s*[^,]*,\s*[^,]*,\s*\d{6}/i,
         /[A-Z][^,]*,\s*[A-Z][^,]*,\s*[A-Z][^,]*,\s*[A-Z][^,]*,\s*[A-Z][^,]*,\s*[A-Z][^,]*,\s*\d{6}/i
       ];
       
@@ -2871,21 +2863,14 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
         fatherName = fatherMatch ? fatherMatch[1].trim() : null;
       }
       
-      // Fallback data for testing - always use sample data for demo
-      console.log('Using fallback data for testing...');
-      console.log('Original OCR results:');
+      // Use actual OCR results - no fallback data
+      console.log('Using actual OCR results:');
       console.log('aadhaarNumber:', aadhaarNumber);
       console.log('fullName:', fullName);
       console.log('dob:', dob);
       console.log('gender:', gender);
-      
-      // Use actual Aadhaar data from the provided image
-      aadhaarNumber = aadhaarNumber || '608816546160';
-      fullName = fullName || 'Banty Kumar Ray';
-      dob = dob || '20/03/2001';
-      gender = gender || 'MALE';
-      address = address || 'MANDIR KE PASS, Shafipur, SUBHASHNAGAR ROORKEE, Roorkee, Haridwar, Uttarakhand, 247667';
-      fatherName = fatherName || 'Not available';
+      console.log('address:', address);
+      console.log('fatherName:', fatherName);
       
       // Ensure all fields are within database limits
       if (fullName && fullName.length > 100) {
