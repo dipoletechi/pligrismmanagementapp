@@ -267,11 +267,13 @@ const Reports = () => {
       onChange(newSelectedValues);
     };
 
+
     const handleSelectAll = () => {
       if ((selectedValues?.length || 0) === (filteredOptions?.length || 0)) {
         onChange([]);
       } else {
         onChange(filteredOptions.map(option => option.value));
+        
       }
     };
 
