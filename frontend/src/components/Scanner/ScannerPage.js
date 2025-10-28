@@ -390,11 +390,14 @@ const ScannerPage = () => {
         
         if (dayAccommodations && dayAccommodations.length > 0) {
           const accommodation = dayAccommodations[0]; // Get first accommodation for the day
-          const vendorId = accommodation.vendor;
+          
+          // Use vendorId if available (from enhanced data), otherwise fall back to vendor field
+          const vendorId = accommodation.vendorId || accommodation.vendor;
           console.log('Looking for vendor ID:', vendorId);
+          console.log('Accommodation data:', accommodation);
           
           // Check if vendor is already enhanced (contains vendor name instead of ID)
-          if (typeof vendorId === 'string' && vendorId !== 'Unknown Vendor') {
+          if (typeof vendorId === 'string' && vendorId !== 'Unknown Vendor' && !accommodation.vendorId) {
             // Vendor is already enhanced with name, find the full vendor details
             let vendor = null;
             
@@ -421,7 +424,7 @@ const ScannerPage = () => {
               endTime: accommodation.endTime
             };
           } else {
-            // Vendor is still an ID, find vendor details by ID
+            // Vendor is an ID (either from vendorId field or original vendor field)
             let vendor = null;
             
             // Try different possible vendor data structures
@@ -682,18 +685,18 @@ const ScannerPage = () => {
           qrScanner.dayString
         );
         
-        // Use event ID with proper fallback
-        if (dayEvents?.[0]?.id) {
-          logItemId = dayEvents[0].id;
-        } else if (tripData?.selected_event_id) {
-          logItemId = tripData.selected_event_id;
+        // Use event title with proper fallback
+        if (dayEvents?.[0]?.title) {
+          logItemId = dayEvents[0].title;
+        } else if (tripData?.selected_event_title) {
+          logItemId = tripData.selected_event_title;
         } else {
-          logItemId = 'event_1'; // Last resort fallback
+          logItemId = 'Event'; // Last resort fallback
         }
         
-        console.log('Event ID for log:', logItemId);
+        console.log('Event title for log:', logItemId);
         console.log('Event details:', dayEvents?.[0]);
-        console.log('Main trip event:', tripData?.selected_event_id);
+        console.log('Main trip event:', tripData?.selected_event_title);
       }
 
       console.log('Determined Log Type:', logType);

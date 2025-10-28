@@ -37,7 +37,7 @@ const processLogsWithVendorInfo = async (logs) => {
         logData.vendor_info = null;
       }
     } else if (log.log_type.includes('Event')) {
-      // For events, log_item_id might be event title or ID
+      // For events, log_item_id contains the event title
       logData.vendor_info = {
         id: log.log_item_id,
         name: log.log_item_id,
