@@ -436,60 +436,51 @@ function MainLayout({ children }) {
         </Toolbar>
       </AppBar>
 
-      <Box
-        component="nav"
-        sx={{ 
-          width: { xs: 0, md: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth }, 
-          flexShrink: { md: 0 },
-          transition: 'width 0.3s ease'
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
         }}
-        aria-label="mailbox folders"
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: drawerWidth,
+            zIndex: (theme) => theme.zIndex.drawer
+          },
+        }}
       >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
-              width: drawerWidth,
-              zIndex: (theme) => theme.zIndex.drawer
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
-              width: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth,
-              transition: 'width 0.3s ease',
-              overflowX: 'hidden',
-              zIndex: (theme) => theme.zIndex.drawer
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
+        {drawer}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth,
+            transition: 'width 0.3s ease',
+            overflowX: 'hidden',
+            zIndex: (theme) => theme.zIndex.drawer
+          },
+        }}
+        open
+      >
+        {drawer}
+      </Drawer>
 
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 1, sm: 2, md: 3 },
+          p: 0,
           width: { 
             xs: '100%', 
             md: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` 
           },
+          ml: { xs: 0, md: `${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
           mt: { xs: 7, sm: 8 },
           minHeight: '100vh',
           transition: 'all 0.3s ease',

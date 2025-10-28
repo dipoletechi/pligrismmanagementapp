@@ -13,7 +13,6 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
-import MainLayout from '../Layout/MainLayout';
 
 const priorities = ['low', 'medium', 'high'];
 const statuses = ['open', 'in_progress', 'resolved', 'closed'];
@@ -90,25 +89,29 @@ export default function SupportTickets() {
   );
 
   return (
-    <MainLayout>
-      <Box sx={{ 
-        minHeight: '100vh', 
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', 
-        py: { xs: 2, md: 4 },
-        px: { xs: 1, sm: 2, md: 0 }
-      }}>
-        <Container maxWidth="xl">
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
+    }}>
+      <Container maxWidth="lg">
           {/* Header */}
           <Box sx={{ mb: { xs: 2, md: 4 } }}>
             <Box sx={{ 
               display: 'flex', 
               flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'flex-start', sm: 'center' }, 
-              justifyContent: 'space-between',
+              justifyContent: 'space-between', 
+              alignItems: { xs: 'flex-start', sm: 'flex-start' }, 
               gap: { xs: 2, sm: 0 },
-              mb: 2 
+              mb: 3,
+              p: { xs: 2, md: 3 },
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}>
-              <Box>
+              <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 <Typography 
                   component="h1" 
                   gutterBottom
@@ -119,43 +122,45 @@ export default function SupportTickets() {
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: { xs: 1.5, md: 2 }
+                    mb: 1
                   }}
                 >
-                  <SupportIcon sx={{ fontSize: { xs: 32, md: 48 }, color: '#1976d2' }} />
                   Support Tickets
                 </Typography>
                 <Typography 
+                  sx={{ 
+                    fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                    fontWeight: 400 
+                  }} 
                   color="text.secondary"
-                  sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' } }}
                 >
                   Manage and track support requests
                 </Typography>
               </Box>
-              <Button 
-                variant="contained" 
-                size="large"
-                startIcon={<AddIcon />} 
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
                 onClick={() => openDialog()}
+                size="large"
+                fullWidth={{ xs: true, sm: false }}
                 sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
+                  borderRadius: 3,
+                  px: { xs: 2, md: 4 },
+                  py: { xs: 1.5, md: 2 },
                   textTransform: 'none',
                   fontWeight: 600,
+                  fontSize: { xs: '0.9rem', md: '1.1rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                  boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-                    boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
-                    transform: 'translateY(-2px)',
-                    transition: 'all 0.3s ease'
-                  }
+                    background: 'linear-gradient(45deg, #1565c0 30%, #3d8bdb 90%)',
+                    boxShadow: '0 12px 32px rgba(25, 118, 210, 0.4)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.3s ease'
                 }}
               >
-                New Ticket
+                Add Ticket
               </Button>
             </Box>
           </Box>
@@ -166,7 +171,8 @@ export default function SupportTickets() {
             sx={{ 
               borderRadius: 3,
               overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}
           >
             <TableContainer>
@@ -243,7 +249,6 @@ export default function SupportTickets() {
             </TableContainer>
           </Paper>
         </Container>
-      </Box>
 
         <Dialog 
           open={open} 
@@ -504,7 +509,7 @@ export default function SupportTickets() {
             {snack.message}
           </Alert>
         </Snackbar>
-      </MainLayout>
+    </Box>
   );
 }
 
