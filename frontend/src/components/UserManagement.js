@@ -206,7 +206,9 @@ const UserManagement = () => {
       }
       handleClose();
       fetchAllUsers(); // Refresh counts
-      fetchUsers(pagination.currentPage);
+      // Fetch users based on current active tab
+      const selectedRole = tabs[activeTab].role;
+      fetchUsers(pagination.currentPage, selectedRole);
     } catch (error) {
       console.error('Error saving user:', error);
       setSnackbar({
@@ -227,7 +229,9 @@ const UserManagement = () => {
           severity: 'success'
         });
         fetchAllUsers(); // Refresh counts
-        fetchUsers(pagination.currentPage);
+        // Fetch users based on current active tab
+        const selectedRole = tabs[activeTab].role;
+        fetchUsers(pagination.currentPage, selectedRole);
       } catch (error) {
         console.error('Error deleting user:', error);
         setSnackbar({
@@ -562,7 +566,6 @@ const UserManagement = () => {
         onClose={handleClose} 
         maxWidth="sm" 
         fullWidth
-        fullScreen={{ xs: true, sm: false }}
       >
         <DialogTitle sx={{ 
           fontSize: { xs: '1.25rem', md: '1.5rem' },
