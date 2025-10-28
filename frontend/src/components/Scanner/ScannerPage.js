@@ -583,7 +583,7 @@ const ScannerPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/dashboard');
+    navigate('/trips');
   };
 
   const handleDescriptionClick = (title, description) => {

@@ -70,7 +70,8 @@ import {
   KeyboardArrowUp as ArrowUpIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -4497,7 +4498,26 @@ const CreateTrip = () => {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
     <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header Section */}
-      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' }}>
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center', position: 'relative' }}>
+        {(isViewMode || isEditMode) && (
+          <IconButton
+            onClick={() => navigate('/trips')}
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+              color: '#1976d2',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.2)'
+              },
+              zIndex: 1
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+        )}
         <Typography component="h1" gutterBottom sx={{ 
           fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
           fontWeight: 'bold',

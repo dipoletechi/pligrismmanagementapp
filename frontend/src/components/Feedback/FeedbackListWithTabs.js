@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -26,13 +26,15 @@ import {
   Store,
   AutoAwesome,
   ExpandMore,
-  ExpandLess
+  ExpandLess,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const FeedbackListWithTabs = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [tripFeedbacks, setTripFeedbacks] = useState([]);
   const [vendorFeedbacks, setVendorFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -184,14 +186,28 @@ const FeedbackListWithTabs = () => {
         alignItems: 'center', 
         mb: { xs: 2, md: 3 }
       }}>
-        <Typography 
-          sx={{ 
-            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
-            fontWeight: 'bold' 
-          }}
-        >
-          {tripTitle}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <IconButton
+            onClick={() => navigate('/trips')}
+            sx={{
+              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+              color: '#1976d2',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography 
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+              fontWeight: 'bold' 
+            }}
+          >
+            {tripTitle}
+          </Typography>
+        </Box>
       </Box>
 
       {/* Tabs */}

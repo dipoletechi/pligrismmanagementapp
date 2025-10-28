@@ -22,7 +22,8 @@ import {
   CircularProgress,
   Alert,
   Tabs,
-  Tab
+  Tab,
+  IconButton
 } from '@mui/material';
 import {
   Star,
@@ -31,7 +32,9 @@ import {
   Refresh,
   Close as CloseIcon,
   TripOrigin,
-  Store
+  Store,
+  ArrowBack as ArrowBackIcon,
+  Feedback as FeedbackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -251,7 +254,35 @@ const FeedbackList = () => {
 
       {/* Feedback Details Dialog */}
       <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Feedback Details</DialogTitle>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.25rem',
+          py: 2,
+          position: 'relative'
+        }}>
+          <IconButton
+            onClick={() => setDetailsDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FeedbackIcon sx={{ mr: 1, fontSize: 24 }} />
+            Feedback Details
+          </Box>
+        </DialogTitle>
         <DialogContent>
           {selectedFeedback && (
             <Box sx={{ mt: 2 }}>

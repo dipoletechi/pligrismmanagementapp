@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -45,13 +45,16 @@ import {
   DirectionsBus as TransportIcon,
   Hotel as AccommodationIcon,
   Event as EventIcon,
-  NotificationsActive as NotificationIcon
+  NotificationsActive as NotificationIcon,
+  ArrowBack as ArrowBackIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const TripApplicants = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { tripId } = useParams();
   const [tabValue, setTabValue] = useState(0);
   const [applicants, setApplicants] = useState([]);
@@ -344,7 +347,19 @@ const TripApplicants = () => {
         gap: { xs: 2, sm: 0 },
         mb: { xs: 2, md: 3 }
       }}>
-        <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <IconButton
+            onClick={() => navigate('/trips')}
+            sx={{
+              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+              color: '#1976d2',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           <Typography 
             component="h1" 
             sx={{ 
@@ -532,6 +547,35 @@ const TripApplicants = () => {
 
       {/* Applicant Details Dialog */}
       <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.25rem',
+          py: 2,
+          position: 'relative'
+        }}>
+          <IconButton
+            onClick={() => setDetailsDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <PeopleIcon sx={{ mr: 1, fontSize: 24 }} />
+            Applicant Details
+          </Box>
+        </DialogTitle>
         <DialogContent>
           {selectedApplicant && (
             <Box sx={{ mt: 2 }}>

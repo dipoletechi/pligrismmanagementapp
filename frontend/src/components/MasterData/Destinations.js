@@ -30,7 +30,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   LocationOn as LocationIcon,
-  Map as MapIcon
+  Map as MapIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import SimpleMap from '../Map/SimpleMap';
 // No API calls yet
@@ -436,9 +437,26 @@ const Destinations = () => {
             fontWeight: 600,
             fontSize: { xs: '1.25rem', sm: '1.5rem' },
             textAlign: 'center',
-            py: { xs: 2, sm: 3 }
+            py: { xs: 2, sm: 3 },
+            position: 'relative'
           }}
         >
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           {editingDestination ? 'Edit Destination' : 'Add New Destination'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>

@@ -40,7 +40,8 @@ import {
   Person as PersonIcon,
   PersonAdd as PersonAddIcon,
   DirectionsBusOutlined as BusAddIcon,
-  SupervisorAccount as ConductorIcon
+  SupervisorAccount as ConductorIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -1052,9 +1053,26 @@ const TransportVendors = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 2
+            gap: 2,
+            position: 'relative'
           }}
         >
+          <IconButton
+            onClick={handleCloseViewDialog}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           <BusinessIcon sx={{ fontSize: 32 }} />
           <Typography variant="h5" component="div">
             {viewDialog.vendor?.title}
@@ -1599,8 +1617,25 @@ const TransportVendors = () => {
           fontWeight: 600,
           fontSize: '1.5rem',
           textAlign: 'center',
-          py: 3
+          py: 3,
+          position: 'relative'
         }}>
+          <IconButton
+            onClick={() => { setBusDialog(false); setEditingBus(null); }}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           {editingBus ? 'Edit Vehicle' : 'Add New Vehicle'}
         </DialogTitle>
         <form onSubmit={handleBusSubmit}>
@@ -1731,8 +1766,25 @@ const TransportVendors = () => {
           fontWeight: 600,
           fontSize: '1.5rem',
           textAlign: 'center',
-          py: 3
+          py: 3,
+          position: 'relative'
         }}>
+          <IconButton
+            onClick={() => { setDriverDialog(false); setEditingDriver(null); }}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           {editingDriver ? 'Edit Driver' : 'Add New Driver'}
         </DialogTitle>
         <form onSubmit={handleDriverSubmit}>
@@ -1834,8 +1886,25 @@ const TransportVendors = () => {
           fontWeight: 600,
           fontSize: '1.5rem',
           textAlign: 'center',
-          py: 3
+          py: 3,
+          position: 'relative'
         }}>
+          <IconButton
+            onClick={() => { setConductorDialog(false); setEditingConductor(null); }}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           {editingConductor ? 'Edit Conductor' : 'Add New Conductor'}
         </DialogTitle>
         <form onSubmit={handleConductorSubmit}>

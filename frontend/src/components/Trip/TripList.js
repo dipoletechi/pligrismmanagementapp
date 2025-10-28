@@ -35,11 +35,11 @@ import {
   Visibility as ViewIcon,
   DirectionsBus as TripIcon,
   CalendarToday as CalendarIcon,
-  AttachMoney as MoneyIcon,
   GpsFixed as TrackIcon,
   QrCodeScanner as ScannerIcon,
   People as PeopleIcon,
-  Feedback as FeedbackIcon
+  Feedback as FeedbackIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -439,31 +439,6 @@ const TripList = () => {
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={{
               borderRadius: 3,
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              color: 'white',
-              boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
-              }
-            }}>
-              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 1, md: 2 } }}>
-                  <MoneyIcon sx={{ fontSize: { xs: 32, md: 40 }, mr: { xs: 1.5, md: 2 }, opacity: 0.9 }} />
-                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 700 }}>
-                    ₹{trips.reduce((sum, trip) => sum + (parseFloat(trip.budget) || 0), 0).toLocaleString()}
-                  </Typography>
-                </Box>
-                <Typography sx={{ fontSize: { xs: '1rem', md: '1.25rem' }, fontWeight: 500, opacity: 0.9 }}>
-                  Total Budget
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              borderRadius: 3,
               background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
               color: 'white',
               boxShadow: '0 8px 32px rgba(67, 233, 123, 0.3)',
@@ -515,7 +490,6 @@ const TripList = () => {
                   <TableCell sx={{ minWidth: { xs: 120, md: 'auto' } }}>Destination</TableCell>
                   <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Start Date</TableCell>
                   <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>End Date</TableCell>
-                  <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Budget</TableCell>
                   <TableCell sx={{ minWidth: { xs: 100, md: 'auto' } }}>Status</TableCell>
                   <TableCell align="center" sx={{ minWidth: { xs: 200, md: 'auto' } }}>Actions</TableCell>
                 </TableRow>
@@ -580,11 +554,6 @@ const TripList = () => {
                     <TableCell sx={{ py: { xs: 1, md: 2 } }}>
                       <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {new Date(trip.end_date).toLocaleDateString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
-                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, fontWeight: 600 }} color="text.primary">
-                        {trip.budget ? `₹${parseFloat(trip.budget).toLocaleString()}` : 'No budget'}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ py: { xs: 1, md: 2 } }}>
@@ -769,8 +738,25 @@ const TripList = () => {
             fontWeight: 600,
             fontSize: '1.5rem',
             textAlign: 'center',
-            py: 3
+            py: 3,
+            position: 'relative'
           }}>
+            <IconButton
+              onClick={handleCloseTripModal}
+              sx={{
+                position: 'absolute',
+                left: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'white',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TripIcon sx={{ mr: 2, fontSize: 32 }} />
               Trip Details
@@ -824,12 +810,6 @@ const TripList = () => {
                       Financial Information
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">Budget:</Typography>
-                        <Typography variant="h6" fontWeight="600" color="success.main">
-                          {tripModal.trip.budget ? `₹${parseFloat(tripModal.trip.budget).toLocaleString()}` : 'No budget'}
-                        </Typography>
-                      </Box>
                       <Box>
                         <Typography variant="body2" color="text.secondary">Status:</Typography>
                         <Chip 
@@ -908,8 +888,25 @@ const TripList = () => {
             fontWeight: 600,
             fontSize: '1.5rem',
             textAlign: 'center',
-            py: 3
+            py: 3,
+            position: 'relative'
           }}>
+            <IconButton
+              onClick={handleCloseTrackingModal}
+              sx={{
+                position: 'absolute',
+                left: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'white',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TrackIcon sx={{ mr: 2, fontSize: 32 }} />
               Trip Tracking{trackingModal.trip ? ` : ${trackingModal.trip.title}` : ''}
@@ -1067,27 +1064,6 @@ const TripList = () => {
                         </Box>
                       </Card>
 
-                      {/* Financial Overview */}
-                      <Card sx={{ p: 3, backgroundColor: 'rgba(76, 175, 80, 0.05)', border: '1px solid rgba(76, 175, 80, 0.2)' }}>
-                        <Typography variant="h6" fontWeight="600" color="success.main" gutterBottom>
-                          <MoneyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                          Financial Overview
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary">Total Budget:</Typography>
-                            <Typography variant="h5" fontWeight="600" color="success.main">
-                              {trackingModal.trip.budget ? `₹${parseFloat(trackingModal.trip.budget).toLocaleString()}` : 'No budget set'}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary">Status:</Typography>
-                            <Typography variant="body1" fontWeight="500" color="success.main">
-                              {trackingModal.trip.budget ? 'Budget Allocated' : 'Pending Budget'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Card>
 
                       {/* Trip Description */}
                       {trackingModal.trip.description && (
@@ -1161,8 +1137,34 @@ const TripList = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          Change Trip Status
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.25rem',
+          py: 2,
+          position: 'relative'
+        }}>
+          <IconButton
+            onClick={handleCloseStatusModal}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CalendarIcon sx={{ mr: 1, fontSize: 24 }} />
+            Change Trip Status
+          </Box>
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
