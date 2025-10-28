@@ -173,7 +173,13 @@ const Amenities = () => {
               >
                 Amenities Management
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              <Typography 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  fontWeight: 400 
+                }} 
+                color="text.secondary"
+              >
                 Manage amenities available for trips
               </Typography>
             </Box>
@@ -181,9 +187,10 @@ const Amenities = () => {
             {/* Total Amenities Card and Add Button Row */}
             <Box sx={{ 
               display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between', 
-              alignItems: 'center',
-              gap: 3
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 2, sm: 3 }
             }}>
               {/* Total Amenities Card */}
               <Card sx={{
@@ -226,13 +233,14 @@ const Amenities = () => {
                 startIcon={<AddIcon />}
                 onClick={() => handleOpen()}
                 size="large"
+                fullWidth={{ xs: true, sm: false }}
                 sx={{
                   borderRadius: 3,
-                  px: 4,
-                  py: 2,
+                  px: { xs: 2, md: 4 },
+                  py: { xs: 1.5, md: 2 },
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '1.1rem',
+                  fontSize: { xs: '0.9rem', md: '1.1rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
                   '&:hover': {
@@ -257,7 +265,10 @@ const Amenities = () => {
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.2)'
         }}>
-          <TableContainer sx={{ maxHeight: 400 }}>
+          <TableContainer sx={{ 
+            maxHeight: { xs: 500, md: 400 },
+            overflowX: 'auto'
+          }}>
             <Table>
               <TableHead>
                 <TableRow sx={{
@@ -265,13 +276,14 @@ const Amenities = () => {
                   '& .MuiTableCell-head': {
                     color: 'white',
                     fontWeight: 600,
-                    fontSize: '1.1rem',
-                    border: 'none'
+                    fontSize: { xs: '0.875rem', md: '1.1rem' },
+                    border: 'none',
+                    py: { xs: 1.5, md: 2 }
                   }
                 }}>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 120, md: 'auto' } }}>Title</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 150, md: 'auto' } }}>Description</TableCell>
+                  <TableCell align="center" sx={{ minWidth: { xs: 100, md: 'auto' } }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -290,26 +302,28 @@ const Amenities = () => {
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <TableCell>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <HotelIcon sx={{ color: '#1976d2', mr: 2, fontSize: 24 }} />
-                        <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+                        <HotelIcon sx={{ color: '#1976d2', mr: { xs: 1, md: 2 }, fontSize: { xs: 20, md: 24 } }} />
+                        <Typography sx={{ fontSize: { xs: '0.875rem', md: '1rem' }, fontWeight: 600 }} color="text.primary">
                           {amenity.title}
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }} color="text.secondary">
                         {amenity.description || 'No description provided'}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <TableCell align="center" sx={{ py: { xs: 1, md: 2 } }}>
+                      <Box sx={{ display: 'flex', gap: { xs: 0.5, md: 1 }, justifyContent: 'center' }}>
                         <IconButton
                           onClick={() => handleEdit(amenity)}
+                          size="small"
                           sx={{
                             color: '#1976d2',
                             backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': {
                               backgroundColor: 'rgba(25, 118, 210, 0.2)',
                               transform: 'scale(1.1)'
@@ -317,13 +331,15 @@ const Amenities = () => {
                             transition: 'all 0.2s ease'
                           }}
                         >
-                          <EditIcon />
+                          <EditIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                         <IconButton
                           onClick={() => handleDelete(amenity.id)}
+                          size="small"
                           sx={{
                             color: '#d32f2f',
                             backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': {
                               backgroundColor: 'rgba(211, 47, 47, 0.2)',
                               transform: 'scale(1.1)'
@@ -331,7 +347,7 @@ const Amenities = () => {
                             transition: 'all 0.2s ease'
                           }}
                         >
-                          <DeleteIcon />
+                          <DeleteIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                       </Box>
                     </TableCell>
