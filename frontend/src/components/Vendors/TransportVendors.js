@@ -24,7 +24,11 @@ import {
   Snackbar,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -57,7 +61,7 @@ const TransportVendors = () => {
   const [viewDialog, setViewDialog] = useState({ open: false, vendor: null, details: null });
   const [activeTab, setActiveTab] = useState(0);
   
-  // Add Bus/Driver/Conductor states
+  // Add Vehicle/Driver/Conductor states
   const [busDialog, setBusDialog] = useState(false);
   const [driverDialog, setDriverDialog] = useState(false);
   const [conductorDialog, setConductorDialog] = useState(false);
@@ -78,7 +82,7 @@ const TransportVendors = () => {
     title: '',
     rc_no: '',
     no_of_sittings: '',
-    type: '',
+    type: 'bus',
     model: '',
     make_year: '',
     transport_vendor_id: ''
@@ -218,13 +222,13 @@ const TransportVendors = () => {
     setViewDialog({ open: false, vendor: null, details: null });
   };
 
-  // Add Bus/Driver/Conductor handlers
+  // Add Vehicle/Driver/Conductor handlers
   const handleAddBus = (vendor) => {
     setBusFormData({
       title: '',
       rc_no: '',
       no_of_sittings: '',
-      type: '',
+      type: 'bus',
       model: '',
       make_year: '',
       transport_vendor_id: vendor.id
@@ -1187,7 +1191,7 @@ const TransportVendors = () => {
                 {/* Buses Tab */}
                 {activeTab === 0 && (
                   <Box>
-                    {/* Add Bus Button */}
+                    {/* Add Vehicle Button */}
                     <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
                       <Button
                         variant="contained"
@@ -1207,7 +1211,7 @@ const TransportVendors = () => {
                           }
                         }}
                       >
-                        Add Bus
+                        Add Vehicle
                       </Button>
                     </Box>
 
@@ -1312,7 +1316,7 @@ const TransportVendors = () => {
                           No buses assigned to this vendor
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Click "Add Bus" to assign buses to this vendor
+                          Click "Add Vehicle" to assign buses to this vendor
                         </Typography>
                       </Box>
                     )}
@@ -1360,7 +1364,6 @@ const TransportVendors = () => {
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Name</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Phone</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>License No</TableCell>
-                              <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Aadhar No</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Actions</TableCell>
                             </TableRow>
                           </TableHead>
@@ -1392,19 +1395,8 @@ const TransportVendors = () => {
                                     {driver.driving_license_no}
                                   </Box>
                                 </TableCell>
-                                <TableCell>{driver.aadhar_no}</TableCell>
                                 <TableCell>
                                   <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <IconButton 
-                                      size="small" 
-                                      onClick={() => {}}
-                                      sx={{ 
-                                        color: '#1976d2',
-                                        '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
-                                      }}
-                                    >
-                                      <ViewIcon />
-                                    </IconButton>
                                     <IconButton 
                                       size="small" 
                                       onClick={() => handleEditDriver(driver)}
@@ -1513,16 +1505,6 @@ const TransportVendors = () => {
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <IconButton 
                                       size="small" 
-                                      onClick={() => {}}
-                                      sx={{ 
-                                        color: '#1976d2',
-                                        '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
-                                      }}
-                                    >
-                                      <ViewIcon />
-                                    </IconButton>
-                                    <IconButton 
-                                      size="small" 
                                       onClick={() => handleEditConductor(conductor)}
                                       sx={{ 
                                         color: '#ff9800',
@@ -1609,7 +1591,7 @@ const TransportVendors = () => {
         </Alert>
       </Snackbar>
 
-      {/* Add Bus Dialog */}
+      {/* Add Vehicle Dialog */}
       <Dialog open={busDialog} onClose={() => { setBusDialog(false); setEditingBus(null); }} maxWidth="sm" fullWidth>
         <DialogTitle sx={{
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
@@ -1619,7 +1601,7 @@ const TransportVendors = () => {
           textAlign: 'center',
           py: 3
         }}>
-          {editingBus ? 'Edit Bus' : 'Add New Bus'}
+          {editingBus ? 'Edit Vehicle' : 'Add New Vehicle'}
         </DialogTitle>
         <form onSubmit={handleBusSubmit}>
           <DialogContent sx={{ p: 4 }}>
@@ -1628,7 +1610,7 @@ const TransportVendors = () => {
                 <TextField
                   autoFocus
                   name="title"
-                  label="Bus Title"
+                  label="Vehicle Title"
                   fullWidth
                   variant="outlined"
                   value={busFormData.title}
@@ -1648,17 +1630,6 @@ const TransportVendors = () => {
               </Grid>
               <Grid item xs={6}>
                 <TextField
-                  name="no_of_sittings"
-                  label="Capacity"
-                  fullWidth
-                  variant="outlined"
-                  type="number"
-                  value={busFormData.no_of_sittings}
-                  onChange={handleBusFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
                   name="model"
                   label="Model"
                   fullWidth
@@ -1669,11 +1640,12 @@ const TransportVendors = () => {
               </Grid>
               <Grid item xs={6}>
                 <TextField
-                  name="type"
-                  label="Bus Type"
+                  name="no_of_sittings"
+                  label="Capacity"
                   fullWidth
                   variant="outlined"
-                  value={busFormData.type}
+                  type="number"
+                  value={busFormData.no_of_sittings}
                   onChange={handleBusFormChange}
                 />
               </Grid>
@@ -1687,6 +1659,24 @@ const TransportVendors = () => {
                   value={busFormData.make_year}
                   onChange={handleBusFormChange}
                 />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="vehicle-type-label" shrink>Type</InputLabel>
+                  <Select
+                    labelId="vehicle-type-label"
+                    name="type"
+                    label="Vehicle Type"
+                    value={busFormData.type || 'bus'}
+                    onChange={handleBusFormChange}
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="bus">Bus</MenuItem>
+                    <MenuItem value="traveller">Traveller</MenuItem>
+                    <MenuItem value="car">Car</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
             </Grid>
           </DialogContent>
@@ -1727,7 +1717,7 @@ const TransportVendors = () => {
                 }
               }}
             >
-              {editingBus ? 'Update Bus' : 'Add Bus'}
+              {editingBus ? 'Update Vehicle' : 'Add Vehicle'}
             </Button>
           </DialogActions>
         </form>
@@ -1939,14 +1929,14 @@ const TransportVendors = () => {
           textAlign: 'center',
           py: 3
         }}>
-          View Bus Details
+          View Vehicle Details
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           {viewingBus && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop:'25px' }}>
-              {/* Bus Title - Full Width */}
+              {/* Vehicle Title - Full Width */}
               <TextField
-                label="Bus Title"
+                label="Vehicle Title"
                 fullWidth
                 variant="outlined"
                 value={viewingBus.title}
@@ -2032,10 +2022,10 @@ const TransportVendors = () => {
                 }}
               />
               
-              {/* Bus Type and Make Year - Side by Side */}
+              {/* Type and Make Year - Side by Side */}
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label="Bus Type"
+                  label="Type"
                   fullWidth
                   variant="outlined"
                   value={viewingBus.type || 'N/A'}
@@ -2045,7 +2035,9 @@ const TransportVendors = () => {
                       color: '#1976d2', 
                       fontWeight: 500,
                       textAlign: 'left',
-                      padding: '16.5px 14px'
+                      padding: '16.5px 14px',
+
+                      
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {

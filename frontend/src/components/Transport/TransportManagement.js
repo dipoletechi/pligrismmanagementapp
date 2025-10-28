@@ -448,11 +448,11 @@ const TransportManagement = () => {
 
   const renderBusDialog = () => (
     <Dialog open={busOpen} onClose={() => setBusOpen(false)} maxWidth="md" fullWidth>
-      <DialogTitle>{editingBus ? 'Edit Bus' : 'Add New Bus'}</DialogTitle>
+      <DialogTitle>{editingBus ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
           <TextField
-            label="Title"
+            label="Vehicle Title"
             value={busFormData.title}
             onChange={(e) => setBusFormData({ ...busFormData, title: e.target.value })}
             fullWidth
@@ -511,11 +511,11 @@ const TransportManagement = () => {
             fullWidth
           />
           <FormControl fullWidth>
-            <InputLabel>Type</InputLabel>
+            <InputLabel>Vehicle Type</InputLabel>
             <Select
               value={busFormData.type}
               onChange={(e) => setBusFormData({ ...busFormData, type: e.target.value })}
-              label="Type"
+              label="Vehicle Type"
             >
               <MenuItem value="bus">Bus</MenuItem>
               <MenuItem value="traveller">Traveller</MenuItem>

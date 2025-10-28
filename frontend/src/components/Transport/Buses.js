@@ -206,7 +206,7 @@ const Buses = () => {
               py: { xs: 1, md: 1.5 }
             }}
           >
-            Add Bus
+            Add Vehicle
           </Button>
         </Box>
       </Box>
@@ -348,7 +348,7 @@ const Buses = () => {
             py: { xs: 2, md: 3 }
           }}
         >
-          {editingBus ? 'Edit Bus' : 'Add New Bus'}
+          {editingBus ? 'Edit Vehicle' : 'Add New Vehicle'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent sx={{ p: { xs: 2, md: 4 } }}>
@@ -357,7 +357,7 @@ const Buses = () => {
                 <TextField
                   autoFocus
                   name="title"
-                  label="Title"
+                  label="Vehicle Title"
                   fullWidth
                   variant="outlined"
                   value={formData.title}
@@ -615,11 +615,11 @@ const Buses = () => {
                     }
                   }}
                 >
-                  <InputLabel>Type</InputLabel>
+                  <InputLabel>Vehicle Type</InputLabel>
                   <Select
                     name="type"
                     value={formData.type}
-                    label="Type"
+                    label="Vehicle Type"
                     onChange={handleChange}
                   >
                     <MenuItem value="bus">Bus</MenuItem>
