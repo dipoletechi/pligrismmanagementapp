@@ -390,13 +390,15 @@ const AccommodationVendors = () => {
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="md"
+        maxWidth="sm"
         fullWidth
+        fullScreen={{ xs: true, sm: false }}
         sx={{
           '& .MuiDialog-paper': {
-            borderRadius: 3,
-            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+            borderRadius: { xs: 0, sm: 3 },
+            boxShadow: { xs: 'none', sm: '0 16px 48px rgba(0, 0, 0, 0.2)' },
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            maxHeight: { xs: '100vh', sm: '90vh' }
           }
         }}
       >
@@ -413,13 +415,21 @@ const AccommodationVendors = () => {
           {editingVendor ? 'Edit Accommodation Vendor' : 'Add New Accommodation Vendor'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', gap: 3 }}>
+          <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: { xs: 2, md: 2 }
+            }}>
               {/* Left Section - 2 rows */}
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {/* Row 1: Title and Address */}
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2 
+                  }}>
                     <TextField
                       autoFocus
                       name="title"
@@ -473,7 +483,11 @@ const AccommodationVendors = () => {
                   </Box>
                   
                   {/* Row 2: Phone and Email */}
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2 
+                  }}>
                     <TextField
                       name="phone"
                       label="Phone"
@@ -535,7 +549,7 @@ const AccommodationVendors = () => {
                   fullWidth
                   variant="outlined"
                   multiline
-                  rows={4}
+                  rows={{ xs: 3, sm: 4 }}
                   value={formData.description}
                   onChange={handleChange}
                   sx={{
@@ -558,16 +572,23 @@ const AccommodationVendors = () => {
               </Box>
             </Box>
           </DialogContent>
-          <DialogActions sx={{ p: 3, gap: 2 }}>
+          <DialogActions sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            gap: 2,
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'center'
+          }}>
             <Button
               onClick={handleClose}
               variant="outlined"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 borderRadius: 2,
-                px: 3,
-                py: 1.5,
+                px: { xs: 2, sm: 3 },
+                py: { xs: 1.5, sm: 1.5 },
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
                 borderColor: '#1976d2',
                 color: '#1976d2',
                 '&:hover': {
@@ -581,12 +602,14 @@ const AccommodationVendors = () => {
             <Button
               type="submit"
               variant="contained"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 borderRadius: 2,
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, sm: 4 },
+                py: { xs: 1.5, sm: 1.5 },
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
                 '&:hover': {

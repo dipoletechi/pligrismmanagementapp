@@ -123,8 +123,7 @@ const Dashboard = () => {
 
         {/* Statistics Cards */}
         <Grid container spacing={{ xs: 2, md: 0 }} sx={{ mb: { xs: 2, md: 4 } }}>
-          {/* Trip Statistics - Only for superadmin, admin, trip_manager */}
-          {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager') && (
+          {/* Trip Statistics - Visible to all roles */}
             <Grid size={{ xs: 12, md: 4 }} sx={{ pr: { xs: 0, md: 0.5 }, mb: { xs: 2, md: 0 } }}>
               <Card sx={{
                 borderRadius: 3,
@@ -254,10 +253,8 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </Grid>
-          )}
 
-          {/* User Statistics - Only for superadmin, admin, trip_manager, financial_manager */}
-          {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
+          {/* User Statistics - Visible to all roles */}
             <Grid size={{ xs: 12, md: 4 }} sx={{ px: { xs: 0, md: 0.5 }, mb: { xs: 2, md: 0 } }}>
             <Card sx={{
               width: '100%',
@@ -389,10 +386,8 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             </Grid>
-          )}
 
-          {/* Support Ticket Statistics - Only for superadmin, admin */}
-          {(user.role === 'superadmin' || user.role === 'admin') && (
+          {/* Support Ticket Statistics - Visible to all roles */}
             <Grid size={{ xs: 12, md: 4 }} sx={{ pl: { xs: 0, md: 0.5 } }}>
             <Card sx={{
               width: '100%',
@@ -524,13 +519,11 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             </Grid>
-          )}
         </Grid>
 
         {/* Pilgrim Statistics & Financial Statistics Row */}
         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 4 } }}>
-          {/* Pilgrim Statistics - 4 columns */}
-          {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
+          {/* Pilgrim Statistics - Visible to all roles */}
             <Grid size={{ xs: 12, md: 4 }}>
             <Card sx={{
               borderRadius: 3,
@@ -625,10 +618,8 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </Grid>
-          )}
 
-          {/* Financial Statistics - 8 columns */}
-          {(user.role === 'superadmin' || user.role === 'admin' || user.role === 'trip_manager' || user.role === 'financial_manager') && (
+          {/* Financial Statistics - Visible to all roles */}
             <Grid size={{ xs: 12, md: 8 }}>
               <Card sx={{
                 borderRadius: 3,
@@ -711,7 +702,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </Grid>
-          )}
       </Grid>
 
       </Box>

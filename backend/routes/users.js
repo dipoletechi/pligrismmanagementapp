@@ -8,10 +8,10 @@ const bcrypt = require('bcryptjs');
 
 const router = express.Router();
 
-// @desc    Get all users (Superadmin only)
+// @desc    Get all users (All roles)
 // @route   GET /api/users
-// @access  Private (Superadmin)
-router.get('/', protect, authorize('superadmin'), async (req, res) => {
+// @access  Private (All roles)
+router.get('/', protect, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -63,8 +63,8 @@ router.get('/', protect, authorize('superadmin'), async (req, res) => {
 
 // @desc    Get user by ID
 // @route   GET /api/users/:id
-// @access  Private (Superadmin)
-router.get('/:id', protect, authorize('superadmin'), async (req, res) => {
+// @access  Private (All roles)
+router.get('/:id', protect, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, {
       attributes: { exclude: ['password'] }
