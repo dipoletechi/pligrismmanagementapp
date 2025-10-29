@@ -42,6 +42,7 @@ import {
   Stepper,
   Step,
   StepLabel,
+  StepButton,
   StepContent,
   OutlinedInput,
   InputAdornment,
@@ -753,6 +754,36 @@ const CreateTrip = () => {
     }
   }, [isEditMode, isViewMode]);
 
+  // Auto-scroll stepper to active step on mobile
+  useEffect(() => {
+    const scrollToActiveStep = () => {
+      const stepperContainer = document.querySelector('[data-stepper-container]');
+      if (stepperContainer) {
+        const stepElement = stepperContainer.querySelector(`[data-step-index="${activeStep}"]`);
+        if (stepElement) {
+          // Use requestAnimationFrame for better performance
+          requestAnimationFrame(() => {
+            stepElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'nearest', 
+              inline: 'center' 
+            });
+          });
+        }
+      }
+    };
+
+    // Check if mobile view (less than md breakpoint = 960px)
+    const isMobile = window.innerWidth < 960;
+    if (isMobile) {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        scrollToActiveStep();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeStep]);
+
   // Fetch fresh trip data from backend when in edit/view mode
   useEffect(() => {
     const fetchFreshTripData = async () => {
@@ -1323,6 +1354,21 @@ const CreateTrip = () => {
     saveStepData(activeStep);
     
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  // Handle direct step navigation (clickable stepper)
+  const handleStepClick = (stepIndex) => {
+    // Don't allow step clicking in view mode
+    if (isViewMode) {
+      setActiveStep(stepIndex);
+      return;
+    }
+
+    // Save current step data before jumping to another step
+    saveStepData(activeStep);
+    
+    // Allow jumping to any step (no validation on previous steps)
+    setActiveStep(stepIndex);
   };
 
 
@@ -2560,8 +2606,8 @@ const CreateTrip = () => {
     switch (step) {
       case 0:
         return (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={{ xs: 2, md: 3 }}>
+            <Grid item xs={12} md={6} sx={{ width: '100%', minWidth: 0 }}>
               <TextField
                 fullWidth
                 label="Trip Title"
@@ -2570,17 +2616,48 @@ const CreateTrip = () => {
                 onChange={handleChange}
                 required
                 disabled={isViewMode}
+                variant="outlined"
+                sx={{
+                  width: '100%',
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: { xs: '0.875rem', md: '1rem' }
+                  }
+                }}
               />
             </Grid>
-            <Grid item xs={12} md={6} width={250}>
-              <FormControl fullWidth>
+            <Grid item xs={12} md={6} sx={{ width: '100%', minWidth: 0 }}>
+              <FormControl 
+                fullWidth 
+                variant="outlined"
+                sx={{
+                  width: '100% !important',
+                  display: 'block',
+                  minWidth: 0,
+                  maxWidth: 'none'
+                }}
+              >
                 <InputLabel>Destination</InputLabel>
                 <Select
-                name="destination"
-                value={formData.destination}
-                onChange={handleChange}
+                  name="destination"
+                  value={formData.destination}
+                  onChange={handleChange}
                   label="Destination"
                   disabled={isViewMode}
+                  sx={{
+                    width: '100% !important',
+                    minWidth: 0,
+                    maxWidth: 'none',
+                    '& .MuiSelect-select': {
+                      width: '100% !important',
+                      minWidth: 0,
+                      fontSize: { xs: '0.875rem', md: '1rem' }
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      width: '100% !important',
+                      minWidth: 0,
+                      maxWidth: 'none'
+                    }
+                  }}
                 >
                   {destinations.map((dest) => (
                     <MenuItem key={dest.id} value={dest.id}>
@@ -2595,7 +2672,19 @@ const CreateTrip = () => {
                 label="Start Date & Time"
                 value={formData.startDate}
                 onChange={(newValue) => setFormData(prev => ({ ...prev, startDate: newValue }))}
-                renderInput={(params) => <TextField {...params} fullWidth disabled={isViewMode} />}
+                renderInput={(params) => (
+                  <TextField 
+                    {...params} 
+                    fullWidth 
+                    disabled={isViewMode}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        fontSize: { xs: '0.875rem', md: '1rem' }
+                      }
+                    }}
+                  />
+                )}
                 disabled={isViewMode}
               />
             </Grid>
@@ -2604,7 +2693,19 @@ const CreateTrip = () => {
                 label="End Date & Time"
                 value={formData.endDate}
                 onChange={(newValue) => setFormData(prev => ({ ...prev, endDate: newValue }))}
-                renderInput={(params) => <TextField {...params} fullWidth disabled={isViewMode} />}
+                renderInput={(params) => (
+                  <TextField 
+                    {...params} 
+                    fullWidth 
+                    disabled={isViewMode}
+                    variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        fontSize: { xs: '0.875rem', md: '1rem' }
+                      }
+                    }}
+                  />
+                )}
                 disabled={isViewMode}
               />
             </Grid>
@@ -4554,60 +4655,174 @@ const CreateTrip = () => {
         background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
       }}>
         {/* Progress Stepper */}
-        <Stepper 
-          activeStep={activeStep} 
-          orientation="horizontal"
+        <Box 
+          data-stepper-container
           sx={{ 
+            overflowX: { xs: 'scroll', md: 'visible' },
+            overflowY: 'hidden',
             mb: { xs: 2, md: 4 },
-            '& .MuiStepLabel-label': {
-              fontWeight: 600,
-              fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.9rem' }
+            pb: { xs: 1, md: 0 },
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth',
+            scrollSnapType: { xs: 'x mandatory', md: 'none' },
+            '&::-webkit-scrollbar': {
+              height: '6px',
+              display: { xs: 'block', md: 'none' }
             },
-            '& .MuiStepLabel-root .Mui-active': {
-              color: '#1976d2'
+            '&::-webkit-scrollbar-track': {
+              background: '#f1f1f1',
+              borderRadius: '4px'
             },
-            '& .MuiStepLabel-root .Mui-completed': {
-              color: '#4caf50'
-            },
-            '& .MuiStepIcon-root': {
-              fontSize: { xs: '1.5rem', md: '2rem' }
+            '&::-webkit-scrollbar-thumb': {
+              background: '#888',
+              borderRadius: '4px',
+              '&:hover': {
+                background: '#555'
+              }
             }
           }}
         >
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel 
-                StepIconComponent={({ active, completed }) => (
-                  <Box sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: completed ? '#4caf50' : active ? '#1976d2' : '#e0e0e0',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem',
-                    boxShadow: active ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none'
-                  }}>
+          <Stepper 
+            activeStep={activeStep} 
+            orientation="horizontal"
+            nonLinear={true}
+            sx={{ 
+              minWidth: { xs: 'min-content', md: 'auto' },
+              width: { xs: 'max-content', md: '100%' },
+              display: { xs: 'flex', md: 'flex' },
+              flexWrap: { xs: 'nowrap', md: 'wrap' },
+              '& .MuiStep-root': {
+                minWidth: { xs: '90px', sm: '130px', md: 'auto' },
+                flexShrink: 0,
+                scrollSnapAlign: { xs: 'center', md: 'none' },
+                padding: { xs: '0 4px', sm: '0 8px' },
+                width: { xs: 'auto', md: 'auto' }
+              },
+              '& .MuiStepButton-root': {
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: { xs: 'none', md: 'translateY(-2px)' }
+                }
+              },
+              '& .MuiStepLabel-label': {
+                fontWeight: 600,
+                fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.9rem' },
+                display: 'block',
+                lineHeight: { xs: 1.2, sm: 1.4 },
+                textAlign: { xs: 'center', sm: 'left' },
+                whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                overflow: 'visible'
+              },
+              '& .MuiStepLabel-root': {
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'center', sm: 'flex-start' },
+                gap: { xs: 0.5, sm: 1 }
+              },
+              '& .MuiStepLabel-root .Mui-active': {
+                color: '#1976d2'
+              },
+              '& .MuiStepLabel-root .Mui-completed': {
+                color: '#4caf50'
+              },
+              '& .MuiStepIcon-root': {
+                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' }
+              },
+              '& .MuiStepContent-root': {
+                marginLeft: { xs: 0, sm: 2.5 }
+              }
+            }}
+          >
+            {steps.map((label, index) => {
+              // Define StepIcon component that properly receives Material-UI props
+              const CustomStepIcon = React.forwardRef(({ active, completed, ...other }, ref) => {
+                // Filter out any props that shouldn't be passed to DOM elements
+                const { ownerState, ...domProps } = other;
+                return (
+                  <Box 
+                    ref={ref}
+                    {...domProps}
+                    sx={{
+                      width: { xs: 32, sm: 36, md: 40 },
+                      height: { xs: 32, sm: 36, md: 40 },
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: completed ? '#4caf50' : active ? '#1976d2' : '#e0e0e0',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                      boxShadow: active ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none',
+                      mb: { xs: 0.5, sm: 0 }
+                    }}
+                    title={label}
+                  >
                     {completed ? '✓' : index + 1}
                   </Box>
-                )}
-              >
-                {label}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+                );
+              });
+              CustomStepIcon.displayName = `CustomStepIcon-${index}`;
+
+              return (
+                <Step 
+                  key={label} 
+                  data-step-index={index}
+                  sx={{
+                    cursor: 'pointer',
+                    '& > *': {
+                      pointerEvents: 'auto'
+                    }
+                  }}
+                >
+                  <Box
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleStepClick(index);
+                    }}
+                    sx={{
+                      cursor: 'pointer',
+                      width: '100%',
+                      '&:hover': {
+                        opacity: 0.8,
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                        borderRadius: '4px',
+                        '& .MuiStepLabel-root': {
+                          opacity: 1
+                        }
+                      }
+                    }}
+                  >
+                    <StepLabel
+                      StepIconComponent={CustomStepIcon}
+                      sx={{
+                        cursor: 'pointer',
+                        pointerEvents: 'none',
+                        '& .MuiStepLabel-labelContainer': {
+                          display: 'block',
+                          width: '100%',
+                          textAlign: { xs: 'center', sm: 'left' }
+                        }
+                      }}
+                    >
+                      {label}
+                    </StepLabel>
+                  </Box>
+                </Step>
+              );
+            })}
+          </Stepper>
+        </Box>
 
         {/* Step Content */}
         <Box sx={{ 
-          mt: 4, 
-          p: 3, 
+          mt: { xs: 2, md: 4 }, 
+          p: { xs: 2, sm: 2.5, md: 3 }, 
           borderRadius: 2,
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          border: '1px solid rgba(0, 0, 0, 0.05)'
+          border: '1px solid rgba(0, 0, 0, 0.05)',
+          overflow: 'hidden'
         }}>
           {renderStepContent(activeStep)}
         </Box>
@@ -4615,20 +4830,21 @@ const CreateTrip = () => {
         {/* Navigation Buttons */}
         <Box sx={{ 
           display: 'flex', 
-          flexDirection: 'row', 
+          flexDirection: { xs: 'column-reverse', sm: 'row' },
           pt: { xs: 2, md: 3 },
           mt: { xs: 2, md: 3 },
           borderTop: '1px solid rgba(0, 0, 0, 0.1)',
-          gap: { xs: 1, md: 0 }
+          gap: { xs: 1, sm: 1, md: 0 }
         }}>
           <Button
             variant={activeStep === 0 ? "outlined" : "contained"}
             disabled={activeStep === 0}
             onClick={handleBack}
+            fullWidth={{ xs: true, sm: false }}
             sx={{ 
-              mr: { xs: 0, md: 1 },
+              mr: { xs: 0, sm: 1 },
               px: { xs: 2, md: 3 },
-              py: { xs: 1, md: 1.5 },
+              py: { xs: 1.25, md: 1.5 },
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
@@ -4650,14 +4866,15 @@ const CreateTrip = () => {
           >
             Back
           </Button>
-          <Box sx={{ flex: '1 1 auto' }} />
+          <Box sx={{ flex: { xs: '0 0 auto', sm: '1 1 auto' } }} />
           {activeStep === (steps?.length || 0) - 1 && isViewMode ? (
             <Button
               onClick={() => navigate('/trips/list')}
               variant="contained"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 px: { xs: 2, md: 4 },
-                py: { xs: 1, md: 1.5 },
+                py: { xs: 1.25, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
@@ -4673,14 +4890,21 @@ const CreateTrip = () => {
               Close
             </Button>
           ) : activeStep === (steps?.length || 0) - 1 && !isViewMode ? (
-            <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 1, md: 2 }, 
+              width: { xs: '100%', sm: 'auto' },
+              flexWrap: 'wrap' 
+            }}>
               <Button 
                 onClick={() => handleSubmit(false, 1)} 
                 variant="outlined"
                 disabled={loading}
+                fullWidth={{ xs: true, sm: false }}
                 sx={{
                   px: { xs: 2, md: 4 },
-                  py: { xs: 1, md: 1.5 },
+                  py: { xs: 1.25, md: 1.5 },
                   borderRadius: 2,
                   textTransform: 'none',
                   fontWeight: 600,
@@ -4700,9 +4924,10 @@ const CreateTrip = () => {
                 onClick={() => handleSubmit(false, 2)} 
               variant="contained"
               disabled={loading}
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 px: { xs: 2, md: 4 },
-                py: { xs: 1, md: 1.5 },
+                py: { xs: 1.25, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
@@ -4723,6 +4948,7 @@ const CreateTrip = () => {
             <Button 
               onClick={handleNext} 
               variant="contained" 
+              fullWidth={{ xs: true, sm: false }}
               disabled={
                 !isViewMode && activeStep === 0 && (
                   !formData.title.trim() || 
@@ -4734,7 +4960,7 @@ const CreateTrip = () => {
               }
               sx={{
                 px: { xs: 2, md: 4 },
-                py: { xs: 1, md: 1.5 },
+                py: { xs: 1.25, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,

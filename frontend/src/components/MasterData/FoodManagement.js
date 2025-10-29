@@ -484,22 +484,35 @@ const FoodManagement = () => {
           </Box>
 
           <TableContainer>
-            <Table>
+            <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Start Time</TableCell>
-                  <TableCell>End Time</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ width: '30%', fontWeight: 600 }}>Title</TableCell>
+                  <TableCell sx={{ width: '25%', fontWeight: 600 }}>Start Time</TableCell>
+                  <TableCell sx={{ width: '25%', fontWeight: 600 }}>End Time</TableCell>
+                  <TableCell sx={{ width: '20%', fontWeight: 600 }} align="center">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {schedules.map((schedule) => (
                   <TableRow key={schedule.id}>
-                    <TableCell>{schedule.title}</TableCell>
-                    <TableCell>{formatTimeForDisplay(schedule.start_time)}</TableCell>
-                    <TableCell>{formatTimeForDisplay(schedule.end_time)}</TableCell>
-                    <TableCell align="center">
+                    <TableCell 
+                      sx={{ 
+                        width: '30%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {schedule.title}
+                    </TableCell>
+                    <TableCell sx={{ width: '25%' }}>
+                      {formatTimeForDisplay(schedule.start_time)}
+                    </TableCell>
+                    <TableCell sx={{ width: '25%' }}>
+                      {formatTimeForDisplay(schedule.end_time)}
+                    </TableCell>
+                    <TableCell sx={{ width: '20%' }} align="center">
                       <IconButton onClick={() => handleScheduleOpen(schedule)}>
                         <EditIcon />
                       </IconButton>
@@ -543,20 +556,40 @@ const FoodManagement = () => {
           </Box>
 
           <TableContainer>
-            <Table>
+            <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ width: '20%', fontWeight: 600 }}>Title</TableCell>
+                  <TableCell sx={{ width: '60%', fontWeight: 600 }}>Description</TableCell>
+                  <TableCell sx={{ width: '20%', fontWeight: 600 }} align="center">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {categories.map((category) => (
                   <TableRow key={category.id}>
-                    <TableCell>{category.title}</TableCell>
-                    <TableCell>{category.description}</TableCell>
-                    <TableCell align="center">
+                    <TableCell 
+                      sx={{ 
+                        width: '20%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {category.title}
+                    </TableCell>
+                    <TableCell 
+                      sx={{ 
+                        width: '60%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: 0
+                      }}
+                      title={category.description || ''}
+                    >
+                      {category.description || '-'}
+                    </TableCell>
+                    <TableCell sx={{ width: '20%' }} align="center">
                       <IconButton onClick={() => handleCategoryOpen(category)}>
                         <EditIcon />
                       </IconButton>
@@ -594,19 +627,38 @@ const FoodManagement = () => {
               flexWrap: 'wrap',
               width: { xs: '100%', sm: 'auto' }
             }}>
-              <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
-                <InputLabel>Filter by Category</InputLabel>
+              <FormControl 
+                variant="outlined"
+                sx={{ 
+                  minWidth: { xs: '100%', sm: 200 },
+                  '& .MuiInputLabel-root': {
+                    fontSize: { xs: '0.875rem', md: '1rem' }
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& .MuiSelect-select': {
+                      fontSize: { xs: '0.875rem', md: '1rem' }
+                    }
+                  }
+                }}
+              >
+                <InputLabel id="category-filter-label">
+                  Filter by Category
+                </InputLabel>
                 <Select
-                  value={selectedCategory}
+                  labelId="category-filter-label"
+                  value={selectedCategory || ''}
                   onChange={(e) => handleCategoryFilter(e.target.value)}
                   label="Filter by Category"
-                  displayEmpty
                   sx={{
-                    fontSize: { xs: '0.875rem', md: '1rem' }
+                    '& .MuiSelect-select': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }
                   }}
                 >
                   <MenuItem value="">
-                    <em>All Categories</em>
+                    All Categories
                   </MenuItem>
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
@@ -631,24 +683,44 @@ const FoodManagement = () => {
           </Box>
 
           <TableContainer>
-            <Table>
+            <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ width: '20%', fontWeight: 600 }}>Title</TableCell>
+                  <TableCell sx={{ width: '40%', fontWeight: 600 }}>Description</TableCell>
+                  <TableCell sx={{ width: '20%', fontWeight: 600 }}>Category</TableCell>
+                  <TableCell sx={{ width: '20%', fontWeight: 600 }} align="center">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredFoodItems.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.title}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>
+                    <TableCell 
+                      sx={{ 
+                        width: '20%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {item.title}
+                    </TableCell>
+                    <TableCell 
+                      sx={{ 
+                        width: '40%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: 0
+                      }}
+                      title={item.description || ''}
+                    >
+                      {item.description || '-'}
+                    </TableCell>
+                    <TableCell sx={{ width: '20%' }}>
                       <Chip label={item.categoryTitle} color="primary" size="small" />
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell sx={{ width: '20%' }} align="center">
                       <IconButton onClick={() => handleFoodItemOpen(item)}>
                         <EditIcon />
                       </IconButton>
@@ -871,40 +943,74 @@ const FoodManagement = () => {
              <Box sx={{ mt: 1 }}>
                {/* First Row: Title and Category */}
                <Grid container spacing={2} sx={{ mb: 2 }}>
-                 <Grid item xs={6}>
+                 <Grid item xs={12} sm={6} sx={{ width: '100%' }}>
                    <TextField
                      autoFocus
                      name="title"
                      label="Title"
                      fullWidth
+                     variant="outlined"
                      value={foodItemForm.title}
                      onChange={(e) => setFoodItemForm({...foodItemForm, title: e.target.value})}
                      required
+                     sx={{
+                       width: '100%',
+                       '& .MuiOutlinedInput-root': {
+                         borderRadius: 2,
+                         '&:hover .MuiOutlinedInput-notchedOutline': {
+                           borderColor: '#1976d2',
+                           borderWidth: 2
+                         },
+                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                           borderColor: '#1976d2',
+                           borderWidth: 2
+                         }
+                       },
+                       '& .MuiInputLabel-root.Mui-focused': {
+                         color: '#1976d2'
+                       }
+                     }}
                    />
                  </Grid>
-                 <Grid item xs={6}>
-                   <FormControl fullWidth required>
+                 <Grid item xs={12} sm={6} sx={{ width: '100%' }}>
+                   <FormControl 
+                     fullWidth 
+                     required 
+                     variant="outlined"
+                     sx={{
+                       width: '100% !important',
+                       display: 'block',
+                       minWidth: 0,
+                       '& .MuiOutlinedInput-root': {
+                         width: '100% !important',
+                         minWidth: 0,
+                         borderRadius: 2,
+                         '&:hover .MuiOutlinedInput-notchedOutline': {
+                           borderColor: '#1976d2',
+                           borderWidth: 2
+                         },
+                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                           borderColor: '#1976d2',
+                           borderWidth: 2
+                         }
+                       },
+                       '& .MuiInputLabel-root.Mui-focused': {
+                         color: '#1976d2'
+                       }
+                     }}
+                   >
                      <InputLabel id="category-label">Category</InputLabel>
                      <Select
                        labelId="category-label"
-                       value={foodItemForm.categoryId}
+                       value={foodItemForm.categoryId || ''}
                        onChange={(e) => setFoodItemForm({...foodItemForm, categoryId: e.target.value})}
                        label="Category"
-                       displayEmpty
                        sx={{
-                         '& .MuiOutlinedInput-root': {
-                           borderRadius: 2,
-                           '&:hover .MuiOutlinedInput-notchedOutline': {
-                             borderColor: '#1976d2',
-                             borderWidth: 2
-                           },
-                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                             borderColor: '#1976d2',
-                             borderWidth: 2
-                           }
-                         },
-                         '& .MuiInputLabel-root.Mui-focused': {
-                           color: '#1976d2'
+                         width: '100% !important',
+                         minWidth: 0,
+                         '& .MuiSelect-select': {
+                           width: '100% !important',
+                           minWidth: 0
                          }
                        }}
                      >
@@ -929,15 +1035,34 @@ const FoodManagement = () => {
                
                {/* Second Row: Description */}
                <Grid container spacing={2}>
-                 <Grid item xs={12}>
+                 <Grid item xs={12} sx={{ width: '100%' }}>
                    <TextField
                      name="description"
                      label="Description"
                      fullWidth
+                     variant="outlined"
                      multiline
                      rows={3}
                      value={foodItemForm.description}
                      onChange={(e) => setFoodItemForm({...foodItemForm, description: e.target.value})}
+                     sx={{
+                       width: '100%',
+                       '& .MuiOutlinedInput-root': {
+                         width: '100%',
+                         borderRadius: 2,
+                         '&:hover .MuiOutlinedInput-notchedOutline': {
+                           borderColor: '#1976d2',
+                           borderWidth: 2
+                         },
+                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                           borderColor: '#1976d2',
+                           borderWidth: 2
+                         }
+                       },
+                       '& .MuiInputLabel-root.Mui-focused': {
+                         color: '#1976d2'
+                       }
+                     }}
                    />
                  </Grid>
                </Grid>
