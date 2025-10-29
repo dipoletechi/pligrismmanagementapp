@@ -2183,13 +2183,55 @@ router.post('/login', async (req, res) => {
         });
       }
       
-      // Get Aadhaar details for pre-filling
-      const aadhaarNumber = aadhaarResult[0]?.aadhaar_number || '';
-      const aadhaarName = aadhaarResult[0]?.aadhaar_name || '';
-      const age = aadhaarResult[0]?.age || '';
-      const aadhaarAddress = aadhaarResult[0]?.aadhaar_address || '';
+      // Only send Aadhaar data if it's valid and not hardcoded/generic
+      const isValidAadhaarData = (data) => {
+        if (!data) return false;
+        
+        // Check for hardcoded/generic names
+        const invalidNames = [
+          'sample name',
+          'test name',
+          'dummy name',
+          'example name',
+          'john doe',
+          'jane doe',
+          'unknown',
+          'not found',
+          'n/a',
+          'na',
+          'null',
+          'undefined',
+          'OCR Processing Failed',
+          'OCR_FAILED'
+        ];
+        
+        // Check if name is invalid
+        if (data.aadhaar_name && invalidNames.some(invalid => 
+          data.aadhaar_name.toLowerCase().includes(invalid.toLowerCase())
+        )) {
+          return false;
+        }
+        
+        // Check if Aadhaar number is invalid
+        if (data.aadhaar_number && (
+          data.aadhaar_number === 'OCR_FAILED' ||
+          data.aadhaar_number === '000000000000' ||
+          data.aadhaar_number.length !== 12 ||
+          !/^\d{12}$/.test(data.aadhaar_number)
+        )) {
+          return false;
+        }
+        
+        return true;
+      };
       
-      console.log("User needs verification. Aadhaar details:", { aadhaarNumber, aadhaarName, age, aadhaarAddress });
+      // Get Aadhaar details for pre-filling - only if valid
+      const aadhaarNumber = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.aadhaar_number || '') : '';
+      const aadhaarName = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.aadhaar_name || '') : '';
+      const age = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.age || '') : '';
+      const aadhaarAddress = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.aadhaar_address || '') : '';
+      
+      console.log("User needs verification. Valid Aadhaar details:", { aadhaarNumber, aadhaarName, age, aadhaarAddress });
       console.log("hasAadhaarFront from DB:", hasAadhaarFront);
       console.log("hasAadhaarBack from DB:", hasAadhaarBack);
       
@@ -2276,11 +2318,11 @@ router.post('/login', async (req, res) => {
         });
       }
       
-      // Get Aadhaar details for pre-filling
-      const aadhaarNumber = aadhaarResult[0]?.aadhaar_number || '';
-      const aadhaarName = aadhaarResult[0]?.aadhaar_name || '';
-      const age = aadhaarResult[0]?.age || '';
-      const aadhaarAddress = aadhaarResult[0]?.aadhaar_address || '';
+      // Get Aadhaar details for pre-filling - only if valid (using same validation function)
+      const aadhaarNumber2 = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.aadhaar_number || '') : '';
+      const aadhaarName2 = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.aadhaar_name || '') : '';
+      const age2 = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.age || '') : '';
+      const aadhaarAddress2 = isValidAadhaarData(aadhaarResult[0]) ? (aadhaarResult[0]?.aadhaar_address || '') : '';
       
       console.log("hasAadhaarFront from DB:", hasAadhaarFront);
       console.log("hasAadhaarBack from DB:", hasAadhaarBack);
@@ -2313,10 +2355,10 @@ router.post('/login', async (req, res) => {
           redirectToStep: redirectStep, // Dynamic step based on Aadhaar images
           hasAadhaarFront: hasAadhaarFront,
           hasAadhaarBack: hasAadhaarBack,
-          aadhaarNumber: aadhaarNumber,
-          aadhaarName: aadhaarName,
-          age: age,
-          aadhaarAddress: aadhaarAddress
+          aadhaarNumber: aadhaarNumber2,
+          aadhaarName: aadhaarName2,
+          age: age2,
+          aadhaarAddress: aadhaarAddress2
         }
       });
     }
@@ -2659,6 +2701,80 @@ router.post('/upload-aadhaar-image', async (req, res) => {
   }
 });
 
+// Test OCR endpoint for debugging
+router.post('/test-ocr', async (req, res) => {
+  try {
+    const { imagePath } = req.body;
+    
+    if (!imagePath) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image path is required'
+      });
+    }
+    
+    const Tesseract = require('tesseract.js');
+    const fs = require('fs');
+    const path = require('path');
+    
+    const fullImagePath = path.join(__dirname, '..', imagePath.replace(/^\//, ''));
+    
+    if (!fs.existsSync(fullImagePath)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image file not found'
+      });
+    }
+    
+    console.log('Testing OCR on:', fullImagePath);
+    
+    // Test with different language settings
+    const results = {};
+    
+    try {
+      // Test English + Hindi
+      const engHinResult = await Tesseract.recognize(fullImagePath, 'eng+hin', {
+        tessedit_pageseg_mode: '6'
+      });
+      results.engHin = {
+        text: engHinResult.data.text,
+        confidence: engHinResult.data.confidence,
+        words: engHinResult.data.words?.map(w => ({ text: w.text, confidence: w.confidence }))
+      };
+    } catch (e) {
+      results.engHin = { error: e.message };
+    }
+    
+    try {
+      // Test English only
+      const engResult = await Tesseract.recognize(fullImagePath, 'eng', {
+        tessedit_pageseg_mode: '6'
+      });
+      results.eng = {
+        text: engResult.data.text,
+        confidence: engResult.data.confidence,
+        words: engResult.data.words?.map(w => ({ text: w.text, confidence: w.confidence }))
+      };
+    } catch (e) {
+      results.eng = { error: e.message };
+    }
+    
+    res.json({
+      success: true,
+      message: 'OCR test completed',
+      data: results
+    });
+    
+  } catch (error) {
+    console.error('OCR test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error testing OCR',
+      error: error.message
+    });
+  }
+});
+
 // Mobile OCR Processing API
 // OCR Processing API (called during registration, before login)
 router.post('/process-aadhaar-ocr', async (req, res) => {
@@ -2735,21 +2851,43 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
     const backImageStats = fs.statSync(backImagePath);
     
     // Real OCR processing using Tesseract.js
+    // IMPORTANT: Only data extracted from images is used - no fallback/hardcoded data
+    // Updated patterns based on real Aadhaar card format analysis
     const Tesseract = require('tesseract.js');
     let ocrData;
     
     try {
-      console.log('Starting real OCR processing...');
+      console.log('Starting real OCR processing - using only image-extracted data...');
       
-      // Process front image for personal details
-      const frontResult = await Tesseract.recognize(frontImagePath, 'eng', {
-        logger: m => console.log('Front OCR:', m)
-      });
+      // Try OCR with different settings for better accuracy
+      let frontResult, backResult;
       
-      // Process back image for address details  
-      const backResult = await Tesseract.recognize(backImagePath, 'eng', {
-        logger: m => console.log('Back OCR:', m)
-      });
+      try {
+        // First attempt: English + Hindi with specific settings
+        frontResult = await Tesseract.recognize(frontImagePath, 'eng+hin', {
+          logger: m => console.log('Front OCR:', m),
+          tessedit_pageseg_mode: '6', // Single uniform block of text
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 /:()-\u0900-\u097F' // English + Hindi + numbers + common symbols
+        });
+        
+        backResult = await Tesseract.recognize(backImagePath, 'eng+hin', {
+          logger: m => console.log('Back OCR:', m),
+          tessedit_pageseg_mode: '6', // Single uniform block of text
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 /:()-\u0900-\u097F' // English + Hindi + numbers + common symbols
+        });
+      } catch (langError) {
+        console.log('Hindi language not available, falling back to English only');
+        // Fallback: English only
+        frontResult = await Tesseract.recognize(frontImagePath, 'eng', {
+          logger: m => console.log('Front OCR (English only):', m),
+          tessedit_pageseg_mode: '6'
+        });
+        
+        backResult = await Tesseract.recognize(backImagePath, 'eng', {
+          logger: m => console.log('Back OCR (English only):', m),
+          tessedit_pageseg_mode: '6'
+        });
+      }
       
       // Extract text from OCR results
       const frontText = frontResult.data.text;
@@ -2757,6 +2895,18 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
       
       console.log('Front OCR Text:', frontText);
       console.log('Back OCR Text:', backText);
+      
+      // Debug: Log OCR confidence and word details
+      console.log('Front OCR Confidence:', frontResult.data.confidence);
+      console.log('Back OCR Confidence:', backResult.data.confidence);
+      
+      if (frontResult.data.words) {
+        console.log('Front OCR Words:', frontResult.data.words.map(w => ({ text: w.text, confidence: w.confidence })));
+      }
+      
+      if (backResult.data.words) {
+        console.log('Back OCR Words:', backResult.data.words.map(w => ({ text: w.text, confidence: w.confidence })));
+      }
       
       // Enhanced parsing with better patterns
       let aadhaarNumber = null;
@@ -2766,10 +2916,12 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
       let address = null;
       let fatherName = null;
       
-      // Parse Aadhaar number - 12 digit patterns
+      // Parse Aadhaar number - improved patterns for real Aadhaar format
+      // Real Aadhaar shows: "2943 6593 3461" (4-4-4 format)
       const aadhaarPatterns = [
-        /\b\d{4}\s?\d{4}\s?\d{4}\b/g,
-        /\b\d{12}\b/g,
+        /\b\d{4}\s\d{4}\s\d{4}\b/g, // 4-4-4 format with spaces
+        /\b\d{4}\s?\d{4}\s?\d{4}\b/g, // 4-4-4 format with optional spaces
+        /\b\d{12}\b/g, // 12 digits without spaces
         /X{8}\d{4}/g // Masked Aadhaar like XXXXXXXXX5276
       ];
       
@@ -2781,32 +2933,91 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
         }
       }
       
-      // Parse name from front image - look for name patterns in OCR text
+      // Parse name from front image - improved patterns for real Aadhaar format
+      // Real Aadhaar shows: "मेराज खान" and "MERAJ KHAN" (Hindi and English)
       const namePatterns = [
-        /(?:Name|नाम)[:\s]*([A-Za-z\s]+)/i,
-        /[A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+/g, // General name pattern
-        /[A-Z][a-z]+\s+[A-Z][a-z]+/g, // Two word names
-        /(?:Name|नाम)[:\s]*([A-Za-z\s]+)/i // Hindi and English name patterns
+        // Pattern for English name (all caps) - most reliable for Aadhaar cards
+        /([A-Z]{3,}\s+[A-Z]{3,}(?:\s+[A-Z]{3,})?)/g,
+        // Pattern for Hindi name followed by English name with slash
+        /([A-Za-z\s]{3,50})\s*\/\s*([A-Z]{3,}\s+[A-Z]{3,})/i,
+        // Pattern for name after "Name" label
+        /(?:Name|नाम)[:\s]*([A-Za-z\s]{3,50})/i,
+        // Pattern for capitalized words (2-3 words) - more specific
+        /([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/g,
+        // Pattern for all caps names (MERAJ KHAN format)
+        /([A-Z]{4,}\s+[A-Z]{4,})/g
+      ];
+      
+      // List of generic/invalid names that should be rejected
+      const invalidNames = [
+        'sample name',
+        'test name',
+        'dummy name',
+        'example name',
+        'john doe',
+        'jane doe',
+        'unknown',
+        'not found',
+        'n/a',
+        'na',
+        'null',
+        'undefined'
       ];
       
       for (const pattern of namePatterns) {
         const match = frontText.match(pattern);
         if (match) {
-          fullName = match[1] ? match[1].trim() : match[0].trim();
-          console.log('Name extracted from front image:', fullName);
-          break;
+          let extractedName;
+          
+          // Handle different pattern types
+          if (pattern.source.includes('\\/')) {
+            // Pattern with Hindi/English format - prefer English name
+            extractedName = match[2] ? match[2].trim() : match[1].trim();
+          } else {
+            extractedName = match[1] ? match[1].trim() : match[0].trim();
+          }
+          
+          // Clean up the name - remove extra spaces and normalize
+          extractedName = extractedName.replace(/\s+/g, ' ').trim();
+          
+          // Validate the extracted name
+          const isValidName = extractedName && 
+                            extractedName.length >= 3 && 
+                            extractedName.length <= 50 &&
+                            !invalidNames.some(invalid => 
+                              extractedName.toLowerCase().includes(invalid.toLowerCase())
+                            ) &&
+                            /^[A-Za-z\s]+$/.test(extractedName) && // Only letters and spaces
+                            !extractedName.match(/\d/) && // No numbers
+                            !extractedName.match(/[!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?]/) && // No special characters
+                            extractedName.split(' ').length >= 2 && // At least two words
+                            extractedName.split(' ').every(word => word.length >= 2); // Each word at least 2 characters
+          
+          if (isValidName) {
+            fullName = extractedName;
+            console.log('Valid name extracted from front image:', fullName);
+            break;
+          } else {
+            console.log('Invalid name rejected:', extractedName);
+          }
         }
       }
       
-      // Use extracted name from OCR
-      console.log('Extracted name from OCR:', fullName);
+      // If no valid name found, set to null instead of using fallback
+      if (!fullName) {
+        console.log('No valid name found in OCR text');
+        fullName = null;
+      }
       
-      // Parse DOB - look for date patterns
+      console.log('Final extracted name from OCR:', fullName);
+      
+      // Parse DOB - updated patterns based on real Aadhaar format
+      // Real Aadhaar shows: "जन्म तिथि / DOB: 12/12/1988"
       const dobPatterns = [
-        /\b\d{2}\/\d{2}\/\d{4}\b/g,
-        /\b\d{4}-\d{2}-\d{2}\b/g, // YYYY-MM-DD format
-        /\b\d{1,2}\/\d{1,2}\/\d{4}\b/g, // DD/MM/YYYY format
-        /\b\d{2}-\d{2}-\d{4}\b/g // DD-MM-YYYY format
+        /(?:DOB|जन्म तिथि)[:\s]*(\d{1,2}\/\d{1,2}\/\d{4})/i,
+        /(\d{1,2}\/\d{1,2}\/\d{4})/g, // DD/MM/YYYY format
+        /(\d{4}-\d{2}-\d{2})/g, // YYYY-MM-DD format
+        /(\d{2}-\d{2}-\d{4})/g // DD-MM-YYYY format
       ];
       
       for (const pattern of dobPatterns) {
@@ -2817,9 +3028,10 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
         }
       }
       
-      // Parse gender - look for Male/Female patterns
+      // Parse gender - updated patterns based on real Aadhaar format
+      // Real Aadhaar shows: "पुरुष / Male"
       const genderPatterns = [
-        /(?:Gender|लिंग)[:\s]*(Male|Female|पुरुष|महिला)/i,
+        /(?:Gender|लिंग|पुरुष|महिला)[:\s]*(Male|Female|पुरुष|महिला)/i,
         /Male|Female|पुरुष|महिला/i,
         /MALE|FEMALE/i,
         /\bMale\b/i,
@@ -2849,18 +3061,41 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
         }
       }
       
-      // If no address found from OCR, use fallback
+      // If no address found from OCR, leave it null
       if (!address || address.length < 10) {
-        address = 'Address not detected from back image';
-        console.log('Using fallback address:', address);
+        address = null;
+        console.log('No valid address found in OCR text');
       } else {
         console.log('Address extracted from OCR:', address);
       }
       
-      // Parse father's name from address
-      if (address) {
-        const fatherMatch = address.match(/D\/O\s+([^,]+)/i);
-        fatherName = fatherMatch ? fatherMatch[1].trim() : null;
+      // Parse father's name from front image - updated for real Aadhaar format
+      // Real Aadhaar shows: "Father: Sudhdan Khan" / "पिता : सुध्दन खांन"
+      const fatherPatterns = [
+        /(?:Father|पिता)[:\s]*([A-Za-z\s]{3,50})/i,
+        /(?:Father|पिता)[:\s]*([A-Z]{2,}\s+[A-Z]{2,}(?:\s+[A-Z]{2,})?)/g,
+        /Father[:\s]*([A-Za-z\s]+)/i
+      ];
+      
+      for (const pattern of fatherPatterns) {
+        const match = frontText.match(pattern);
+        if (match) {
+          const extractedFatherName = match[1] ? match[1].trim() : match[0].trim();
+          
+          // Validate father's name
+          const isValidFatherName = extractedFatherName && 
+                                  extractedFatherName.length >= 3 && 
+                                  extractedFatherName.length <= 50 &&
+                                  /^[A-Za-z\s]+$/.test(extractedFatherName) &&
+                                  !extractedFatherName.match(/\d/) &&
+                                  extractedFatherName.split(' ').length >= 2;
+          
+          if (isValidFatherName) {
+            fatherName = extractedFatherName.replace(/\s+/g, ' ').trim();
+            console.log('Father name extracted from front image:', fatherName);
+            break;
+          }
+        }
       }
       
       // Use actual OCR results - no fallback data
@@ -2880,10 +3115,18 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
         address = address.substring(0, 65535);
       }
       
-      // Ensure Aadhaar number is exactly 12 digits and clean
+      // Validate Aadhaar number - must be exactly 12 digits
       if (aadhaarNumber) {
         aadhaarNumber = aadhaarNumber.replace(/\s/g, '').substring(0, 12);
-        console.log('Cleaned Aadhaar number:', aadhaarNumber, 'Length:', aadhaarNumber.length);
+        // Check if it's exactly 12 digits and not all zeros or invalid patterns
+        if (aadhaarNumber.length !== 12 || !/^\d{12}$/.test(aadhaarNumber) || aadhaarNumber === '000000000000') {
+          console.log('Invalid Aadhaar number detected:', aadhaarNumber);
+          aadhaarNumber = null;
+        } else {
+          console.log('Valid Aadhaar number:', aadhaarNumber, 'Length:', aadhaarNumber.length);
+        }
+      } else {
+        console.log('No Aadhaar number found in OCR text');
       }
       
       console.log('Final data being returned:');
@@ -2896,21 +3139,62 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
       const mobileMatch = frontText.match(/\b\d{10}\b/);
       const mobile = mobileMatch ? mobileMatch[0] : null;
       
-      // Parse address from back image
-      const addressMatch = backText.match(/(?:Address|पता)[:\s]*([^\n]+(?:\n[^\n]+)*)/i);
-      address = addressMatch ? addressMatch[1].trim() : null;
-      
-      // Parse father's name from address
-      const fatherMatch = address ? address.match(/D\/O\s+([^,]+)/i) : null;
-      fatherName = fatherMatch ? fatherMatch[1].trim() : null;
-      
-      // Calculate age from DOB
+      // Calculate age from DOB - validate DOB first
       let age = null;
       if (dob) {
-        const birthDate = new Date(dob.split('/').reverse().join('-'));
-        const today = new Date();
-        age = today.getFullYear() - birthDate.getFullYear();
+        try {
+          // Parse the date properly
+          let birthDate;
+          if (dob.includes('/')) {
+            const parts = dob.split('/');
+            if (parts.length === 3) {
+              // Try DD/MM/YYYY format first
+              birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
+              // If invalid, try MM/DD/YYYY
+              if (isNaN(birthDate.getTime())) {
+                birthDate = new Date(parts[2], parts[0] - 1, parts[1]);
+              }
+            }
+          } else if (dob.includes('-')) {
+            birthDate = new Date(dob);
+          }
+          
+          if (birthDate && !isNaN(birthDate.getTime())) {
+            const today = new Date();
+            const calculatedAge = today.getFullYear() - birthDate.getFullYear();
+            
+            // Validate age is reasonable (between 0 and 120)
+            if (calculatedAge >= 0 && calculatedAge <= 120) {
+              age = calculatedAge;
+              console.log('Valid age calculated:', age, 'from DOB:', dob);
+            } else {
+              console.log('Invalid age calculated:', calculatedAge, 'from DOB:', dob);
+              age = null;
+            }
+          } else {
+            console.log('Invalid DOB format:', dob);
+            age = null;
+          }
+        } catch (error) {
+          console.log('Error calculating age from DOB:', dob, error.message);
+          age = null;
+        }
+      } else {
+        console.log('No DOB found in OCR text');
       }
+      
+      // Final validation - ensure all key fields are null if not properly extracted
+      console.log('Final validation of extracted data:');
+      console.log('Aadhaar Number:', aadhaarNumber ? 'Found' : 'NULL');
+      console.log('Name:', fullName ? 'Found' : 'NULL');
+      console.log('Address:', address ? 'Found' : 'NULL');
+      console.log('Age:', age ? 'Found' : 'NULL');
+      
+      // Ensure all fields are properly null if not found
+      if (!aadhaarNumber) aadhaarNumber = null;
+      if (!fullName) fullName = null;
+      if (!address) address = null;
+      if (!age) age = null;
       
       ocrData = {
         aadhaarNumber: aadhaarNumber,
@@ -2935,11 +3219,11 @@ router.post('/process-aadhaar-ocr', async (req, res) => {
     } catch (ocrError) {
       console.error('OCR processing error:', ocrError);
       
-      // Fallback if OCR fails
+      // Fallback if OCR fails - return null values instead of hardcoded data
       ocrData = {
-        aadhaarNumber: 'OCR_FAILED',
-        fullName: 'OCR Processing Failed',
-        address: 'Please try again or enter manually',
+        aadhaarNumber: null,
+        fullName: null,
+        address: null,
         age: null,
         fatherName: null,
         dob: null,
