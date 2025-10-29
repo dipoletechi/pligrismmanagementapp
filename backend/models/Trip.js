@@ -46,7 +46,7 @@ const Trip = sequelize.define('Trip', {
   selected_event_description: { type: DataTypes.TEXT, allowNull: true },
   selected_event_start_time: { type: DataTypes.STRING(50), allowNull: true },
   selected_event_end_time: { type: DataTypes.STRING(50), allowNull: true },
-  finance_data: { type: DataTypes.TEXT, allowNull: true }, // JSON string
+  // finance_data removed - now using trip_vendor_allocations table
   use_all_days_selection: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false }
 }, {
   tableName: 'trips',

@@ -18,8 +18,7 @@ router.get('/', protect, async (req, res) => {
 
 // Create bus
 router.post('/', protect, authorize('superadmin', 'admin'), [
-  body('title').trim().notEmpty(),
-  body('rc_no').trim().notEmpty()
+  body('title').trim().notEmpty()
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });

@@ -145,25 +145,26 @@ const AccommodationVendors = () => {
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
     }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2, md: 4 } }}>
           <Box sx={{ 
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             {/* Title and Description */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
               <Typography 
-                variant="h3" 
                 component="h1" 
                 gutterBottom
                 sx={{
+                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -174,7 +175,13 @@ const AccommodationVendors = () => {
               >
                 Accommodation Vendors
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              <Typography 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  fontWeight: 400 
+                }}
+              >
                 Manage accommodation vendors and their details
               </Typography>
             </Box>
@@ -182,9 +189,10 @@ const AccommodationVendors = () => {
             {/* Total Vendors Card and Add Button Row */}
             <Box sx={{ 
               display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between', 
-              alignItems: 'center',
-              gap: 3
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 2, md: 3 }
             }}>
               {/* Total Vendors Card */}
               <Card sx={{
@@ -198,24 +206,24 @@ const AccommodationVendors = () => {
                   transform: 'translateY(-4px)',
                   boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
                 },
-                minWidth: 200,
+                minWidth: { xs: '100%', sm: 200 },
                 flexShrink: 0
               }}>
-                <CardContent sx={{ p: 2 }}>
+                <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Box sx={{
-                      p: 1,
+                      p: { xs: 0.75, md: 1 },
                       borderRadius: 2,
                       backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       mr: 1.5
                     }}>
-                      <HotelIcon sx={{ fontSize: 20, color: 'white' }} />
+                      <HotelIcon sx={{ fontSize: { xs: 18, md: 20 }, color: 'white' }} />
                     </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: { xs: '0.85rem', md: '0.9rem' } }}>
                       Total Vendors
                     </Typography>
                   </Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700, ml: 1 }}>
+                  <Typography sx={{ fontSize: { xs: '1.75rem', md: '2.125rem' }, fontWeight: 700, ml: 1 }}>
                     {vendors.length}
                   </Typography>
                 </CardContent>
@@ -226,14 +234,14 @@ const AccommodationVendors = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => handleOpen()}
-                size="large"
+                fullWidth={{ xs: true, sm: false }}
                 sx={{
                   borderRadius: 3,
-                  px: 4,
-                  py: 2,
+                  px: { xs: 3, md: 4 },
+                  py: { xs: 1.5, md: 2 },
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '1.1rem',
+                  fontSize: { xs: '1rem', md: '1.1rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   boxShadow: '0 8px 24px rgba(25, 118, 210, 0.3)',
                   '&:hover': {
@@ -259,7 +267,10 @@ const AccommodationVendors = () => {
           background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
           overflow: 'hidden'
         }}>
-          <TableContainer sx={{ maxHeight: 400 }}>
+          <TableContainer sx={{ 
+            maxHeight: { xs: 500, md: 400 },
+            overflowX: 'auto'
+          }}>
             <Table>
               <TableHead>
                 <TableRow sx={{ 
@@ -267,16 +278,17 @@ const AccommodationVendors = () => {
                   '& .MuiTableCell-head': {
                     color: 'white',
                     fontWeight: 600,
-                    fontSize: '1rem',
-                    borderBottom: 'none'
+                    fontSize: { xs: '0.875rem', md: '1rem' },
+                    borderBottom: 'none',
+                    py: { xs: 1.5, md: 2 }
                   }
                 }}>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 150, md: 'auto' } }}>Title</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 200, md: 'auto' } }}>Description</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 150, md: 'auto' } }}>Address</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 120, md: 'auto' } }}>Phone</TableCell>
+                  <TableCell sx={{ minWidth: { xs: 150, md: 'auto' } }}>Email</TableCell>
+                  <TableCell align="center" sx={{ minWidth: { xs: 100, md: 'auto' } }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -294,15 +306,15 @@ const AccommodationVendors = () => {
                       }
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
+                    <TableCell sx={{ fontWeight: 600, color: '#1976d2', py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.875rem', md: '0.9375rem' }, fontWeight: 'bold' }}>
                         {vendor.title}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ maxWidth: 200 }}>
+                    <TableCell sx={{ maxWidth: 200, py: { xs: 1, md: 2 } }}>
                       <Typography 
-                        variant="body2" 
                         sx={{ 
+                          fontSize: { xs: '0.8rem', md: '0.875rem' },
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap'
@@ -311,31 +323,33 @@ const AccommodationVendors = () => {
                         {vendor.description || 'No description'}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <HotelIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                        <Typography variant="body2">
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
+                        <HotelIcon sx={{ fontSize: { xs: 14, md: 16 }, color: 'text.secondary' }} />
+                        <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                           {vendor.address || 'N/A'}
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, fontWeight: 500 }}>
                         {vendor.phone || 'N/A'}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ color: '#1976d2' }}>
+                    <TableCell sx={{ py: { xs: 1, md: 2 } }}>
+                      <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' }, color: '#1976d2' }}>
                         {vendor.email || 'N/A'}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <TableCell align="center" sx={{ py: { xs: 1, md: 2 } }}>
+                      <Box sx={{ display: 'flex', gap: { xs: 0.5, md: 1 }, justifyContent: 'center' }}>
                         <IconButton 
-                          onClick={() => handleOpen(vendor)} 
+                          onClick={() => handleOpen(vendor)}
+                          size="small"
                           sx={{ 
                             color: '#ff9800',
                             backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': { 
                               backgroundColor: 'rgba(255, 152, 0, 0.2)',
                               transform: 'scale(1.1)'
@@ -344,13 +358,15 @@ const AccommodationVendors = () => {
                           }}
                           title="Edit"
                         >
-                          <EditIcon />
+                          <EditIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                         <IconButton 
-                          onClick={() => handleDelete(vendor.id)} 
+                          onClick={() => handleDelete(vendor.id)}
+                          size="small"
                           sx={{ 
                             color: '#d32f2f',
                             backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                            p: { xs: 0.5, md: 1 },
                             '&:hover': { 
                               backgroundColor: 'rgba(211, 47, 47, 0.2)',
                               transform: 'scale(1.1)'
@@ -359,7 +375,7 @@ const AccommodationVendors = () => {
                           }}
                           title="Delete"
                         >
-                          <DeleteIcon />
+                          <DeleteIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
                         </IconButton>
                       </Box>
                     </TableCell>
@@ -374,13 +390,15 @@ const AccommodationVendors = () => {
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="md"
+        maxWidth="sm"
         fullWidth
+        fullScreen={{ xs: true, sm: false }}
         sx={{
           '& .MuiDialog-paper': {
-            borderRadius: 3,
-            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+            borderRadius: { xs: 0, sm: 3 },
+            boxShadow: { xs: 'none', sm: '0 16px 48px rgba(0, 0, 0, 0.2)' },
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            maxHeight: { xs: '100vh', sm: '90vh' }
           }
         }}
       >
@@ -397,13 +415,21 @@ const AccommodationVendors = () => {
           {editingVendor ? 'Edit Accommodation Vendor' : 'Add New Accommodation Vendor'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', gap: 3 }}>
+          <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: { xs: 2, md: 2 }
+            }}>
               {/* Left Section - 2 rows */}
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {/* Row 1: Title and Address */}
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2 
+                  }}>
                     <TextField
                       autoFocus
                       name="title"
@@ -457,7 +483,11 @@ const AccommodationVendors = () => {
                   </Box>
                   
                   {/* Row 2: Phone and Email */}
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2 
+                  }}>
                     <TextField
                       name="phone"
                       label="Phone"
@@ -519,7 +549,7 @@ const AccommodationVendors = () => {
                   fullWidth
                   variant="outlined"
                   multiline
-                  rows={4}
+                  rows={{ xs: 3, sm: 4 }}
                   value={formData.description}
                   onChange={handleChange}
                   sx={{
@@ -542,16 +572,23 @@ const AccommodationVendors = () => {
               </Box>
             </Box>
           </DialogContent>
-          <DialogActions sx={{ p: 3, gap: 2 }}>
+          <DialogActions sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            gap: 2,
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'center'
+          }}>
             <Button
               onClick={handleClose}
               variant="outlined"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 borderRadius: 2,
-                px: 3,
-                py: 1.5,
+                px: { xs: 2, sm: 3 },
+                py: { xs: 1.5, sm: 1.5 },
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
                 borderColor: '#1976d2',
                 color: '#1976d2',
                 '&:hover': {
@@ -565,12 +602,14 @@ const AccommodationVendors = () => {
             <Button
               type="submit"
               variant="contained"
+              fullWidth={{ xs: true, sm: false }}
               sx={{
                 borderRadius: 2,
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, sm: 4 },
+                py: { xs: 1.5, sm: 1.5 },
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
                 '&:hover': {

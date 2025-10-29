@@ -4,7 +4,7 @@ const { sequelize } = require('../config/database');
 const Bus = sequelize.define('Bus', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   title: { type: DataTypes.STRING(100), allowNull: false },
-  rc_no: { type: DataTypes.STRING(20), allowNull: false },
+  rc_no: { type: DataTypes.STRING(20), allowNull: true },
   rc_date: { type: DataTypes.DATE, allowNull: true },
   expiry_date: { type: DataTypes.DATE, allowNull: true },
   puc_no: { type: DataTypes.STRING(20), allowNull: true },

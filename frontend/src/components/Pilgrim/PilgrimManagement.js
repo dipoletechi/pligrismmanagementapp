@@ -243,16 +243,36 @@ const PilgrimManagement = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 2, sm: 0 },
+        mb: { xs: 2, md: 3 }
+      }}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center' }}>
-            <PersonIcon sx={{ mr: 2, fontSize: 32 }} />
+          <Typography 
+            component="h1" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' }
+            }}
+          >
+            <PersonIcon sx={{ mr: { xs: 1.5, md: 2 }, fontSize: { xs: 28, md: 32 } }} />
             Pilgrim Management
           </Typography>
           {tripFilter && (
-            <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography 
+              color="text.secondary" 
+              sx={{ 
+                mt: 1,
+                fontSize: { xs: '0.875rem', md: '1rem' }
+              }}
+            >
               Showing applicants for: <strong>{tripFilter.tripTitle}</strong>
             </Typography>
           )}
@@ -261,13 +281,13 @@ const PilgrimManagement = () => {
 
       {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {/* Tabs */}
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: { xs: 2, md: 3 } }}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}

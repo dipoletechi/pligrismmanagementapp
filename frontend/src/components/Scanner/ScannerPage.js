@@ -232,12 +232,14 @@ const ScannerPage = () => {
       
       // Get data for this specific day
       const dayKey = dateString.split('/').reverse().join('-');
-      console.log('Looking for transport data for date:', dayKey);
+      const dayKeyFormat = `Day ${dayNumber}`;
+      console.log('Looking for transport data for date:', dayKey, 'and day:', dayKeyFormat);
       
-      const dayVendor = vendorsByDay[dayKey];
-      const dayDrivers = driversByDay[dayKey] || [];
-      const dayBuses = busesByDay[dayKey] || [];
-      const dayConductors = conductorsByDay[dayKey] || [];
+      // Try both date format and Day format
+      const dayVendor = vendorsByDay[dayKey] || vendorsByDay[dayKeyFormat];
+      const dayDrivers = driversByDay[dayKey] || driversByDay[dayKeyFormat] || [];
+      const dayBuses = busesByDay[dayKey] || busesByDay[dayKeyFormat] || [];
+      const dayConductors = conductorsByDay[dayKey] || conductorsByDay[dayKeyFormat] || [];
       
       console.log('Found vendor for this date:', dayVendor);
       console.log('Found drivers for this date:', dayDrivers);
@@ -314,11 +316,14 @@ const ScannerPage = () => {
         }
         console.log('Parsed events_by_day:', eventsByDay);
         
-        // Try to find events by date (format: YYYY-MM-DD)
+        // Try to find events by date (format: YYYY-MM-DD) or Day format
         const dateKey = dateString.split('/').reverse().join('-'); // Convert DD/MM/YYYY to YYYY-MM-DD
-        console.log('Looking for events for date:', dateKey);
+        const dayKeyFormat = `Day ${dayNumber}`;
+        console.log('Looking for events for date:', dateKey, 'and day:', dayKeyFormat);
         console.log('Available dates in events_by_day:', Object.keys(eventsByDay));
-        const dayEvents = eventsByDay[dateKey];
+        
+        // Try both date format and Day format
+        const dayEvents = eventsByDay[dateKey] || eventsByDay[dayKeyFormat];
         console.log('Found events for this date:', dayEvents);
         
         if (dayEvents && dayEvents.length > 0) {
@@ -381,20 +386,27 @@ const ScannerPage = () => {
         }
         console.log('Parsed accommodations_by_day:', accommodationsByDay);
         
-        // Try to find accommodation by date (format: YYYY-MM-DD)
+        // Try to find accommodation by date (format: YYYY-MM-DD) or Day format
         const dateKey = dateString.split('/').reverse().join('-'); // Convert DD/MM/YYYY to YYYY-MM-DD
-        console.log('Looking for accommodation for date:', dateKey);
+        const dayKey = `Day ${dayNumber}`;
+        console.log('Looking for accommodation for date:', dateKey, 'and day:', dayKey);
         console.log('Available dates in accommodations_by_day:', Object.keys(accommodationsByDay));
-        const dayAccommodations = accommodationsByDay[dateKey];
+        
+        // Try both date format and Day format
+        const dayAccommodations = accommodationsByDay[dateKey] || accommodationsByDay[dayKey];
         console.log('Found accommodations for this date:', dayAccommodations);
         
         if (dayAccommodations && dayAccommodations.length > 0) {
           const accommodation = dayAccommodations[0]; // Get first accommodation for the day
-          const vendorId = accommodation.vendor;
+          
+          // Use vendorId if available (from enhanced data), otherwise fall back to vendor field
+          const vendorId = accommodation.vendorId || accommodation.vendor;
           console.log('Looking for vendor ID:', vendorId);
+          console.log('Accommodation data:', accommodation);
+          console.log('Available accommodation vendors:', tripData.allAccommodationVendors);
           
           // Check if vendor is already enhanced (contains vendor name instead of ID)
-          if (typeof vendorId === 'string' && vendorId !== 'Unknown Vendor') {
+          if (typeof vendorId === 'string' && vendorId !== 'Unknown Vendor' && !accommodation.vendorId) {
             // Vendor is already enhanced with name, find the full vendor details
             let vendor = null;
             
@@ -421,7 +433,7 @@ const ScannerPage = () => {
               endTime: accommodation.endTime
             };
           } else {
-            // Vendor is still an ID, find vendor details by ID
+            // Vendor is an ID (either from vendorId field or original vendor field)
             let vendor = null;
             
             // Try different possible vendor data structures
@@ -465,11 +477,19 @@ const ScannerPage = () => {
       
       // Fallback to general accommodation vendor
       if (tripData.accommodationVendor) {
+        console.log('Using fallback accommodation vendor:', tripData.accommodationVendor);
         return tripData.accommodationVendor;
+      }
+      
+      // Additional fallback - try to get any accommodation vendor
+      if (tripData.allAccommodationVendors && tripData.allAccommodationVendors.length > 0) {
+        console.log('Using first available accommodation vendor:', tripData.allAccommodationVendors[0]);
+        return tripData.allAccommodationVendors[0];
       }
       
       // If no database data, return null
       console.log('No accommodation data found for day:', dayNumber);
+      console.log('Available accommodation vendors:', tripData.allAccommodationVendors);
       return null;
     } catch (error) {
       console.error('Error parsing accommodations_by_day:', error);
@@ -583,7 +603,7 @@ const ScannerPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/dashboard');
+    navigate('/trips');
   };
 
   const handleDescriptionClick = (title, description) => {
@@ -635,11 +655,25 @@ const ScannerPage = () => {
           tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
           qrScanner.dayString
         );
-        // Use transport ID instead of name
-        logItemId = dayTransport?.vendor?.id || dayTransport?.buses?.[0]?.id || 'transport_1';
+        
+        // Use transport vendor ID with proper fallback
+        if (dayTransport?.vendor?.id) {
+          logItemId = dayTransport.vendor.id;
+        } else if (tripData?.transportVendor?.id) {
+          logItemId = tripData.transportVendor.id;
+        } else if (dayTransport?.buses?.[0]?.id) {
+          logItemId = dayTransport.buses[0].id;
+        } else if (tripData?.bus?.id) {
+          logItemId = tripData.bus.id;
+        } else {
+          logItemId = 'transport_1'; // Last resort fallback
+        }
+        
         console.log('Transport ID for log:', logItemId);
         console.log('Transport vendor details:', dayTransport?.vendor);
+        console.log('Main trip transport vendor:', tripData?.transportVendor);
         console.log('Transport bus details:', dayTransport?.buses?.[0]);
+        console.log('Main trip bus:', tripData?.bus);
       } else if (qrScanner.category === 'accommodation') {
         logType = qrScanner.action === 'checkIn' ? 'AccommodationCheckIn' : 'AccommodationCheckOut';
         // Get accommodation details for the specific day
@@ -647,10 +681,19 @@ const ScannerPage = () => {
           tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
           qrScanner.dayString
         );
-        // Use accommodation ID instead of name
-        logItemId = dayAccommodation?.id || 'accommodation_1';
+        
+        // Use accommodation ID with proper fallback
+        if (dayAccommodation?.id) {
+          logItemId = dayAccommodation.id;
+        } else if (tripData?.accommodationVendor?.id) {
+          logItemId = tripData.accommodationVendor.id;
+        } else {
+          logItemId = 'accommodation_1'; // Last resort fallback
+        }
+        
         console.log('Accommodation ID for log:', logItemId);
         console.log('Accommodation details:', dayAccommodation);
+        console.log('Main trip accommodation vendor:', tripData?.accommodationVendor);
       } else if (qrScanner.category === 'events') {
         logType = qrScanner.action === 'checkIn' ? 'EventCheckIn' : 'EventCheckOut';
         // Get event details for the specific day
@@ -658,10 +701,19 @@ const ScannerPage = () => {
           tripDays.find(d => d.dateString === qrScanner.dayString)?.dayNumber || 1, 
           qrScanner.dayString
         );
-        // Use event ID instead of name
-        logItemId = dayEvents?.[0]?.id || 'event_1';
-        console.log('Event ID for log:', logItemId);
+        
+        // Use event title with proper fallback
+        if (dayEvents?.[0]?.title) {
+          logItemId = dayEvents[0].title;
+        } else if (tripData?.selected_event_title) {
+          logItemId = tripData.selected_event_title;
+        } else {
+          logItemId = 'Event'; // Last resort fallback
+        }
+        
+        console.log('Event title for log:', logItemId);
         console.log('Event details:', dayEvents?.[0]);
+        console.log('Main trip event:', tripData?.selected_event_title);
       }
 
       console.log('Determined Log Type:', logType);

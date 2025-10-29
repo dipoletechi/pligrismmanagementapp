@@ -22,7 +22,8 @@ import {
   CircularProgress,
   Alert,
   Tabs,
-  Tab
+  Tab,
+  IconButton
 } from '@mui/material';
 import {
   Star,
@@ -31,7 +32,9 @@ import {
   Refresh,
   Close as CloseIcon,
   TripOrigin,
-  Store
+  Store,
+  ArrowBack as ArrowBackIcon,
+  Feedback as FeedbackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -151,17 +154,33 @@ const FeedbackList = () => {
       }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 2, sm: 0 },
+        mb: { xs: 2, md: 3 }
+      }}>
+        <Typography 
+          sx={{ 
+            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' },
+            fontWeight: 'bold' 
+          }}
+        >
           Feedback Management
         </Typography>
         <Button
           onClick={fetchFeedbacks}
           variant="outlined"
           startIcon={<Refresh />}
-          sx={{ ml: 2 }}
+          fullWidth={{ xs: true, sm: false }}
+          sx={{ 
+            ml: { xs: 0, sm: 2 },
+            fontSize: { xs: '0.875rem', md: '1rem' }
+          }}
         >
           Refresh
         </Button>
@@ -169,18 +188,18 @@ const FeedbackList = () => {
 
       {/* Feedback Table */}
       <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
+        <CardContent sx={{ p: { xs: 1, md: 2 } }}>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Trip</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Rating</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 50, md: 'auto' } }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 100, md: 'auto' } }}>User</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 120, md: 'auto' } }}>Trip</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 80, md: 'auto' } }}>Type</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 80, md: 'auto' } }}>Rating</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 100, md: 'auto' } }}>Date</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.875rem', md: '1rem' }, minWidth: { xs: 100, md: 'auto' } }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -235,7 +254,35 @@ const FeedbackList = () => {
 
       {/* Feedback Details Dialog */}
       <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Feedback Details</DialogTitle>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.25rem',
+          py: 2,
+          position: 'relative'
+        }}>
+          <IconButton
+            onClick={() => setDetailsDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FeedbackIcon sx={{ mr: 1, fontSize: 24 }} />
+            Feedback Details
+          </Box>
+        </DialogTitle>
         <DialogContent>
           {selectedFeedback && (
             <Box sx={{ mt: 2 }}>

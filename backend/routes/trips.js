@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Trip, TripStatus, Destination } = require('../models');
+const TripVendorAllocation = require('../models/TripVendorAllocation');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -50,7 +51,28 @@ router.get('/:id', protect, async (req, res) => {
     if (!trip) {
       return res.status(404).json({ success: false, message: 'Trip not found' });
     }
-    res.json({ success: true, data: trip });
+    
+    // Fetch vendor allocations from trip_vendor_allocations table
+    const vendorAllocations = await TripVendorAllocation.findAll({
+      where: { trip_id: req.params.id }
+    });
+    
+    // Reconstruct finance_data from vendor allocations
+    const financeData = {
+      vendors: vendorAllocations.map(allocation => ({
+        vendorId: allocation.vendor_id,
+        type: allocation.vendor_type,
+        amount: parseFloat(allocation.amount),
+        description: allocation.description || '',
+        notes: allocation.notes || ''
+      }))
+    };
+    
+    // Override finance_data with reconstructed data
+    const tripData = trip.toJSON();
+    tripData.finance_data = financeData;
+    
+    res.json({ success: true, data: tripData });
   } catch (e) {
     console.error('Get trip error:', e);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -77,6 +99,35 @@ router.post('/', protect, authorize('superadmin', 'admin', 'trip_manager'), [
   try {
     const tripData = { ...req.body, created_by: req.user.id };
     const trip = await Trip.create(tripData);
+    
+    // Save vendor allocations to trip_vendor_allocations table
+    if (req.body.finance_data) {
+      try {
+        const financeData = typeof req.body.finance_data === 'string' 
+          ? JSON.parse(req.body.finance_data) 
+          : req.body.finance_data;
+        
+        // Save vendor allocations
+        if (financeData.vendors && Array.isArray(financeData.vendors)) {
+          const vendorAllocations = financeData.vendors.map(vendor => ({
+            trip_id: trip.id,
+            vendor_type: vendor.type,
+            vendor_id: vendor.vendorId,
+            amount: vendor.amount || 0,
+            description: vendor.description || null,
+            status: 'pending'
+          }));
+          
+          if (vendorAllocations.length > 0) {
+            await TripVendorAllocation.bulkCreate(vendorAllocations);
+          }
+        }
+      } catch (financeError) {
+        console.error('Error saving vendor allocations:', financeError);
+        // Don't fail the trip creation, just log the error
+      }
+    }
+    
     res.status(201).json({ success: true, data: trip });
   } catch (e) {
     console.error('Create trip error:', e);
@@ -93,6 +144,69 @@ router.put('/:id', protect, authorize('superadmin', 'admin', 'trip_manager'), as
     }
     
     await Trip.update(req.body, { where: { id: req.params.id } });
+    
+    // Update vendor allocations in trip_vendor_allocations table
+    // Only update if finance_data is explicitly provided
+    if (req.body.finance_data !== undefined) {
+      try {
+        const financeData = typeof req.body.finance_data === 'string' 
+          ? JSON.parse(req.body.finance_data) 
+          : req.body.finance_data;
+        
+        if (financeData.vendors && Array.isArray(financeData.vendors) && financeData.vendors.length > 0) {
+          // Get existing vendor allocations
+          const existingAllocations = await TripVendorAllocation.findAll({ 
+            where: { trip_id: req.params.id } 
+          });
+          
+          const existingMap = new Map();
+          existingAllocations.forEach(allocation => {
+            const key = `${allocation.vendor_type}_${allocation.vendor_id}`;
+            existingMap.set(key, allocation);
+          });
+          
+          const newVendorKeys = new Set();
+          
+          // Update or create vendor allocations
+          for (const vendor of financeData.vendors) {
+            const key = `${vendor.type}_${vendor.vendorId}`;
+            newVendorKeys.add(key);
+            
+            const existingAllocation = existingMap.get(key);
+            
+            if (existingAllocation) {
+              // Update existing allocation
+              await existingAllocation.update({
+                amount: vendor.amount || 0,
+                description: vendor.description || null
+              });
+            } else {
+              // Create new allocation
+              await TripVendorAllocation.create({
+                trip_id: req.params.id,
+                vendor_type: vendor.type,
+                vendor_id: vendor.vendorId,
+                amount: vendor.amount || 0,
+                description: vendor.description || null,
+                status: 'pending'
+              });
+            }
+          }
+          
+          // Delete allocations that are no longer present
+          for (const [key, allocation] of existingMap.entries()) {
+            if (!newVendorKeys.has(key)) {
+              await allocation.destroy();
+            }
+          }
+        }
+        // If no vendors provided, keep existing allocations (don't delete)
+      } catch (financeError) {
+        console.error('Error updating vendor allocations:', financeError);
+        // Don't fail the trip update, just log the error
+      }
+    }
+    
     const updatedTrip = await Trip.findByPk(req.params.id);
     res.json({ success: true, data: updatedTrip });
   } catch (e) {

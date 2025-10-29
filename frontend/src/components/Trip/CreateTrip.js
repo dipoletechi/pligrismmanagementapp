@@ -70,7 +70,8 @@ import {
   KeyboardArrowUp as ArrowUpIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -84,10 +85,22 @@ const CreateTrip = () => {
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
+  // Helper function to safely parse JSON
+  const safeJSONParse = (data, defaultValue = null) => {
+    if (!data) return defaultValue;
+    if (typeof data === 'object') return data;
+    try {
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return defaultValue;
+    }
+  };
+  
   // Check if we're in edit mode or view mode
-  const isEditMode = location.state?.isEditMode || false;
+  const [isEditMode, setIsEditMode] = useState(location.state?.isEditMode || false);
   const isViewMode = location.state?.isViewMode || false;
-  const editingTrip = location.state?.editingTrip || null;
+  const [editingTrip, setEditingTrip] = useState(location.state?.editingTrip || null);
   
   
   
@@ -123,41 +136,54 @@ const CreateTrip = () => {
           }
         })() : ''),
         // Parse JSON fields if they exist (using underscore field names from database)
-        selectedDrivers: editingTrip.selected_drivers ? JSON.parse(editingTrip.selected_drivers) : [],
-        selectedConductors: editingTrip.selected_conductors ? JSON.parse(editingTrip.selected_conductors) : [],
-        selectedBuses: editingTrip.selected_buses ? JSON.parse(editingTrip.selected_buses) : [],
-        driversByDay: editingTrip.drivers_by_day ? JSON.parse(editingTrip.drivers_by_day) : {},
-        conductorsByDay: editingTrip.conductors_by_day ? JSON.parse(editingTrip.conductors_by_day) : {},
-        busesByDay: editingTrip.buses_by_day ? JSON.parse(editingTrip.buses_by_day) : {},
-        vendorsByDay: editingTrip.vendors_by_day ? JSON.parse(editingTrip.vendors_by_day) : {},
-        timeByDay: editingTrip.time_by_day ? JSON.parse(editingTrip.time_by_day) : {},
-        accommodationsByDay: editingTrip.accommodations_by_day ? JSON.parse(editingTrip.accommodations_by_day) : {},
+        selectedDrivers: safeJSONParse(editingTrip.selected_drivers, []),
+        selectedConductors: safeJSONParse(editingTrip.selected_conductors, []),
+        selectedBuses: safeJSONParse(editingTrip.selected_buses, []),
+        driversByDay: safeJSONParse(editingTrip.drivers_by_day, {}),
+        conductorsByDay: safeJSONParse(editingTrip.conductors_by_day, {}),
+        busesByDay: safeJSONParse(editingTrip.buses_by_day, {}),
+        vendorsByDay: safeJSONParse(editingTrip.vendors_by_day, {}),
+        timeByDay: safeJSONParse(editingTrip.time_by_day, {}),
+        accommodationsByDay: safeJSONParse(editingTrip.accommodations_by_day, {}),
         selectedAccommodationVendor: editingTrip.selected_accommodation_vendor || '',
         selectedAccommodationStartTime: editingTrip.selected_accommodation_start_time || '',
         selectedAccommodationEndTime: editingTrip.selected_accommodation_end_time || '',
-        selectedFoodVendors: editingTrip.selected_food_vendors ? JSON.parse(editingTrip.selected_food_vendors) : [],
-        foodVendorsByDay: editingTrip.food_vendors_by_day ? JSON.parse(editingTrip.food_vendors_by_day) : {},
-        selectedFoodSchedules: editingTrip.selected_food_schedules ? JSON.parse(editingTrip.selected_food_schedules) : [],
-        selectedFoodCategories: editingTrip.selected_food_categories ? JSON.parse(editingTrip.selected_food_categories) : [],
-        selectedFoodItems: editingTrip.selected_food_items ? JSON.parse(editingTrip.selected_food_items) : [],
-        foodSchedulesByDay: editingTrip.food_schedules_by_day ? JSON.parse(editingTrip.food_schedules_by_day) : {},
-        foodCategoriesByDay: editingTrip.food_categories_by_day ? JSON.parse(editingTrip.food_categories_by_day) : {},
-        foodItemsByDay: editingTrip.food_items_by_day ? JSON.parse(editingTrip.food_items_by_day) : {},
-        allDaysFoodEntries: editingTrip.all_days_food_entries ? JSON.parse(editingTrip.all_days_food_entries) : [],
-        eventsByDay: editingTrip.events_by_day ? JSON.parse(editingTrip.events_by_day) : {},
-        allDaysEvents: editingTrip.all_days_events ? JSON.parse(editingTrip.all_days_events) : [],
+        selectedFoodVendors: safeJSONParse(editingTrip.selected_food_vendors, []),
+        foodVendorsByDay: safeJSONParse(editingTrip.food_vendors_by_day, {}),
+        selectedFoodSchedules: safeJSONParse(editingTrip.selected_food_schedules, []),
+        selectedFoodCategories: safeJSONParse(editingTrip.selected_food_categories, []),
+        selectedFoodItems: safeJSONParse(editingTrip.selected_food_items, []),
+        foodSchedulesByDay: safeJSONParse(editingTrip.food_schedules_by_day, {}),
+        foodCategoriesByDay: safeJSONParse(editingTrip.food_categories_by_day, {}),
+        foodItemsByDay: safeJSONParse(editingTrip.food_items_by_day, {}),
+        allDaysFoodEntries: safeJSONParse(editingTrip.all_days_food_entries, []),
+        eventsByDay: safeJSONParse(editingTrip.events_by_day, {}),
+        allDaysEvents: safeJSONParse(editingTrip.all_days_events, []),
         selectedEventTitle: editingTrip.selected_event_title || '',
         selectedEventDescription: editingTrip.selected_event_description || '',
         selectedEventStartTime: editingTrip.selected_event_start_time || '',
         selectedEventEndTime: editingTrip.selected_event_end_time || '',
-        finance: editingTrip.finance_data ? JSON.parse(editingTrip.finance_data) : { 
-          vendors: [], 
-          otherExpenses: [], 
-          transportExpenses: [],
-          accommodationExpenses: [],
-          foodExpenses: [],
-          totalAmount: 0 
-        }
+        finance: (() => {
+          console.log('=== LOADING FINANCE DATA (EDIT MODE) ===');
+          console.log('Editing Trip ID:', editingTrip.id);
+          console.log('Editing Trip Title:', editingTrip.title);
+          console.log('Raw finance_data:', editingTrip.finance_data);
+          
+          const parsed = safeJSONParse(editingTrip.finance_data, { vendors: [] });
+          console.log('Parsed finance data:', parsed);
+          console.log('Vendors array:', parsed.vendors);
+          
+          // Keep only vendors array, remove old expense arrays
+          const result = {
+            vendors: parsed.vendors || [],
+            transportExpenses: [],
+            accommodationExpenses: [],
+            foodExpenses: []
+          };
+          
+          console.log('Final finance object:', result);
+          return result;
+        })()
       };
     } else {
       return {
@@ -720,16 +746,53 @@ const CreateTrip = () => {
         allDaysEvents: [],
         eventsByDay: {},
         finance: { 
-          vendors: [], 
-          otherExpenses: [],
-          transportExpenses: [],
-          accommodationExpenses: [],
-          foodExpenses: []
+          vendors: []
         }
       });
       setActiveStep(0);
     }
   }, [isEditMode, isViewMode]);
+
+  // Fetch fresh trip data from backend when in edit/view mode
+  useEffect(() => {
+    const fetchFreshTripData = async () => {
+      if ((isEditMode || isViewMode) && editingTrip && editingTrip.id) {
+        try {
+          console.log('🔄 Fetching fresh trip data for ID:', editingTrip.id);
+          const response = await axios.get(`/api/trips/${editingTrip.id}`);
+          const freshTripData = response.data.data;
+          
+          console.log('✅ Fresh trip data received:', freshTripData);
+          console.log('✅ Fresh finance_data:', freshTripData.finance_data);
+          
+          // Update formData with fresh finance_data from backend
+          setFormData(prev => ({
+            ...prev,
+            finance: (() => {
+              console.log('=== LOADING FRESH FINANCE DATA ===');
+              const parsed = safeJSONParse(freshTripData.finance_data, { vendors: [] });
+              console.log('Parsed fresh finance data:', parsed);
+              console.log('Fresh vendors array:', parsed.vendors);
+              
+              const result = {
+                vendors: parsed.vendors || [],
+                transportExpenses: [],
+                accommodationExpenses: [],
+                foodExpenses: []
+              };
+              
+              console.log('Final fresh finance object:', result);
+              return result;
+            })()
+          }));
+        } catch (error) {
+          console.error('❌ Error fetching fresh trip data:', error);
+        }
+      }
+    };
+    
+    fetchFreshTripData();
+  }, [isEditMode, isViewMode, editingTrip]);
 
 
   const fetchDropdownData = async () => {
@@ -996,34 +1059,33 @@ const CreateTrip = () => {
           selectedEventStartTime: tripData.selected_event_start_time || '',
           selectedEventEndTime: tripData.selected_event_end_time || '',
           finance: (() => {
-            console.log('Loading finance data for trip:', tripData.title);
+            console.log('=== LOADING FINANCE DATA ===');
+            console.log('Trip ID:', tripData.id);
+            console.log('Trip Title:', tripData.title);
             console.log('Raw finance_data:', tripData.finance_data);
             
             if (tripData.finance_data) {
-              try {
-                const parsed = JSON.parse(tripData.finance_data);
-                console.log('Parsed finance data:', parsed);
-                return parsed;
-              } catch (error) {
-                console.error('Error parsing finance_data:', error);
-                return { 
-                  vendors: [], 
-                  otherExpenses: [],
-                  transportExpenses: [],
-                  accommodationExpenses: [],
-                  foodExpenses: [],
-                  totalAmount: 0 
-                };
-              }
+              const parsed = safeJSONParse(tripData.finance_data, { vendors: [] });
+              console.log('Parsed finance data:', parsed);
+              console.log('Vendors array:', parsed.vendors);
+              
+              // Keep only vendors array, remove old expense arrays
+              const result = {
+                vendors: parsed.vendors || [],
+                transportExpenses: [],
+                accommodationExpenses: [],
+                foodExpenses: []
+              };
+              
+              console.log('Final finance object:', result);
+              return result;
             } else {
               console.log('No finance_data, using default');
               return { 
                 vendors: [], 
-                otherExpenses: [],
                 transportExpenses: [],
                 accommodationExpenses: [],
-                foodExpenses: [],
-                totalAmount: 0 
+                foodExpenses: []
               };
             }
           })()
@@ -1217,11 +1279,23 @@ const CreateTrip = () => {
       }
       
       // If validation passes, create the trip immediately and then move to next step
-      handleSubmit(true).then((tripId) => {
+      handleSubmit(true).then(async (tripId) => {
         // Store the trip ID for subsequent steps
         if (tripId) {
           localStorage.setItem('currentTripId', tripId);
           console.log('Trip ID stored for subsequent steps:', tripId);
+          
+          // Fetch the created trip data and set it as editingTrip
+          try {
+            const response = await axios.get(`/api/trips/${tripId}`);
+            if (response.data && response.data.data) {
+              setEditingTrip(response.data.data);
+              setIsEditMode(true);
+              console.log('Switched to edit mode with trip:', response.data.data);
+            }
+          } catch (error) {
+            console.error('Error fetching created trip:', error);
+          }
         }
         // Move to next step after successful trip creation
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -1964,7 +2038,7 @@ const CreateTrip = () => {
           }
         };
       } else {
-        // Add new vendor
+        // Add new vendor with all fields initialized
         const newVendor = {
           id: Date.now(),
           vendorId,
@@ -1983,56 +2057,6 @@ const CreateTrip = () => {
     });
   };
 
-  // Handle other expense changes
-  const handleOtherExpenseChange = (index, field, value) => {
-    setFormData(prev => {
-      const currentFinance = prev.finance || { vendors: [], otherExpenses: [], transportExpenses: [], accommodationExpenses: [], foodExpenses: [] };
-      const updatedExpenses = [...(currentFinance.otherExpenses || [])];
-      if (!updatedExpenses[index]) {
-        updatedExpenses[index] = { description: '', amount: '' };
-      }
-      updatedExpenses[index][field] = value;
-      
-      return {
-        ...prev,
-        finance: {
-          ...currentFinance,
-          otherExpenses: updatedExpenses
-        }
-      };
-    });
-  };
-
-  // Add new other expense
-  const handleAddOtherExpense = () => {
-    setFormData(prev => {
-      const currentFinance = prev.finance || { vendors: [], otherExpenses: [], transportExpenses: [], accommodationExpenses: [], foodExpenses: [] };
-      return {
-        ...prev,
-        finance: {
-          ...currentFinance,
-          otherExpenses: [...(currentFinance.otherExpenses || []), { description: '', amount: '' }]
-        }
-      };
-    });
-  };
-
-  // Remove other expense
-  const handleRemoveOtherExpense = (index) => {
-    setFormData(prev => {
-      const currentFinance = prev.finance || { vendors: [], otherExpenses: [], transportExpenses: [], accommodationExpenses: [], foodExpenses: [] };
-      const updatedExpenses = [...(currentFinance.otherExpenses || [])];
-      updatedExpenses.splice(index, 1);
-      
-      return {
-        ...prev,
-        finance: {
-          ...currentFinance,
-          otherExpenses: updatedExpenses
-        }
-      };
-    });
-  };
 
   // Add new transport expense
   const handleAddTransportExpense = () => {
@@ -2186,39 +2210,20 @@ const CreateTrip = () => {
 
   // Calculate total amount
   const calculateTotalAmount = () => {
+    // Only calculate from vendors array (main budget allocations)
     const vendorTotal = (formData.finance?.vendors || []).reduce((sum, vendor) => {
       const amount = parseFloat(vendor.amount) || 0;
       return sum + amount;
     }, 0);
     
-    const otherExpensesTotal = (formData.finance?.otherExpenses || []).reduce((sum, expense) => {
-      const amount = parseFloat(expense.amount) || 0;
-      return sum + amount;
-    }, 0);
-
-    const transportExpensesTotal = (formData.finance?.transportExpenses || []).reduce((sum, expense) => {
-      const amount = parseFloat(expense.amount) || 0;
-      return sum + amount;
-    }, 0);
-
-    const accommodationExpensesTotal = (formData.finance?.accommodationExpenses || []).reduce((sum, expense) => {
-      const amount = parseFloat(expense.amount) || 0;
-      return sum + amount;
-    }, 0);
-
-    const foodExpensesTotal = (formData.finance?.foodExpenses || []).reduce((sum, expense) => {
-      const amount = parseFloat(expense.amount) || 0;
-      return sum + amount;
-    }, 0);
-    
-    const total = vendorTotal + otherExpensesTotal + transportExpensesTotal + accommodationExpensesTotal + foodExpensesTotal;
-    return total.toLocaleString('en-IN');
+    return vendorTotal.toLocaleString('en-IN');
   };
 
   // Get selected vendors from transportation and accommodation
   const getSelectedVendors = () => {
     const selectedVendors = new Map();
     
+    // Get from step selections (for new trips)
     // Add transport vendor if selected
     if (formData.selectedTransportVendor) {
       const vendorId = formData.selectedTransportVendor;
@@ -2314,6 +2319,34 @@ const CreateTrip = () => {
         });
       }
     });
+    
+    // Finally, merge in finance data (takes priority for display)
+    // This ensures manually entered finance data is shown
+    if (formData.finance?.vendors && formData.finance.vendors.length > 0) {
+      formData.finance.vendors.forEach(financeVendor => {
+        let vendor = null;
+        let vendorList = [];
+        
+        if (financeVendor.type === 'transport') {
+          vendorList = transportVendors;
+        } else if (financeVendor.type === 'accommodation') {
+          vendorList = accommodationVendors;
+        } else if (financeVendor.type === 'food') {
+          vendorList = foodVendors;
+        }
+        
+        vendor = vendorList.find(v => v.id === parseInt(financeVendor.vendorId));
+        
+        if (vendor) {
+          // This will override any existing entry from step selections
+          selectedVendors.set(`${financeVendor.vendorId}-${financeVendor.type}`, {
+            id: financeVendor.vendorId,
+            type: financeVendor.type,
+            name: vendor.title
+          });
+        }
+      });
+    }
     
     return Array.from(selectedVendors.values());
   };
@@ -2425,6 +2458,7 @@ const CreateTrip = () => {
         selected_event_end_time: formData.selectedEventEndTime,
         finance_data: JSON.stringify(formData.finance),
         use_all_days_selection: isAllDaysApplied,
+        // Use the statusId parameter to set trip status
         trip_status_id: statusId
       };
       
@@ -2435,6 +2469,14 @@ const CreateTrip = () => {
         console.log('Trip updated successfully:', response.data);
         setSnackbar({ open: true, message: 'Trip updated successfully!', severity: 'success' });
         tripId = editingTrip.id;
+        
+        // Clean up localStorage if this is final submit
+        if (!isFromStep0) {
+          localStorage.removeItem('currentTripId');
+          setTimeout(() => {
+            navigate('/trips/list');
+          }, 1500);
+        }
       } else {
         response = await axios.post('/api/trips', tripData);
         console.log('Trip created successfully:', response.data);
@@ -2487,12 +2529,7 @@ const CreateTrip = () => {
         foodVendorsByDay: {},
         events: [],
         finance: { 
-          vendors: [], 
-          otherExpenses: [],
-          transportExpenses: [],
-          accommodationExpenses: [],
-          foodExpenses: [],
-          totalAmount: 0 
+          vendors: []
         }
       });
       setAppliedToAllDays({ drivers: false, conductors: false, buses: false, accommodations: false, food: false, events: false });
@@ -4174,7 +4211,7 @@ const CreateTrip = () => {
                     <Box sx={{ p: 2 }}>
                 {(() => {
                         const transportVendors = getSelectedVendors().filter(v => v.type === 'transport');
-                        const hasTransportData = transportVendors.length > 0 || (formData.finance?.transportExpenses?.length || 0) > 0;
+                        const hasTransportData = transportVendors.length > 0;
                   
                         if (!hasTransportData) {
                     return (
@@ -4203,7 +4240,19 @@ const CreateTrip = () => {
                   }
         return (
                           <>
-                            {transportVendors.map((vendor, index) => (
+                            {transportVendors.map((vendor, index) => {
+                              const financeVendor = formData.finance?.vendors?.find(f => 
+                                parseInt(f.vendorId) === parseInt(vendor.id) && f.type === vendor.type
+                              );
+                              
+                              console.log(`Transport vendor ${vendor.id} (${vendor.name}):`, {
+                                vendorId: vendor.id,
+                                vendorType: vendor.type,
+                                financeVendor: financeVendor,
+                                allFinanceVendors: formData.finance?.vendors
+                              });
+                              
+                              return (
                               <Box key={`transport-${vendor.id}`} sx={{ display: 'flex', gap: 2, mb: 2 }}>
                                 <TextField
                                   value={vendor.name}
@@ -4212,9 +4261,9 @@ const CreateTrip = () => {
                                   disabled={isViewMode}
                                 />
                                 <TextField
-                                  placeholder="Note"
+                                  placeholder="Description"
                                   size="small"
-                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                                  value={financeVendor?.description || ''}
                                   onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
                                   sx={{ flex: 1 }}
                                   disabled={isViewMode}
@@ -4223,7 +4272,7 @@ const CreateTrip = () => {
                                 label="Amount (₹)"
                                 type="number"
                                 size="small"
-                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                                  value={financeVendor?.amount || ''}
                                 onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
                                   sx={{ width: 120 }}
                                   disabled={isViewMode}
@@ -4231,49 +4280,9 @@ const CreateTrip = () => {
                                   startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                                 }}
                               />
-                              </Box>
-                            ))}
-                            {(formData.finance?.transportExpenses || []).map((expense, index) => (
-                              <Box key={`transport-expense-${expense.id}`} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                              <TextField
-                                  placeholder="Transport Item"
-                                size="small"
-                                  value={expense.description || ''}
-                                  onChange={(e) => handleTransportExpenseChange(index, 'description', e.target.value)}
-                                sx={{ flex: 1 }}
-                                  disabled={isViewMode}
-                                />
-                                <TextField
-                                  placeholder="Note"
-                                  size="small"
-                                  value={expense.note || ''}
-                                  onChange={(e) => handleTransportExpenseChange(index, 'note', e.target.value)}
-                                  sx={{ flex: 1 }}
-                                  disabled={isViewMode}
-                                />
-                                <TextField
-                                  label="Amount (₹)"
-                                  type="number"
-                                  size="small"
-                                  value={expense.amount || ''}
-                                  onChange={(e) => handleTransportExpenseChange(index, 'amount', e.target.value)}
-                                  sx={{ width: 120 }}
-                                  disabled={isViewMode}
-                                InputProps={{
-                                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                                }}
-                              />
-                                {!isViewMode && (
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => handleRemoveTransportExpense(index)}
-                                    sx={{ color: 'error.main' }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
                             </Box>
-                            ))}
+                            );
+                            })}
                           </>
                         );
                       })()}
@@ -4298,7 +4307,7 @@ const CreateTrip = () => {
                     <Box sx={{ p: 2 }}>
                       {(() => {
                         const accommodationVendors = getSelectedVendors().filter(v => v.type === 'accommodation');
-                        const hasAccommodationData = accommodationVendors.length > 0 || (formData.finance?.accommodationExpenses?.length || 0) > 0;
+                        const hasAccommodationData = accommodationVendors.length > 0;
                         
                         if (!hasAccommodationData) {
                           return (
@@ -4327,7 +4336,12 @@ const CreateTrip = () => {
                         }
                         return (
                           <>
-                            {accommodationVendors.map((vendor, index) => (
+                            {accommodationVendors.map((vendor, index) => {
+                              const financeVendor = formData.finance?.vendors?.find(f => 
+                                parseInt(f.vendorId) === parseInt(vendor.id) && f.type === vendor.type
+                              );
+                              
+                              return (
                               <Box key={`accommodation-${vendor.id}`} sx={{ display: 'flex', gap: 2, mb: 2 }}>
                                 <TextField
                                   value={vendor.name}
@@ -4336,9 +4350,9 @@ const CreateTrip = () => {
                                   disabled={isViewMode}
                                 />
                                 <TextField
-                                  placeholder="Note"
+                                  placeholder="Description"
                                   size="small"
-                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                                  value={financeVendor?.description || ''}
                                 onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
                                 sx={{ flex: 1 }}
                                   disabled={isViewMode}
@@ -4347,7 +4361,7 @@ const CreateTrip = () => {
                               label="Amount (₹)"
                               type="number"
                               size="small"
-                                  value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                                  value={financeVendor?.amount || ''}
                                   onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
                                   sx={{ width: 120 }}
                                   disabled={isViewMode}
@@ -4356,48 +4370,8 @@ const CreateTrip = () => {
                                   }}
                               />
                             </Box>
-                            ))}
-                            {(formData.finance?.accommodationExpenses || []).map((expense, index) => (
-                              <Box key={`accommodation-expense-${expense.id}`} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                                <TextField
-                                  placeholder="Accommodation Item"
-                                  size="small"
-                                  value={expense.description || ''}
-                                  onChange={(e) => handleAccommodationExpenseChange(index, 'description', e.target.value)}
-                              sx={{ flex: 1 }}
-                                  disabled={isViewMode}
-                                />
-                                <TextField
-                                  placeholder="Note"
-                                  size="small"
-                                  value={expense.note || ''}
-                                  onChange={(e) => handleAccommodationExpenseChange(index, 'note', e.target.value)}
-                                  sx={{ flex: 1 }}
-                                  disabled={isViewMode}
-                                />
-                                <TextField
-                                  label="Amount (₹)"
-                                  type="number"
-                                  size="small"
-                                  value={expense.amount || ''}
-                                  onChange={(e) => handleAccommodationExpenseChange(index, 'amount', e.target.value)}
-                                  sx={{ width: 120 }}
-                                  disabled={isViewMode}
-                              InputProps={{
-                                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                              }}
-                            />
-                                {!isViewMode && (
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => handleRemoveAccommodationExpense(index)}
-                                    sx={{ color: 'error.main' }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
-                              </Box>
-                            ))}
+                            );
+                            })}
                           </>
                         );
                       })()}
@@ -4422,7 +4396,7 @@ const CreateTrip = () => {
                     <Box sx={{ p: 2 }}>
                       {(() => {
                         const foodVendors = getSelectedVendors().filter(v => v.type === 'food');
-                        const hasFoodData = foodVendors.length > 0 || (formData.finance?.foodExpenses?.length || 0) > 0;
+                        const hasFoodData = foodVendors.length > 0;
                         
                         if (!hasFoodData) {
                           return (
@@ -4451,7 +4425,12 @@ const CreateTrip = () => {
                         }
                         return (
                           <>
-                            {foodVendors.map((vendor, index) => (
+                            {foodVendors.map((vendor, index) => {
+                              const financeVendor = formData.finance?.vendors?.find(f => 
+                                parseInt(f.vendorId) === parseInt(vendor.id) && f.type === vendor.type
+                              );
+                              
+                              return (
                           <Box key={`food-${vendor.id}`} sx={{ display: 'flex', gap: 2, mb: 2 }}>
                             <TextField
                               value={vendor.name}
@@ -4460,9 +4439,9 @@ const CreateTrip = () => {
                               disabled={isViewMode}
                             />
                             <TextField
-                              placeholder="Note"
+                              placeholder="Description"
                               size="small"
-                              value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.description || ''}
+                              value={financeVendor?.description || ''}
                               onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'description', e.target.value)}
                               sx={{ flex: 1 }}
                               disabled={isViewMode}
@@ -4471,7 +4450,7 @@ const CreateTrip = () => {
                               label="Amount (₹)"
                               type="number"
                               size="small"
-                              value={formData.finance?.vendors?.find(f => f.vendorId === vendor.id && f.type === vendor.type)?.amount || ''}
+                              value={financeVendor?.amount || ''}
                               onChange={(e) => handleFinanceChange(vendor.id, vendor.type, 'amount', e.target.value)}
                               sx={{ width: 120 }}
                               disabled={isViewMode}
@@ -4480,134 +4459,11 @@ const CreateTrip = () => {
                               }}
                             />
                           </Box>
-                            ))}
-                            {(formData.finance?.foodExpenses || []).map((expense, index) => (
-                              <Box key={`food-expense-${expense.id}`} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                            <TextField
-                                  placeholder="Food Item"
-                              size="small"
-                                  value={expense.description || ''}
-                                  onChange={(e) => handleFoodExpenseChange(index, 'description', e.target.value)}
-                              sx={{ flex: 1 }}
-                                  disabled={isViewMode}
-                                />
-                                <TextField
-                                  placeholder="Note"
-                                  size="small"
-                                  value={expense.note || ''}
-                                  onChange={(e) => handleFoodExpenseChange(index, 'note', e.target.value)}
-                                  sx={{ flex: 1 }}
-                                  disabled={isViewMode}
-                                />
-                                <TextField
-                                  label="Amount (₹)"
-                                  type="number"
-                                  size="small"
-                                  value={expense.amount || ''}
-                                  onChange={(e) => handleFoodExpenseChange(index, 'amount', e.target.value)}
-                                  sx={{ width: 120 }}
-                                  disabled={isViewMode}
-                                  InputProps={{
-                                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                                  }}
-                                />
-                                {!isViewMode && (
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => handleRemoveFoodExpense(index)}
-                                    sx={{ color: 'error.main' }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                )}
-                          </Box>
-                            ))}
+                            );
+                            })}
                           </>
                   );
                 })()}
-                    </Box>
-                  </Box>
-
-                  {/* Other Section */}
-                  <Box>
-                    <Box sx={{ 
-                      backgroundColor: '#f5f5f5', 
-                      p: 2, 
-                      borderBottom: '1px solid #000',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      position: 'relative'
-                    }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
-                        Other
-                      </Typography>
-                      {!isViewMode && (
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleAddOtherExpense()}
-                          sx={{ 
-                            position: 'absolute',
-                            right: 16,
-                            backgroundColor: '#000', 
-                            color: 'white',
-                            '&:hover': { backgroundColor: '#333' }
-                          }}
-                        >
-                          <AddIcon />
-                        </IconButton>
-                      )}
-                    </Box>
-                    <Box sx={{ p: 2 }}>
-                      {(formData.finance?.otherExpenses || []).map((expense, index) => (
-                        <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                          <TextField
-                            placeholder="Other Expense"
-                            size="small"
-                            value={expense.description || ''}
-                            onChange={(e) => handleOtherExpenseChange(index, 'description', e.target.value)}
-                            sx={{ flex: 1 }}
-                            disabled={isViewMode}
-                          />
-                          <TextField
-                            label="Amount (₹)"
-                            type="number"
-                            size="small"
-                            value={expense.amount || ''}
-                            onChange={(e) => handleOtherExpenseChange(index, 'amount', e.target.value)}
-                            sx={{ width: 120 }}
-                            disabled={isViewMode}
-                            InputProps={{
-                              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                            }}
-                          />
-                          {!isViewMode && (
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleRemoveOtherExpense(index)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          )}
-                        </Box>
-                      )) || (
-                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                          <TextField
-                            placeholder="Other Expense"
-                            size="small"
-                            sx={{ flex: 1 }}
-                            disabled={isViewMode}
-                          />
-                          <TextField
-                            placeholder="Amount"
-                            type="number"
-                            size="small"
-                            sx={{ width: 120 }}
-                            disabled={isViewMode}
-                          />
-                        </Box>
-                      )}
                     </Box>
                   </Box>
 
@@ -4640,10 +4496,30 @@ const CreateTrip = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header Section */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h3" component="h1" gutterBottom sx={{ 
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center', position: 'relative' }}>
+        {(isViewMode || isEditMode) && (
+          <IconButton
+            onClick={() => navigate('/trips')}
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+              color: '#1976d2',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.2)'
+              },
+              zIndex: 1
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+        )}
+        <Typography component="h1" gutterBottom sx={{ 
+          fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
           fontWeight: 'bold',
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           backgroundClip: 'text',
@@ -4652,12 +4528,19 @@ const CreateTrip = () => {
         }}>
             {isViewMode ? 'View Trip' : isEditMode ? 'Edit Trip' : 'Trip Management'}
         </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography 
+          color="text.secondary" 
+          sx={{ 
+            mb: 2,
+            fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+            px: { xs: 2, md: 0 }
+          }}
+        >
           {isViewMode ? 'View trip details and configurations (Read-only)' : isEditMode ? 'Update trip details and configurations' : 'Create a new pilgrimage trip with all necessary details'}
         </Typography>
         <Box sx={{ 
-          width: 100, 
-          height: 4, 
+          width: { xs: 60, md: 100 }, 
+          height: { xs: 3, md: 4 }, 
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
           borderRadius: 2,
           mx: 'auto'
@@ -4665,7 +4548,7 @@ const CreateTrip = () => {
       </Box>
 
       <Paper sx={{ 
-        p: 4, 
+        p: { xs: 2, sm: 3, md: 4 }, 
         borderRadius: 3,
         boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
@@ -4675,16 +4558,19 @@ const CreateTrip = () => {
           activeStep={activeStep} 
           orientation="horizontal"
           sx={{ 
-            mb: 4,
+            mb: { xs: 2, md: 4 },
             '& .MuiStepLabel-label': {
               fontWeight: 600,
-              fontSize: '0.9rem'
+              fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.9rem' }
             },
             '& .MuiStepLabel-root .Mui-active': {
               color: '#1976d2'
             },
             '& .MuiStepLabel-root .Mui-completed': {
               color: '#4caf50'
+            },
+            '& .MuiStepIcon-root': {
+              fontSize: { xs: '1.5rem', md: '2rem' }
             }
           }}
         >
@@ -4730,21 +4616,23 @@ const CreateTrip = () => {
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'row', 
-          pt: 3,
-          mt: 3,
-          borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+          pt: { xs: 2, md: 3 },
+          mt: { xs: 2, md: 3 },
+          borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+          gap: { xs: 1, md: 0 }
         }}>
           <Button
             variant={activeStep === 0 ? "outlined" : "contained"}
             disabled={activeStep === 0}
             onClick={handleBack}
             sx={{ 
-              mr: 1,
-              px: 3,
-              py: 1.5,
+              mr: { xs: 0, md: 1 },
+              px: { xs: 2, md: 3 },
+              py: { xs: 1, md: 1.5 },
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
+              fontSize: { xs: '0.875rem', md: '1rem' },
               ...(activeStep > 0 && {
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
@@ -4768,11 +4656,12 @@ const CreateTrip = () => {
               onClick={() => navigate('/trips/list')}
               variant="contained"
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)',
                 boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
                 '&:hover': {
@@ -4784,17 +4673,18 @@ const CreateTrip = () => {
               Close
             </Button>
           ) : activeStep === (steps?.length || 0) - 1 && !isViewMode ? (
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, flexWrap: 'wrap' }}>
               <Button 
                 onClick={() => handleSubmit(false, 1)} 
                 variant="outlined"
                 disabled={loading}
                 sx={{
-                  px: 4,
-                  py: 1.5,
+                  px: { xs: 2, md: 4 },
+                  py: { xs: 1, md: 1.5 },
                   borderRadius: 2,
                   textTransform: 'none',
                   fontWeight: 600,
+                  fontSize: { xs: '0.875rem', md: '1rem' },
                   borderColor: '#ff9800',
                   color: '#ff9800',
                   '&:hover': {
@@ -4811,11 +4701,12 @@ const CreateTrip = () => {
               variant="contained"
               disabled={loading}
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)',
                 boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
                 '&:hover': {
@@ -4842,11 +4733,12 @@ const CreateTrip = () => {
                 )
               }
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, md: 4 },
+                py: { xs: 1, md: 1.5 },
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
                 '&:hover': {

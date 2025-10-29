@@ -37,7 +37,7 @@ const processLogsWithVendorInfo = async (logs) => {
         logData.vendor_info = null;
       }
     } else if (log.log_type.includes('Event')) {
-      // For events, log_item_id might be event title or ID
+      // For events, log_item_id contains the event title
       logData.vendor_info = {
         id: log.log_item_id,
         name: log.log_item_id,
@@ -191,7 +191,7 @@ router.get('/user/:userId/trip/:tripId',
       const { userId, tripId } = req.params;
       
       // Check if user has admin privileges or is accessing their own logs
-      const hasAdminRole = ['admin', 'trip_manager', 'superadmin'].includes(req.user.role);
+      const hasAdminRole = ['admin', 'trip_manager', 'superadmin', 'financial_manager'].includes(req.user.role);
       const isOwnLogs = req.user.id == userId;
       
       if (!hasAdminRole && !isOwnLogs) {

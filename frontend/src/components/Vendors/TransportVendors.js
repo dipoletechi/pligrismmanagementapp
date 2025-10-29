@@ -24,7 +24,11 @@ import {
   Snackbar,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -36,7 +40,8 @@ import {
   Person as PersonIcon,
   PersonAdd as PersonAddIcon,
   DirectionsBusOutlined as BusAddIcon,
-  SupervisorAccount as ConductorIcon
+  SupervisorAccount as ConductorIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -57,7 +62,7 @@ const TransportVendors = () => {
   const [viewDialog, setViewDialog] = useState({ open: false, vendor: null, details: null });
   const [activeTab, setActiveTab] = useState(0);
   
-  // Add Bus/Driver/Conductor states
+  // Add Vehicle/Driver/Conductor states
   const [busDialog, setBusDialog] = useState(false);
   const [driverDialog, setDriverDialog] = useState(false);
   const [conductorDialog, setConductorDialog] = useState(false);
@@ -78,7 +83,7 @@ const TransportVendors = () => {
     title: '',
     rc_no: '',
     no_of_sittings: '',
-    type: '',
+    type: 'bus',
     model: '',
     make_year: '',
     transport_vendor_id: ''
@@ -218,13 +223,13 @@ const TransportVendors = () => {
     setViewDialog({ open: false, vendor: null, details: null });
   };
 
-  // Add Bus/Driver/Conductor handlers
+  // Add Vehicle/Driver/Conductor handlers
   const handleAddBus = (vendor) => {
     setBusFormData({
       title: '',
       rc_no: '',
       no_of_sittings: '',
-      type: '',
+      type: 'bus',
       model: '',
       make_year: '',
       transport_vendor_id: vendor.id
@@ -454,25 +459,26 @@ const TransportVendors = () => {
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
     }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2, md: 4 } }}>
           <Box sx={{ 
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             {/* Title and Description */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
               <Typography 
-                variant="h3" 
                 component="h1" 
                 gutterBottom
                 sx={{
+                  fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -483,7 +489,13 @@ const TransportVendors = () => {
               >
                 Transport Vendors
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+              <Typography 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  fontWeight: 400 
+                }}
+              >
                 Manage transport vendors and their details
               </Typography>
             </Box>
@@ -491,9 +503,10 @@ const TransportVendors = () => {
             {/* Stats Cards Row */}
             <Box sx={{ 
               display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between', 
-              alignItems: 'center',
-              gap: 3,
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 2, md: 3 },
               flexWrap: 'wrap'
             }}>
               {/* Total Vendors Card */}
@@ -1040,9 +1053,26 @@ const TransportVendors = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 2
+            gap: 2,
+            position: 'relative'
           }}
         >
+          <IconButton
+            onClick={handleCloseViewDialog}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           <BusinessIcon sx={{ fontSize: 32 }} />
           <Typography variant="h5" component="div">
             {viewDialog.vendor?.title}
@@ -1179,7 +1209,7 @@ const TransportVendors = () => {
                 {/* Buses Tab */}
                 {activeTab === 0 && (
                   <Box>
-                    {/* Add Bus Button */}
+                    {/* Add Vehicle Button */}
                     <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
                       <Button
                         variant="contained"
@@ -1199,7 +1229,7 @@ const TransportVendors = () => {
                           }
                         }}
                       >
-                        Add Bus
+                        Add Vehicle
                       </Button>
                     </Box>
 
@@ -1304,7 +1334,7 @@ const TransportVendors = () => {
                           No buses assigned to this vendor
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Click "Add Bus" to assign buses to this vendor
+                          Click "Add Vehicle" to assign buses to this vendor
                         </Typography>
                       </Box>
                     )}
@@ -1352,7 +1382,6 @@ const TransportVendors = () => {
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Name</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Phone</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>License No</TableCell>
-                              <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Aadhar No</TableCell>
                               <TableCell sx={{ fontWeight: 600, color: '#1976d2' }}>Actions</TableCell>
                             </TableRow>
                           </TableHead>
@@ -1384,19 +1413,8 @@ const TransportVendors = () => {
                                     {driver.driving_license_no}
                                   </Box>
                                 </TableCell>
-                                <TableCell>{driver.aadhar_no}</TableCell>
                                 <TableCell>
                                   <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <IconButton 
-                                      size="small" 
-                                      onClick={() => {}}
-                                      sx={{ 
-                                        color: '#1976d2',
-                                        '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
-                                      }}
-                                    >
-                                      <ViewIcon />
-                                    </IconButton>
                                     <IconButton 
                                       size="small" 
                                       onClick={() => handleEditDriver(driver)}
@@ -1505,16 +1523,6 @@ const TransportVendors = () => {
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <IconButton 
                                       size="small" 
-                                      onClick={() => {}}
-                                      sx={{ 
-                                        color: '#1976d2',
-                                        '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.1)' }
-                                      }}
-                                    >
-                                      <ViewIcon />
-                                    </IconButton>
-                                    <IconButton 
-                                      size="small" 
                                       onClick={() => handleEditConductor(conductor)}
                                       sx={{ 
                                         color: '#ff9800',
@@ -1601,7 +1609,7 @@ const TransportVendors = () => {
         </Alert>
       </Snackbar>
 
-      {/* Add Bus Dialog */}
+      {/* Add Vehicle Dialog */}
       <Dialog open={busDialog} onClose={() => { setBusDialog(false); setEditingBus(null); }} maxWidth="sm" fullWidth>
         <DialogTitle sx={{
           background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
@@ -1609,9 +1617,26 @@ const TransportVendors = () => {
           fontWeight: 600,
           fontSize: '1.5rem',
           textAlign: 'center',
-          py: 3
+          py: 3,
+          position: 'relative'
         }}>
-          {editingBus ? 'Edit Bus' : 'Add New Bus'}
+          <IconButton
+            onClick={() => { setBusDialog(false); setEditingBus(null); }}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          {editingBus ? 'Edit Vehicle' : 'Add New Vehicle'}
         </DialogTitle>
         <form onSubmit={handleBusSubmit}>
           <DialogContent sx={{ p: 4 }}>
@@ -1620,7 +1645,7 @@ const TransportVendors = () => {
                 <TextField
                   autoFocus
                   name="title"
-                  label="Bus Title"
+                  label="Vehicle Title"
                   fullWidth
                   variant="outlined"
                   value={busFormData.title}
@@ -1640,17 +1665,6 @@ const TransportVendors = () => {
               </Grid>
               <Grid item xs={6}>
                 <TextField
-                  name="no_of_sittings"
-                  label="Capacity"
-                  fullWidth
-                  variant="outlined"
-                  type="number"
-                  value={busFormData.no_of_sittings}
-                  onChange={handleBusFormChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
                   name="model"
                   label="Model"
                   fullWidth
@@ -1661,11 +1675,12 @@ const TransportVendors = () => {
               </Grid>
               <Grid item xs={6}>
                 <TextField
-                  name="type"
-                  label="Bus Type"
+                  name="no_of_sittings"
+                  label="Capacity"
                   fullWidth
                   variant="outlined"
-                  value={busFormData.type}
+                  type="number"
+                  value={busFormData.no_of_sittings}
                   onChange={handleBusFormChange}
                 />
               </Grid>
@@ -1679,6 +1694,24 @@ const TransportVendors = () => {
                   value={busFormData.make_year}
                   onChange={handleBusFormChange}
                 />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="vehicle-type-label" shrink>Type</InputLabel>
+                  <Select
+                    labelId="vehicle-type-label"
+                    name="type"
+                    label="Vehicle Type"
+                    value={busFormData.type || 'bus'}
+                    onChange={handleBusFormChange}
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="bus">Bus</MenuItem>
+                    <MenuItem value="traveller">Traveller</MenuItem>
+                    <MenuItem value="car">Car</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
             </Grid>
           </DialogContent>
@@ -1719,7 +1752,7 @@ const TransportVendors = () => {
                 }
               }}
             >
-              {editingBus ? 'Update Bus' : 'Add Bus'}
+              {editingBus ? 'Update Vehicle' : 'Add Vehicle'}
             </Button>
           </DialogActions>
         </form>
@@ -1733,8 +1766,25 @@ const TransportVendors = () => {
           fontWeight: 600,
           fontSize: '1.5rem',
           textAlign: 'center',
-          py: 3
+          py: 3,
+          position: 'relative'
         }}>
+          <IconButton
+            onClick={() => { setDriverDialog(false); setEditingDriver(null); }}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           {editingDriver ? 'Edit Driver' : 'Add New Driver'}
         </DialogTitle>
         <form onSubmit={handleDriverSubmit}>
@@ -1836,8 +1886,25 @@ const TransportVendors = () => {
           fontWeight: 600,
           fontSize: '1.5rem',
           textAlign: 'center',
-          py: 3
+          py: 3,
+          position: 'relative'
         }}>
+          <IconButton
+            onClick={() => { setConductorDialog(false); setEditingConductor(null); }}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
           {editingConductor ? 'Edit Conductor' : 'Add New Conductor'}
         </DialogTitle>
         <form onSubmit={handleConductorSubmit}>
@@ -1931,14 +1998,14 @@ const TransportVendors = () => {
           textAlign: 'center',
           py: 3
         }}>
-          View Bus Details
+          View Vehicle Details
         </DialogTitle>
         <DialogContent sx={{ p: 4 }}>
           {viewingBus && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop:'25px' }}>
-              {/* Bus Title - Full Width */}
+              {/* Vehicle Title - Full Width */}
               <TextField
-                label="Bus Title"
+                label="Vehicle Title"
                 fullWidth
                 variant="outlined"
                 value={viewingBus.title}
@@ -2024,10 +2091,10 @@ const TransportVendors = () => {
                 }}
               />
               
-              {/* Bus Type and Make Year - Side by Side */}
+              {/* Type and Make Year - Side by Side */}
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label="Bus Type"
+                  label="Type"
                   fullWidth
                   variant="outlined"
                   value={viewingBus.type || 'N/A'}
@@ -2037,7 +2104,9 @@ const TransportVendors = () => {
                       color: '#1976d2', 
                       fontWeight: 500,
                       textAlign: 'left',
-                      padding: '16.5px 14px'
+                      padding: '16.5px 14px',
+
+                      
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {

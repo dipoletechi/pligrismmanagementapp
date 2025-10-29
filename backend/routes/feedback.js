@@ -5,8 +5,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Get all feedbacks
 router.get('/',
-  // protect,
-  // authorize(['superadmin', 'admin', 'trip_manager', 'transport']),
+  protect,
   async (req, res) => {
     try {
       console.log('Feedback API - User:', req.user);
@@ -32,13 +31,13 @@ router.get('/',
               ...feedback.toJSON(),
               user: user ? {
                 id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email
+                firstName: user.firstName || user.first_name || 'Unknown',
+                lastName: user.lastName || user.last_name || '',
+                email: user.email || 'Unknown'
               } : null,
               trip: trip ? {
                 id: trip.id,
-                title: trip.title
+                title: trip.title || 'Unknown Trip'
               } : null
             };
           } catch (error) {
@@ -62,13 +61,13 @@ router.get('/',
               ...feedback.toJSON(),
               user: user ? {
                 id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email
+                firstName: user.firstName || user.first_name || 'Unknown',
+                lastName: user.lastName || user.last_name || '',
+                email: user.email || 'Unknown'
               } : null,
               trip: trip ? {
                 id: trip.id,
-                title: trip.title
+                title: trip.title || 'Unknown Trip'
               } : null
             };
           } catch (error) {
@@ -154,14 +153,17 @@ router.post('/vendor',
   authorize(['user']), // Typically users submit feedback
   async (req, res) => {
     try {
-      const { tripid, ratings, vendorid, comment } = req.body;
+      const { tripid, ratings, vendor_type, transport_vendor_id, accommodation_vendor_id, food_vendor_id, comment } = req.body;
       const userId = req.user.id; // Assuming user ID is from authenticated user
 
       const newFeedback = await VendorFeedback.create({
         tripid,
         userId,
         ratings,
-        vendorid,
+        vendor_type,
+        transport_vendor_id,
+        accommodation_vendor_id,
+        food_vendor_id,
         comment
       });
 

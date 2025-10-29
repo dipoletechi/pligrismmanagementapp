@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -45,13 +45,16 @@ import {
   DirectionsBus as TransportIcon,
   Hotel as AccommodationIcon,
   Event as EventIcon,
-  NotificationsActive as NotificationIcon
+  NotificationsActive as NotificationIcon,
+  ArrowBack as ArrowBackIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const TripApplicants = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { tripId } = useParams();
   const [tabValue, setTabValue] = useState(0);
   const [applicants, setApplicants] = useState([]);
@@ -197,7 +200,7 @@ const TripApplicants = () => {
     if (!selectedApplicant) return;
 
     try {
-      const response = await axios.put(`/api/trip-pligrim/${selectedApplicant.id}`, {
+      const response = await axios.put(`/api/trip-pligrim/${selectedApplicant.applicationId}`, {
         status: editStatus
       }, {
         headers: {
@@ -209,11 +212,11 @@ const TripApplicants = () => {
         // Update local state
         setApplicants(prevApplicants =>
           prevApplicants.map(applicant =>
-            applicant.id === selectedApplicant.id ? { ...applicant, status: editStatus } : applicant
+            applicant.applicationId === selectedApplicant.applicationId ? { ...applicant, status: editStatus } : applicant
           )
         );
         updateTabCounts(applicants.map(applicant =>
-          applicant.id === selectedApplicant.id ? { ...applicant, status: editStatus } : applicant
+          applicant.applicationId === selectedApplicant.applicationId ? { ...applicant, status: editStatus } : applicant
         ));
         setEditDialogOpen(false);
         setSelectedApplicant(null);
@@ -334,31 +337,63 @@ const TripApplicants = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ display: 'flex', alignItems: 'center' }}>
-            <PersonIcon sx={{ mr: 2, fontSize: 32 }} />
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 2, sm: 0 },
+        mb: { xs: 2, md: 3 }
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <IconButton
+            onClick={() => navigate('/trips')}
+            sx={{
+              backgroundColor: 'rgba(25, 118, 210, 0.1)',
+              color: '#1976d2',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography 
+            component="h1" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' }
+            }}
+          >
+            <PersonIcon sx={{ mr: { xs: 1.5, md: 2 }, fontSize: { xs: 28, md: 32 } }} />
             {getTripTitle()}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={selectedApplicants.length === 0}
-          onClick={handleSendNotification}
-          startIcon={<NotificationIcon />}
-          sx={{ minWidth: 180 }}
-        >
-          Send Notification
-          {selectedApplicants.length > 0 && ` (${selectedApplicants.length})`}
-        </Button>
+        {user?.role !== 'financial_manager' && (
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={selectedApplicants.length === 0}
+            onClick={handleSendNotification}
+            startIcon={<NotificationIcon />}
+            fullWidth={{ xs: true, sm: false }}
+            sx={{ 
+              minWidth: { xs: '100%', sm: 180 },
+              fontSize: { xs: '0.875rem', md: '1rem' }
+            }}
+          >
+            Send Notification
+            {selectedApplicants.length > 0 && ` (${selectedApplicants.length})`}
+          </Button>
+        )}
       </Box>
 
       {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
@@ -404,14 +439,16 @@ const TripApplicants = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isAllSelected}
-                        indeterminate={isSomeSelected}
-                        onChange={handleSelectAll}
-                        color="primary"
-                      />
-                    </TableCell>
+                    {user?.role !== 'financial_manager' && (
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isAllSelected}
+                          indeterminate={isSomeSelected}
+                          onChange={handleSelectAll}
+                          color="primary"
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>Applicant</TableCell>
                     <TableCell>Contact Details</TableCell>
                     <TableCell>Status</TableCell>
@@ -421,13 +458,15 @@ const TripApplicants = () => {
                 <TableBody>
                   {filteredApplicants.map((applicant) => (
                     <TableRow key={applicant.id} hover>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedApplicants.includes(applicant.id)}
-                          onChange={() => handleSelectOne(applicant.id)}
-                          color="primary"
-                        />
-                      </TableCell>
+                      {user?.role !== 'financial_manager' && (
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={selectedApplicants.includes(applicant.id)}
+                            onChange={() => handleSelectOne(applicant.id)}
+                            color="primary"
+                          />
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar sx={{ bgcolor: 'primary.main' }}>
@@ -470,15 +509,17 @@ const TripApplicants = () => {
                               <ViewIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit Status">
-                            <IconButton
-                              onClick={() => handleEditClick(applicant)}
-                              size="small"
-                              color="secondary"
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
+                          {user?.role !== 'financial_manager' && (
+                            <Tooltip title="Edit Status">
+                              <IconButton
+                                onClick={() => handleEditClick(applicant)}
+                                size="small"
+                                color="secondary"
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -506,6 +547,35 @@ const TripApplicants = () => {
 
       {/* Applicant Details Dialog */}
       <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: '1.25rem',
+          py: 2,
+          position: 'relative'
+        }}>
+          <IconButton
+            onClick={() => setDetailsDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <PeopleIcon sx={{ mr: 1, fontSize: 24 }} />
+            Applicant Details
+          </Box>
+        </DialogTitle>
         <DialogContent>
           {selectedApplicant && (
             <Box sx={{ mt: 2 }}>

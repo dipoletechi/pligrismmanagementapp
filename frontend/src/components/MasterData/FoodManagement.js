@@ -363,23 +363,24 @@ const FoodManagement = () => {
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 },
+      px: { xs: 1, sm: 2, md: 0 }
     }}>
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2, md: 4 } }}>
           <Box sx={{ 
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderRadius: 3,
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             <Typography 
-              variant="h3" 
               component="h1" 
               gutterBottom
               sx={{
+                fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
                 background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
@@ -390,7 +391,13 @@ const FoodManagement = () => {
             >
               Food Management
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+            <Typography 
+              sx={{ 
+                fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                fontWeight: 400 
+              }} 
+              color="text.secondary"
+            >
               Manage food schedules, categories, and items
             </Typography>
           </Box>
@@ -411,13 +418,16 @@ const FoodManagement = () => {
             <Tabs 
               value={activeTab} 
               onChange={handleTabChange}
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{
                 '& .MuiTab-root': {
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '1.1rem',
-                  py: 2,
-                  px: 3,
+                  fontSize: { xs: '0.875rem', md: '1.1rem' },
+                  py: { xs: 1.5, md: 2 },
+                  px: { xs: 2, md: 3 },
+                  minHeight: { xs: 48, md: 60 },
                   '&.Mui-selected': {
                     color: '#1976d2',
                     background: 'linear-gradient(45deg, rgba(25, 118, 210, 0.1) 30%, rgba(66, 165, 245, 0.1) 90%)'
@@ -430,20 +440,44 @@ const FoodManagement = () => {
                 }
               }}
             >
-              <Tab label="Food Schedules" icon={<ScheduleIcon />} />
-              <Tab label="Food Categories" icon={<CategoryIcon />} />
-              <Tab label="Food Items" icon={<FoodIcon />} />
+              <Tab 
+                label="Food Schedules" 
+                icon={<ScheduleIcon sx={{ fontSize: { xs: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Food Categories" 
+                icon={<CategoryIcon sx={{ fontSize: { xs: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Food Items" 
+                icon={<FoodIcon sx={{ fontSize: { xs: 20, md: 24 } }} />} 
+                iconPosition="start"
+              />
             </Tabs>
           </Box>
 
         {/* Food Schedules Tab */}
         <TabPanel value={activeTab} index={0}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Food Schedules</Typography>
+          <Box sx={{ 
+            mb: 3, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between', 
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 2, sm: 0 }
+          }}>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>Food Schedules</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => handleScheduleOpen()}
+              fullWidth={{ xs: true, sm: false }}
+              sx={{
+                fontSize: { xs: '0.875rem', md: '1rem' },
+                py: { xs: 1, md: 1.5 }
+              }}
             >
               Add Schedule
             </Button>
@@ -485,12 +519,24 @@ const FoodManagement = () => {
 
         {/* Food Categories Tab */}
         <TabPanel value={activeTab} index={1}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Food Categories</Typography>
+          <Box sx={{ 
+            mb: 3, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between', 
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 2, sm: 0 }
+          }}>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>Food Categories</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => handleCategoryOpen()}
+              fullWidth={{ xs: true, sm: false }}
+              sx={{
+                fontSize: { xs: '0.875rem', md: '1rem' },
+                py: { xs: 1, md: 1.5 }
+              }}
             >
               Add Category
             </Button>
@@ -530,16 +576,34 @@ const FoodManagement = () => {
 
         {/* Food Items Tab */}
         <TabPanel value={activeTab} index={2}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-            <Typography variant="h6">Food Items</Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              <FormControl sx={{ minWidth: 200 }}>
+          <Box sx={{ 
+            mb: 3, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between', 
+            alignItems: { xs: 'stretch', sm: 'center' }, 
+            flexWrap: 'wrap', 
+            gap: 2 
+          }}>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>Food Items</Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2, 
+              alignItems: { xs: 'stretch', sm: 'center' }, 
+              flexWrap: 'wrap',
+              width: { xs: '100%', sm: 'auto' }
+            }}>
+              <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
                 <InputLabel>Filter by Category</InputLabel>
                 <Select
                   value={selectedCategory}
                   onChange={(e) => handleCategoryFilter(e.target.value)}
                   label="Filter by Category"
                   displayEmpty
+                  sx={{
+                    fontSize: { xs: '0.875rem', md: '1rem' }
+                  }}
                 >
                   <MenuItem value="">
                     <em>All Categories</em>
@@ -555,6 +619,11 @@ const FoodManagement = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => handleFoodItemOpen()}
+                fullWidth={{ xs: true, sm: false }}
+                sx={{
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  py: { xs: 1, md: 1.5 }
+                }}
               >
                 Add Food Item
               </Button>

@@ -44,7 +44,7 @@ function TabPanel({ children, value, index, ...other }) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
           {children}
         </Box>
       )}
@@ -218,30 +218,51 @@ const Settings = () => {
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ mb: { xs: 2, md: 4 } }}>
+        <Typography 
+          component="h1" 
+          gutterBottom
+          sx={{ fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.125rem' } }}
+        >
           {isFromProfile ? 'Profile' : 'Settings'}
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
+        <Typography 
+          color="text.secondary"
+          sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+        >
           {isFromProfile ? 'Manage your personal information and account details' : 'Manage your profile and account settings'}
         </Typography>
       </Box>
 
       <Paper sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="settings tabs">
+          <Tabs 
+            value={activeTab} 
+            onChange={handleTabChange} 
+            aria-label="settings tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+          >
             <Tab 
               icon={<PersonIcon />} 
               label="Profile" 
               id="settings-tab-0"
               aria-controls="settings-tabpanel-0"
+              sx={{ 
+                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+                minHeight: { xs: 48, md: 56 }
+              }}
             />
             <Tab 
               icon={<LockIcon />} 
               label="Change Password" 
               id="settings-tab-1"
               aria-controls="settings-tabpanel-1"
+              sx={{ 
+                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+                minHeight: { xs: 48, md: 56 }
+              }}
             />
           </Tabs>
         </Box>

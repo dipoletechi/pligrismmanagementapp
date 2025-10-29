@@ -85,16 +85,16 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
+    <Container component="main" maxWidth="sm" sx={{ px: { xs: 2, sm: 3 } }}>
       <Box
         sx={{
-          marginTop: 8,
+          marginTop: { xs: 4, sm: 6, md: 8 },
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}
       >
-        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+        <Paper elevation={3} sx={{ padding: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
           <Box
             sx={{
               display: 'flex',
@@ -102,11 +102,22 @@ const Login = () => {
               alignItems: 'center',
             }}
           >
-            <LoginIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-            <Typography component="h1" variant="h4" gutterBottom>
+            <LoginIcon sx={{ fontSize: { xs: 32, md: 40 }, color: 'primary.main', mb: 2 }} />
+            <Typography 
+              component="h1" 
+              gutterBottom
+              sx={{ fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' } }}
+            >
               Tirth Yatra Login
             </Typography>
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+            <Typography 
+              color="text.secondary" 
+              align="center" 
+              sx={{ 
+                mb: 3,
+                fontSize: { xs: '0.875rem', md: '1rem' }
+              }}
+            >
               Sign in to access your account
             </Typography>
 

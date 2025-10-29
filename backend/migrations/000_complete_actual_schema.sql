@@ -194,8 +194,6 @@ CREATE TABLE `drivers` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `transport_vendor_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `aadhar_no` (`aadhar_no`),
-  UNIQUE KEY `driving_license_no` (`driving_license_no`),
   KEY `transport_vendor_id` (`transport_vendor_id`),
   CONSTRAINT `drivers_ibfk_1` FOREIGN KEY (`transport_vendor_id`) REFERENCES `transport_vendors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -237,7 +235,7 @@ CREATE TABLE `buses` (
 CREATE TABLE `bus_details` (
   `id` int NOT NULL AUTO_INCREMENT,
   `title` varchar(100) NOT NULL,
-  `rc_no` varchar(20) NOT NULL,
+  `rc_no` varchar(20) DEFAULT NULL,
   `rc_date` datetime DEFAULT NULL,
   `expiry_date` datetime DEFAULT NULL,
   `puc_no` varchar(20) DEFAULT NULL,
@@ -251,7 +249,6 @@ CREATE TABLE `bus_details` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `transport_vendor_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `rc_no` (`rc_no`),
   KEY `transport_vendor_id` (`transport_vendor_id`),
   CONSTRAINT `bus_details_ibfk_1` FOREIGN KEY (`transport_vendor_id`) REFERENCES `transport_vendors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

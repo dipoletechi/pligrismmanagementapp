@@ -448,11 +448,11 @@ const TransportManagement = () => {
 
   const renderBusDialog = () => (
     <Dialog open={busOpen} onClose={() => setBusOpen(false)} maxWidth="md" fullWidth>
-      <DialogTitle>{editingBus ? 'Edit Bus' : 'Add New Bus'}</DialogTitle>
+      <DialogTitle>{editingBus ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
           <TextField
-            label="Title"
+            label="Vehicle Title"
             value={busFormData.title}
             onChange={(e) => setBusFormData({ ...busFormData, title: e.target.value })}
             fullWidth
@@ -511,11 +511,11 @@ const TransportManagement = () => {
             fullWidth
           />
           <FormControl fullWidth>
-            <InputLabel>Type</InputLabel>
+            <InputLabel>Vehicle Type</InputLabel>
             <Select
               value={busFormData.type}
               onChange={(e) => setBusFormData({ ...busFormData, type: e.target.value })}
-              label="Type"
+              label="Vehicle Type"
             >
               <MenuItem value="bus">Bus</MenuItem>
               <MenuItem value="traveller">Traveller</MenuItem>
@@ -633,19 +633,35 @@ const TransportManagement = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
+      <Typography 
+        component="h1" 
+        gutterBottom
+        sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem', md: '2.5rem' } }}
+      >
         Transport Management
       </Typography>
-      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography 
+        color="text.secondary" 
+        sx={{ 
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          mb: { xs: 2, md: 4 }
+        }}
+      >
         Manage buses, drivers, and conductors
       </Typography>
 
-      <Paper sx={{ p: 3 }}>
+      <Paper sx={{ p: { xs: 2, md: 3 } }}>
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider', 
+            mb: { xs: 2, md: 3 }
+          }}
         >
           {tabs.map((tab) => (
             <Tab
@@ -653,7 +669,13 @@ const TransportManagement = () => {
               label={tab.label}
               icon={tab.icon}
               iconPosition="start"
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              sx={{ 
+                textTransform: 'none', 
+                fontWeight: 'bold',
+                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+                minHeight: { xs: 48, md: 56 },
+                px: { xs: 1, md: 2 }
+              }}
             />
           ))}
         </Tabs>

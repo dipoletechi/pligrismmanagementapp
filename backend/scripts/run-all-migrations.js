@@ -63,6 +63,7 @@ class AllMigrationsRunner {
       
       // Skip problematic schema files that cause conflicts
       const filesToSkip = [
+        '000_complete_actual_schema.sql',      // Contains DROP TABLE statements - causes data loss
         '000_complete_production_schema.sql',
         '000_complete_schema.sql',
         '000_complete_schema_v2.sql'
@@ -95,6 +96,7 @@ class AllMigrationsRunner {
                   error.message.includes('Cannot drop table') ||
                   error.message.includes('Can\'t DROP') ||
                   error.message.includes('check that column/key exists') ||
+                  error.message.includes('Unknown column') ||
                   error.message.includes('prepared statement protocol') ||
                   error.message.includes('not supported') ||
                   error.message.includes('column name')) {

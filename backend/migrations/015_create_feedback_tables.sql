@@ -29,10 +29,12 @@ CREATE TABLE IF NOT EXISTS trip_feedback (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Add indexes for better performance (if they don't exist)
-CREATE INDEX idx_vendor_feedback_tripid ON vendor_feedback(tripid);
-CREATE INDEX idx_vendor_feedback_userId ON vendor_feedback(userId);
-CREATE INDEX idx_vendor_feedback_vendorid ON vendor_feedback(vendorid);
+-- Add indexes for better performance
+-- Note: If indexes already exist, these statements will be skipped (ignore duplicate key errors)
+-- Create indexes
+ALTER TABLE vendor_feedback ADD INDEX idx_vendor_feedback_tripid (tripid);
+ALTER TABLE vendor_feedback ADD INDEX idx_vendor_feedback_userId (userId);
+-- Note: vendorid column removed in migration 016, replaced with specific vendor type IDs
 
-CREATE INDEX idx_trip_feedback_trip_id ON trip_feedback(trip_id);
-CREATE INDEX idx_trip_feedback_user_id ON trip_feedback(user_id);
+ALTER TABLE trip_feedback ADD INDEX idx_trip_feedback_trip_id (trip_id);
+ALTER TABLE trip_feedback ADD INDEX idx_trip_feedback_user_id (user_id);

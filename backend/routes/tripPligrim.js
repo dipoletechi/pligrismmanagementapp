@@ -60,6 +60,7 @@ router.get('/trip/:tripId', async (req, res) => {
     const pilgrims = tripApplications.map(application => {
       return {
         id: application.user.id,
+        applicationId: application.id, // Include the application ID for updates
         user: application.user,
         status: application.status, // Use the application status from TripPligrim
         created_at: application.created_at,
@@ -232,37 +233,6 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Update pilgrim application
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const application = await TripPligrim.findByPk(id);
-    if (!application) {
-      return res.status(404).json({
-        success: false,
-        message: 'Pilgrim application not found'
-      });
-    }
-
-    await application.update({ status });
-
-    res.json({
-      success: true,
-      data: application,
-      message: 'Pilgrim application updated successfully'
-    });
-  } catch (error) {
-    console.error('Error updating pilgrim application:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update pilgrim application',
-      error: error.message
-    });
-  }
-});
-
 // Delete pilgrim application
 router.delete('/:id', async (req, res) => {
   try {
@@ -334,6 +304,7 @@ router.put('/:id', async (req, res) => {
       message: 'Pilgrim application status updated successfully',
       data: {
         id: updatedApplication.user.id,
+        applicationId: updatedApplication.id, // Include the application ID
         user: updatedApplication.user,
         status: updatedApplication.status,
         created_at: updatedApplication.created_at,

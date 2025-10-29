@@ -17,7 +17,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // Create accommodation vendor
-router.post('/', protect, authorize('superadmin', 'admin'), [
+router.post('/', protect, authorize('superadmin', 'admin', 'financial_manager'), [
   body('title').trim().notEmpty()
 ], async (req, res) => {
   const errors = validationResult(req);
@@ -32,7 +32,7 @@ router.post('/', protect, authorize('superadmin', 'admin'), [
 });
 
 // Update accommodation vendor
-router.put('/:id', protect, authorize('superadmin', 'admin'), async (req, res) => {
+router.put('/:id', protect, authorize('superadmin', 'admin', 'financial_manager'), async (req, res) => {
   try {
     await AccommodationVendor.update(req.body, { where: { id: req.params.id } });
     const vendor = await AccommodationVendor.findByPk(req.params.id);
@@ -44,7 +44,7 @@ router.put('/:id', protect, authorize('superadmin', 'admin'), async (req, res) =
 });
 
 // Delete accommodation vendor
-router.delete('/:id', protect, authorize('superadmin', 'admin'), async (req, res) => {
+router.delete('/:id', protect, authorize('superadmin', 'admin', 'financial_manager'), async (req, res) => {
   try {
     await AccommodationVendor.destroy({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Deleted' });

@@ -43,13 +43,13 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 280;
 const collapsedDrawerWidth = 70;
+const mobileBreakpoint = 'md'; // md = 900px
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] },
   { text: 'Trip Management', icon: <TripIcon />, path: '/trips', roles: ['superadmin', 'admin', 'trip_manager', 'financial_manager', 'user'] },
   { text: 'Master Data', icon: <LocationIcon />, path: '/master-data', roles: ['superadmin', 'admin'] },
-  { text: 'Financial Management', icon: <FinanceIcon />, path: '/finance', roles: ['superadmin', 'admin', 'financial_manager'] },
-  { text: 'Vendors Management', icon: <PeopleIcon />, path: '/vendors', roles: ['superadmin', 'admin'] },
+  { text: 'Vendors Management', icon: <PeopleIcon />, path: '/vendors', roles: ['superadmin', 'admin', 'financial_manager'] },
   { text: 'Support Management', icon: <SupportIcon />, path: '/support', roles: ['superadmin', 'admin'] },
   { text: 'User Management', icon: <PeopleIcon />, path: '/users', roles: ['superadmin'] },
   { text: 'Pilgrim', icon: <PersonIcon />, path: '/pilgrims', roles: ['superadmin', 'admin', 'trip_manager'] },
@@ -68,11 +68,6 @@ const TripSubMenu = [
   { text: 'List Trips', path: '/trips/list', permissions: { module: 'trips', action: 'read' } }
 ];
 
-const FinanceSubMenu = [
-  { text: 'Vendors', path: '/finance/vendors', permissions: { module: 'finance', action: 'read' } },
-  { text: 'Budget Management', path: '/finance/budget', permissions: { module: 'finance', action: 'read' } },
-  { text: 'Vendor Finance', path: '/finance/vendor-finance', permissions: { module: 'finance', action: 'read' } }
-];
 
 const VendorsSubMenu = [
   { text: 'Accommodation', path: '/vendors/accommodation', permissions: { module: 'vendors', action: 'read' } },
@@ -155,9 +150,6 @@ function MainLayout({ children }) {
       case '/trips':
         subMenu = TripSubMenu;
         break;
-      case '/finance':
-        subMenu = FinanceSubMenu;
-        break;
       case '/vendors':
         subMenu = VendorsSubMenu;
         break;
@@ -181,10 +173,18 @@ function MainLayout({ children }) {
         alignItems: 'center', 
         justifyContent: sidebarCollapsed ? 'center' : 'space-between',
         px: sidebarCollapsed ? 1 : 2,
-        minHeight: '64px !important'
+        minHeight: { xs: '56px !important', sm: '64px !important' }
       }}>
         {!sidebarCollapsed && (
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div" 
+            sx={{ 
+              fontWeight: 'bold',
+              fontSize: { xs: '1rem', sm: '1.25rem' }
+            }}
+          >
             Tirth Yatra
           </Typography>
         )}
@@ -192,6 +192,7 @@ function MainLayout({ children }) {
           onClick={handleSidebarToggle}
           sx={{ 
             color: 'inherit',
+            display: { xs: 'none', md: 'block' },
             ...(sidebarCollapsed && { mx: 'auto' })
           }}
         >
@@ -214,6 +215,8 @@ function MainLayout({ children }) {
                       toggleSubMenu(item.path);
                     } else if (subMenu.length === 0) {
                       navigate(item.path);
+                      // Close mobile drawer after navigation
+                      setMobileOpen(false);
                     }
                   }}
                   selected={false}
@@ -242,9 +245,12 @@ function MainLayout({ children }) {
                 >
                   <ListItemIcon sx={{ 
                     color: isActive ? 'white' : 'inherit',
-                    minWidth: sidebarCollapsed ? 'auto' : 40,
+                    minWidth: sidebarCollapsed ? 'auto' : { xs: 36, md: 40 },
                     justifyContent: 'center',
-                    mr: sidebarCollapsed ? 0 : 2
+                    mr: sidebarCollapsed ? 0 : { xs: 1, md: 2 },
+                    '& .MuiSvgIcon-root': {
+                      fontSize: { xs: '1.25rem', md: '1.5rem' }
+                    }
                   }}>
                     {item.icon}
                   </ListItemIcon>
@@ -255,14 +261,20 @@ function MainLayout({ children }) {
                         sx={{ 
                           color: isActive ? 'white' : 'inherit',
                           '& .MuiListItemText-primary': {
-                            fontSize: '0.9rem',
+                            fontSize: { xs: '0.85rem', md: '0.9rem' },
                             fontWeight: isActive ? 600 : 400
                           }
                         }}
                       />
                       {subMenu.length > 0 && (
-                        <IconButton size="small" sx={{ color: 'inherit' }}>
-                          {isExpanded ? <ExpandMoreIcon /> : <ChevronRightSubIcon />}
+                        <IconButton 
+                          size="small" 
+                          sx={{ 
+                            color: 'inherit',
+                            p: { xs: 0.5, md: 1 }
+                          }}
+                        >
+                          {isExpanded ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightSubIcon fontSize="small" />}
                         </IconButton>
                       )}
                     </>
@@ -275,7 +287,7 @@ function MainLayout({ children }) {
                   ml: 0,
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',
                   borderRadius: 1,
-                  mx: 1,
+                  mx: { xs: 0.5, md: 1 },
                   py: 0.5
                 }}>
                   {subMenu.map((subItem) => (
@@ -284,9 +296,10 @@ function MainLayout({ children }) {
                         sx={{ 
                           borderRadius: 1,
                           mb: 0.5,
-                          pl: 7,
-                          ml: 1,
-                          mr: 1,
+                          pl: { xs: 4, md: 7 },
+                          ml: { xs: 0.5, md: 1 },
+                          mr: { xs: 0.5, md: 1 },
+                          py: { xs: 0.75, md: 1 },
                           backgroundColor: 'transparent',
                           '&:hover': {
                             backgroundColor: 'rgba(25, 118, 210, 0.08)',
@@ -316,6 +329,8 @@ function MainLayout({ children }) {
                           } else {
                             navigate(subItem.path);
                           }
+                          // Close mobile drawer after navigation
+                          setMobileOpen(false);
                         }}
                         selected={location.pathname === subItem.path && !location.state?.isEditMode && !location.state?.isViewMode}
                       >
@@ -323,7 +338,7 @@ function MainLayout({ children }) {
                           primary={subItem.text}
                           sx={{ 
                             '& .MuiListItemText-primary': {
-                              fontSize: '0.85rem',
+                              fontSize: { xs: '0.8rem', md: '0.85rem' },
                               fontWeight: location.pathname === subItem.path ? 600 : 400,
                               color: location.pathname === subItem.path ? 'primary.main' : 'text.secondary'
                             }
@@ -347,28 +362,54 @@ function MainLayout({ children }) {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
-          ml: { sm: `${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
+          width: { xs: '100%', md: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
+          ml: { xs: 0, md: `${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
           transition: 'all 0.3s ease',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ mr: 2, display: { xs: 'block', md: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
           
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div" 
+            sx={{ 
+              flexGrow: 1,
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              display: { xs: 'none', sm: 'block' }
+            }}
+          >
             Tirth Yatra Admin Panel
           </Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton color="inherit">
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div" 
+            sx={{ 
+              flexGrow: 1,
+              fontSize: '1rem',
+              display: { xs: 'block', sm: 'none' }
+            }}
+          >
+            Tirth Yatra
+          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+            <IconButton 
+              color="inherit"
+              sx={{ display: { xs: 'none', sm: 'block' } }}
+            >
               <Badge badgeContent={4} color="error">
                 <NotificationsIcon />
               </Badge>
@@ -382,8 +423,9 @@ function MainLayout({ children }) {
               aria-haspopup="true"
               onClick={handleProfileMenuOpen}
               color="inherit"
+              sx={{ p: { xs: 0.5, sm: 1 } }}
             >
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <Avatar sx={{ width: { xs: 28, sm: 32 }, height: { xs: 28, sm: 32 } }}>
                 {(user?.firstName && user?.lastName) 
                   ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
                   : (user?.name?.charAt(0)?.toUpperCase() || 'U')
@@ -394,54 +436,55 @@ function MainLayout({ children }) {
         </Toolbar>
       </AppBar>
 
-      <Box
-        component="nav"
-        sx={{ 
-          width: { sm: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth }, 
-          flexShrink: { sm: 0 },
-          transition: 'width 0.3s ease'
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
         }}
-        aria-label="mailbox folders"
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: drawerWidth,
+            zIndex: (theme) => theme.zIndex.drawer
+          },
+        }}
       >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
-              width: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth,
-              transition: 'width 0.3s ease',
-              overflowX: 'hidden'
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
+        {drawer}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: sidebarCollapsed ? collapsedDrawerWidth : drawerWidth,
+            transition: 'width 0.3s ease',
+            overflowX: 'hidden',
+            zIndex: (theme) => theme.zIndex.drawer
+          },
+        }}
+        open
+      >
+        {drawer}
+      </Drawer>
 
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
-          mt: 8,
-          transition: 'all 0.3s ease'
+          p: 0,
+          width: { 
+            xs: '100%', 
+            md: `calc(100% - ${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px)` 
+          },
+          ml: { xs: 0, md: `${sidebarCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
+          mt: { xs: 7, sm: 8 },
+          minHeight: '100vh',
+          transition: 'all 0.3s ease',
+          backgroundColor: '#f5f5f5'
         }}
       >
         {children}
