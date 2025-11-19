@@ -11,12 +11,12 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { Login as LoginIcon } from '@mui/icons-material';
+import { Login as LoginIcon, GetApp as GetAppIcon } from '@mui/icons-material';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: 'superadmin@tirthyatra.com',
+    password: 'Dipole@1'
   });
   const [errors, setErrors] = useState({});
 
@@ -174,7 +174,57 @@ const Login = () => {
                   </Link>
                 </Typography>
               </Box>
+              
+              <Box textAlign="center" mt={2}>
+                <Typography 
+                  variant="body2" 
+                  component="a"
+                  href="http://app.dipoletechi.com/trip.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    textDecoration: 'none',
+                    color: 'primary.main',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}
+                >
+                  <GetAppIcon sx={{ fontSize: 18 }} />
+                  Download Mobile App
+                </Typography>
+              </Box>
             </Box>
+          </Box>
+        </Paper>
+        
+        <Paper 
+          elevation={3} 
+          sx={{ 
+            padding: { xs: 2, sm: 3 }, 
+            width: '100%', 
+            mt: 3,
+            border: '2px solid',
+            borderColor: 'text.primary'
+          }}
+        >
+          <Typography 
+            variant="h6" 
+            gutterBottom
+            sx={{ fontWeight: 'bold', mb: 2 }}
+          >
+            Login Credential
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="body2">
+              email- superadmin@tirthyatra.com
+            </Typography>
+            <Typography variant="body2">
+              password- Dipole@1
+            </Typography>
           </Box>
         </Paper>
       </Box>
